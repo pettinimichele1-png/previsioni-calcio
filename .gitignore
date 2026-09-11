@@ -1,0 +1,10 @@
+# il database vive nelle Release, non nel repository
+calcio_dati.db
+calcio_dati.db.gz
+# prodotti intermedi: il pipeline li sposta in docs/ o stato/
+previsioni.html
+previsioni.json
+verifica.html
+verifica.json
+*.pyc
+__pycache__/
