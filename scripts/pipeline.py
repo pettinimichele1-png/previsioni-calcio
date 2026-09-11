@@ -40,6 +40,13 @@ CARTELLA = os.path.dirname(os.path.abspath(__file__))
 SITO = "docs"
 DB_PATH = "calcio_dati.db"
 
+# File di stato che devono sopravvivere fra un'esecuzione e l'altra.
+# Ogni esecuzione parte da una macchina pulita che ha solo il codice e il
+# database: senza questi, le modalita' "previsioni" e "live" non
+# troverebbero il modello addestrato e si fermerebbero subito.
+STATO = ("modello.json", "correzione_divisione.json")
+CARTELLA_STATO = "stato"
+
 # nome prodotto -> nome pubblicato nel sito
 PUBBLICATI = {
     "previsioni.html": "index.html",
@@ -47,6 +54,26 @@ PUBBLICATI = {
     "verifica.html": "verifica.html",
     "verifica.json": "verifica.json",
 }
+
+
+def ripristina_stato():
+    """Porta i file di stato dal repository alla cartella di lavoro."""
+    for nome in STATO:
+        origine = os.path.join(CARTELLA_STATO, nome)
+        if os.path.exists(origine):
+            shutil.copy2(origine, nome)
+            print(f"  ripristinato: {nome}")
+        else:
+            print(f"  {nome} non ancora presente")
+
+
+def salva_stato():
+    """Rimette i file di stato nel repository, per la prossima esecuzione."""
+    os.makedirs(CARTELLA_STATO, exist_ok=True)
+    for nome in STATO:
+        if os.path.exists(nome):
+            shutil.copy2(nome, os.path.join(CARTELLA_STATO, nome))
+            print(f"  salvato: {CARTELLA_STATO}/{nome}")
 
 
 def esegui(script, descrizione, argomenti=(), obbligatoria=False):
@@ -93,8 +120,9 @@ def main():
     sys.path.insert(0, CARTELLA)
     import storage
 
-    print(f"\n{'=' * 64}\nFASE: recupero del database\n{'=' * 64}")
+    print(f"\n{'=' * 64}\nFASE: recupero del database e dello stato\n{'=' * 64}")
     trovato = storage.scarica_database()
+    ripristina_stato()
     if not trovato:
         print("Nessun database disponibile.")
         if modalita != "raccolta":
@@ -133,6 +161,7 @@ def main():
             esegui("previsioni.py", "previsioni aggiornate")
             esegui("verifica.py", "archiviazione", ["archivia"])
 
+    salva_stato()
     pubblica()
 
     print(f"\n{'=' * 64}\nFASE: salvataggio del database\n{'=' * 64}")
