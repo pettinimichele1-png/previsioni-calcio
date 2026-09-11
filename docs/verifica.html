@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verifica delle previsioni</title>
+<style>
+ body { font-family:-apple-system,system-ui,sans-serif; margin:0; padding:12px;
+        background:#f4f5f7; color:#1c2733; }
+ h1 { font-size:18px; margin:0 0 12px; }
+ .riquadro { background:#fff; border-radius:6px; padding:12px; margin-bottom:12px; }
+ .tit { font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+         color:#7b8794; margin-bottom:6px; }
+ .grande { font-size:22px; font-weight:600; }
+ .spiega { font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }
+ table { width:100%; border-collapse:collapse; font-size:12px; background:#fff; }
+ th { background:#2c3e50; color:#fff; padding:6px 4px; font-size:10px; }
+ td { padding:6px 4px; border-bottom:1px solid #eef1f4; text-align:center; }
+ .d { font-size:10px; color:#7b8794; }
+ .s { text-align:left; }
+ .bene { color:#1e7d3c; font-weight:600; }
+ .medio { color:#b8860b; }
+ .male { color:#b03030; }
+ .nota { margin-top:14px; font-size:10px; color:#7b8794; line-height:1.7; }
+</style></head><body>
+<h1>Verifica delle previsioni</h1>
+<div class="riquadro">
+ <div class="tit">Partite verificate</div>
+ <div class="grande">11</div>
+ <div class="spiega">esito piu' probabile azzeccato
+  7 volte
+  (64%) &middot;
+  log loss 0.8322</div>
+</div>
+
+<div class="riquadro">
+ <div class="tit">Confronto con i bookmaker</div>
+ <div class="grande">Non distinguibile</div>
+ <div class="spiega">
+  su 11 partite con quote &middot;
+  differenza -0.0085 di log loss, intervallo 95% [-0.1467, +0.1291]<br>
+  Il confronto e' fatto sulle probabilita' dei bookmaker tolto il loro
+  margine, sulle stesse partite e con le quote fotografate al momento
+  della previsione.
+ </div>
+</div>
+<div class="riquadro" style="padding:0;overflow:hidden">
+ <table>
+  <tr><th>Data</th><th>Partita</th><th>Esito</th><th>Prob. data</th></tr>
+  <tr><td class="d">2026-09-11</td><td class="s">Millonarios - Deportivo Cali</td><td>1-1</td><td class="medio">29%</td></tr><tr><td class="d">2026-09-11</td><td class="s">Sport Recife - Ponte Preta</td><td>2-0</td><td class="bene">80%</td></tr><tr><td class="d">2026-09-10</td><td class="s">São Bernardo - Londrina</td><td>1-2</td><td class="male">24%</td></tr><tr><td class="d">2026-09-10</td><td class="s">Vila Nova - Goias</td><td>2-0</td><td class="bene">46%</td></tr><tr><td class="d">2026-09-10</td><td class="s">Estrela - SC Braga</td><td>2-1</td><td class="medio">31%</td></tr><tr><td class="d">2026-09-10</td><td class="s">Panathinaikos - Kifisia</td><td>3-1</td><td class="medio">43%</td></tr><tr><td class="d">2026-09-09</td><td class="s">Moreirense - Benfica</td><td>0-4</td><td class="bene">75%</td></tr><tr><td class="d">2026-09-09</td><td class="s">Charlton - QPR</td><td>0-0</td><td class="medio">28%</td></tr><tr><td class="d">2026-09-09</td><td class="s">Derby - West Brom</td><td>0-1</td><td class="bene">48%</td></tr><tr><td class="d">2026-09-09</td><td class="s">Norwich - Birmingham</td><td>2-1</td><td class="bene">51%</td></tr><tr><td class="d">2026-09-09</td><td class="s">Twente - Telstar</td><td>1-0</td><td class="bene">62%</td></tr>
+ </table>
+</div>
+<div class="nota">
+La colonna "Prob. data" mostra che probabilita' avevamo assegnato
+all'esito poi avvenuto. Un modello ben calibrato sbaglia spesso: cio'
+che conta non e' azzeccare il singolo pronostico, ma che le probabilita'
+corrispondano alle frequenze reali nel lungo periodo.
+</div>
+</body></html>
