@@ -1,0 +1,101 @@
+name: Sistema di previsione
+
+# ORARI ITALIANI. GitHub lavora in UTC, che d'estate e' un'ora indietro e
+# d'inverno due: ogni fascia ha due cron e solo uno supera il controllo
+# dell'ora locale, cosi' non serve toccare nulla al cambio d'ora.
+#
+#   07:00        raccolta partite + ricalcolo completo + previsioni
+#   08:00        previsioni rigenerate
+#   ogni 30 min  formazioni ufficiali delle partite imminenti (11-23)
+
+on:
+  schedule:
+    - cron: "0 5,6 * * *"           # 07:00 italiane
+    - cron: "0 6,7 * * *"           # 08:00 italiane
+    - cron: "*/30 9-22 * * *"       # fascia partite
+  workflow_dispatch:
+    inputs:
+      modalita:
+        description: "Quale fase eseguire"
+        type: choice
+        options: [automatica, raccolta, previsioni, live]
+        default: automatica
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sistema-previsione
+  cancel-in-progress: false
+
+jobs:
+  esegui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Scarica il repository
+        uses: actions/checkout@v4
+
+      - name: Prepara Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installa le dipendenze
+        run: pip install requests
+
+      - name: Stabilisci la modalita' dall'ora italiana
+        id: modo
+        env:
+          SCELTA: ${{ github.event.inputs.modalita }}
+        run: |
+          python - << 'PY' >> $GITHUB_OUTPUT
+          import os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          scelta = os.environ.get("SCELTA") or "automatica"
+          ora = datetime.now(ZoneInfo("Europe/Rome")).hour
+
+          if scelta != "automatica":
+              azione = scelta
+          elif ora == 7:
+              azione = "raccolta"
+          elif ora == 8:
+              azione = "previsioni"
+          elif 11 <= ora <= 23:
+              azione = "live"
+          else:
+              # e' scattato il cron dell'altro fuso stagionale
+              azione = "nessuna"
+          print(f"azione={azione}")
+          print(f"ora={ora}")
+          PY
+
+      - name: Esegui il pipeline
+        if: steps.modo.outputs.azione != 'nessuna'
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEASON: "2026"
+        run: python scripts/pipeline.py ${{ steps.modo.outputs.azione }}
+
+      - name: Niente da fare
+        if: steps.modo.outputs.azione == 'nessuna'
+        run: |
+          echo "In Italia sono le ${{ steps.modo.outputs.ora }} - cron dell'altro fuso stagionale."
+
+      - name: Pubblica i risultati
+        if: steps.modo.outputs.azione != 'nessuna'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docs
+          if git diff --staged --quiet; then
+            echo "Nessuna novita' da pubblicare."
+          else
+            git commit -m "Aggiornamento $(date -u '+%Y-%m-%d %H:%M') UTC"
+            git pull --rebase --autostash origin ${{ github.ref_name }}
+            git push
+          fi
