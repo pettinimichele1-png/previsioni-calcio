@@ -1,301 +1,52 @@
 {
- "generato": "2026-09-11T19:03:36.444844+00:00",
+ "generato": "2026-09-11T19:34:32.897225+00:00",
  "modello": "2026-09-11T11:20:03.473208+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1563166,
-   "data": "2026-09-11T19:00:00+00:00",
-   "campionato": "England - Championship",
-   "casa": "West Ham",
-   "fuori": "Wrexham",
-   "gol_attesi_casa": 1.94,
-   "gol_attesi_fuori": 1.09,
-   "gol_attesi_totali": 3.03,
-   "nettezza": 34.8,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 13,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5655,
-    "X": 0.2294,
-    "2": 0.2051,
-    "1X": 0.7949,
-    "12": 0.7706,
-    "X2": 0.4345,
-    "over15": 0.8106,
-    "under15": 0.1894,
-    "over25": 0.5838,
-    "under25": 0.4162,
-    "over35": 0.3597,
-    "under35": 0.6403,
-    "gol_gol": 0.5741,
-    "no_gol": 0.4259,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1073
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0991
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0907
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.5994,
-    "X": 0.2263,
-    "2": 0.1743,
-    "margine": 0.0663,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.0339,
-    "X": 0.0031,
-    "2": 0.0308
-   },
-   "divergenza_max": 0.0339
-  },
-  {
-   "fixture_id": 1570381,
-   "data": "2026-09-11T19:00:00+00:00",
-   "campionato": "Spain - La Liga",
-   "casa": "Sevilla",
-   "fuori": "Valencia",
-   "gol_attesi_casa": 1.41,
-   "gol_attesi_fuori": 0.96,
-   "gol_attesi_totali": 2.36,
-   "nettezza": 20.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4666,
-    "X": 0.283,
-    "2": 0.2504,
-    "1X": 0.7496,
-    "12": 0.717,
-    "X2": 0.5334,
-    "over15": 0.6901,
-    "under15": 0.3099,
-    "over25": 0.421,
-    "under25": 0.579,
-    "over35": 0.2139,
-    "under35": 0.7861,
-    "gol_gol": 0.4718,
-    "no_gol": 0.5282,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.133
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1258
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1003
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.4852,
-    "X": 0.2879,
-    "2": 0.2268,
-    "margine": 0.0429,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.0186,
-    "X": -0.0049,
-    "2": 0.0236
-   },
-   "divergenza_max": 0.0236
-  },
-  {
-   "fixture_id": 1601524,
-   "data": "2026-09-11T19:00:00+00:00",
-   "campionato": "Italy - Serie B",
-   "casa": "Benevento",
-   "fuori": "Hellas Verona",
-   "gol_attesi_casa": 1.37,
-   "gol_attesi_fuori": 1.5,
-   "gol_attesi_totali": 2.88,
-   "nettezza": 9.8,
-   "affidabilita": 92.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3414,
-    "X": 0.2599,
-    "2": 0.3987,
-    "1X": 0.6013,
-    "12": 0.7401,
-    "X2": 0.6586,
-    "over15": 0.7877,
-    "under15": 0.2123,
-    "over25": 0.5489,
-    "under25": 0.4511,
-    "over35": 0.3254,
-    "under35": 0.6746,
-    "gol_gol": 0.5867,
-    "no_gol": 0.4133,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1221
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0874
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0799
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.3296,
-    "X": 0.2993,
-    "2": 0.371,
-    "margine": 0.0715,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.0118,
-    "X": -0.0394,
-    "2": 0.0277
-   },
-   "divergenza_max": 0.0394
-  },
-  {
-   "fixture_id": 1601531,
-   "data": "2026-09-11T19:00:00+00:00",
-   "campionato": "Italy - Serie B",
-   "casa": "Pisa",
-   "fuori": "Virtus Entella",
-   "gol_attesi_casa": 1.57,
-   "gol_attesi_fuori": 1.23,
-   "gol_attesi_totali": 2.8,
-   "nettezza": 17.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4467,
-    "X": 0.2603,
-    "2": 0.293,
-    "1X": 0.707,
-    "12": 0.7397,
-    "X2": 0.5533,
-    "over15": 0.775,
-    "under15": 0.225,
-    "over25": 0.5309,
-    "under25": 0.4691,
-    "over35": 0.3084,
-    "under35": 0.6916,
-    "gol_gol": 0.5666,
-    "no_gol": 0.4334,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1232
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0922
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0895
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.5293,
-    "X": 0.2767,
-    "2": 0.194,
-    "margine": 0.0738,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.0826,
-    "X": -0.0164,
-    "2": 0.099
-   },
-   "divergenza_max": 0.099
-  },
   {
    "fixture_id": 1576485,
    "data": "2026-09-11T19:45:00+00:00",
    "campionato": "Portugal - Segunda Liga",
    "casa": "Academica",
    "fuori": "Benfica B",
-   "gol_attesi_casa": 1.53,
-   "gol_attesi_fuori": 1.21,
-   "gol_attesi_totali": 2.74,
-   "nettezza": 16.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.63,
+   "gol_attesi_fuori": 1.28,
+   "gol_attesi_totali": 2.91,
+   "nettezza": 17.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4413,
-    "X": 0.2643,
-    "2": 0.2944,
-    "1X": 0.7056,
-    "12": 0.7357,
-    "X2": 0.5587,
-    "over15": 0.7639,
-    "under15": 0.2361,
-    "over25": 0.5152,
-    "under25": 0.4848,
-    "over35": 0.2939,
-    "under35": 0.7061,
-    "gol_gol": 0.555,
-    "no_gol": 0.445,
+    "1": 0.4498,
+    "X": 0.2545,
+    "2": 0.2957,
+    "1X": 0.7043,
+    "12": 0.7455,
+    "X2": 0.5502,
+    "over15": 0.7927,
+    "under15": 0.2073,
+    "over25": 0.5564,
+    "under25": 0.4436,
+    "over35": 0.3326,
+    "under35": 0.6674,
+    "gol_gol": 0.5863,
+    "no_gol": 0.4137,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1256
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0931
+      "prob": 0.1194
      },
      {
       "risultato": "2-1",
-      "prob": 0.0915
+      "prob": 0.0926
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.083
      }
     ]
-   },
-   "mercato": {
-    "1": 0.4279,
-    "X": 0.2727,
-    "2": 0.2993,
-    "margine": 0.09,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.0134,
-    "X": -0.0084,
-    "2": -0.0049
-   },
-   "divergenza_max": 0.0134
+   }
   },
   {
    "fixture_id": 1549484,
@@ -304,41 +55,41 @@
    "casa": "UTC Cajamarca",
    "fuori": "Juan Pablo II College",
    "gol_attesi_casa": 1.17,
-   "gol_attesi_fuori": 1.39,
-   "gol_attesi_totali": 2.57,
-   "nettezza": 12.0,
-   "affidabilita": 84.0,
+   "gol_attesi_fuori": 1.44,
+   "gol_attesi_totali": 2.61,
+   "nettezza": 14.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 25,
    "partite_storia_fuori": 25,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3102,
-    "X": 0.2766,
-    "2": 0.4132,
-    "1X": 0.5868,
-    "12": 0.7234,
-    "X2": 0.6898,
-    "over15": 0.7322,
-    "under15": 0.2678,
-    "over25": 0.4729,
-    "under25": 0.5271,
-    "over35": 0.2566,
-    "under35": 0.7434,
-    "gol_gol": 0.5253,
-    "no_gol": 0.4747,
+    "1": 0.3001,
+    "X": 0.2726,
+    "2": 0.4273,
+    "1X": 0.5727,
+    "12": 0.7274,
+    "X2": 0.6999,
+    "over15": 0.7414,
+    "under15": 0.2586,
+    "over25": 0.4849,
+    "under25": 0.5151,
+    "over35": 0.2669,
+    "under35": 0.7331,
+    "gol_gol": 0.533,
+    "no_gol": 0.467,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1319
+      "prob": 0.13
      },
      {
       "risultato": "0-1",
-      "prob": 0.1007
+      "prob": 0.0996
      },
      {
       "risultato": "1-2",
-      "prob": 0.0874
+      "prob": 0.0893
      }
     ]
    },
@@ -350,11 +101,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.1986,
-    "X": 0.0084,
-    "2": 0.1902
+    "1": -0.2087,
+    "X": 0.0044,
+    "2": 0.2043
    },
-   "divergenza_max": 0.1986
+   "divergenza_max": 0.2087
   },
   {
    "fixture_id": 1549779,
