@@ -1,73 +1,7 @@
 {
- "generato": "2026-09-12T19:03:39.580579+00:00",
+ "generato": "2026-09-12T19:33:39.624710+00:00",
  "modello": "2026-09-12T05:07:32.449102+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1570379,
-   "data": "2026-09-12T19:00:00+00:00",
-   "campionato": "Spain - La Liga",
-   "casa": "Real Madrid",
-   "fuori": "Rayo Vallecano",
-   "gol_attesi_casa": 3.01,
-   "gol_attesi_fuori": 0.95,
-   "gol_attesi_totali": 3.97,
-   "nettezza": 67.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.782,
-    "X": 0.1334,
-    "2": 0.0847,
-    "1X": 0.9153,
-    "12": 0.8666,
-    "X2": 0.218,
-    "over15": 0.9084,
-    "under15": 0.0916,
-    "over25": 0.7562,
-    "under25": 0.2438,
-    "over35": 0.5585,
-    "under35": 0.4415,
-    "gol_gol": 0.5872,
-    "no_gol": 0.4128,
-    "punteggi_probabili": [
-     {
-      "risultato": "3-0",
-      "prob": 0.0866
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0862
-     },
-     {
-      "risultato": "3-1",
-      "prob": 0.0827
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.7882,
-    "X": 0.1312,
-    "2": 0.0806,
-    "attesi": "3.02-0.92"
-   },
-   "spostamento": 0.0062,
-   "mercato": {
-    "1": 0.8349,
-    "X": 0.1094,
-    "2": 0.0557,
-    "margine": 0.0491,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0529,
-    "X": 0.024,
-    "2": 0.029
-   },
-   "divergenza_max": 0.0529
-  },
   {
    "fixture_id": 1575491,
    "data": "2026-09-12T19:30:00+00:00",
