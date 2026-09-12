@@ -442,6 +442,27 @@ def main():
                             for k, v in mk.items()},
             })
 
+    # versione precedente: serve a mostrare quanto hanno spostato le
+    # formazioni ufficiali rispetto alla stima del mattino
+    try:
+        conn2 = sqlite3.connect(DB_PATH)
+        c2 = conn2.cursor()
+        c2.execute("""SELECT fixture_id, p1, px, p2, gol_attesi_casa, gol_attesi_fuori
+                      FROM archivio_versioni WHERE tipo IN ('probabile','nessuna')""")
+        prima = {r[0]: r[1:] for r in c2.fetchall()}
+        conn2.close()
+        for p in previsioni:
+            if p.get("formazioni") == "ufficiale" and p["fixture_id"] in prima:
+                v = prima[p["fixture_id"]]
+                m = p["mercati"]
+                p["prima"] = {"1": round(v[0], 4), "X": round(v[1], 4),
+                              "2": round(v[2], 4),
+                              "attesi": f"{v[3]:.2f}-{v[4]:.2f}" if v[3] else None}
+                p["spostamento"] = round(
+                    max(abs(m[k] - v[i]) for i, k in enumerate(("1", "X", "2"))), 4)
+    except sqlite3.OperationalError:
+        pass
+
     if CON_QUOTE and previsioni:
         print("Scarico le quote per il confronto...")
         quote = scarica_quote({p["data"][:10] for p in previsioni},
@@ -508,6 +529,26 @@ def scrivi_html(previsioni, generato, mod):
                 f'<span class="v">{v*100:.0f}%</span></div>' for n, v in coppie)
             return f'<div class="gruppo"><div class="tit">{etichetta}</div>{celle}</div>'
 
+        prima = p.get("prima")
+        if prima:
+            def confronta(et):
+                return (f'<div class="cf"><span class="e">{et}</span>'
+                        f'<span class="n">{prima[et]*100:.0f}%</span>'
+                        f'<span class="mk">{m[et]*100:.0f}%</span>'
+                        f'<span class="dv {"piu" if m[et] > prima[et] else ("meno" if m[et] < prima[et] else "pari")}">'
+                        f'{(m[et]-prima[et])*100:+.0f}</span></div>')
+            blocco_prima = (
+                '<div class="gruppo"><div class="tit">'
+                'Prima e dopo le formazioni ufficiali</div>'
+                '<div class="cf intestazione"><span class="e"></span>'
+                '<span class="n">stimate</span><span class="mk">ufficiali</span>'
+                '<span class="dv">scarto</span></div>'
+                + "".join(confronta(x) for x in ("1", "X", "2")) +
+                f'<div class="spiega">spostamento massimo '
+                f'{p.get("spostamento", 0)*100:.0f} punti</div></div>')
+        else:
+            blocco_prima = ''
+
         mercato = p.get("mercato")
         div = p.get("divergenza") or {}
         if mercato:
@@ -547,7 +588,7 @@ def scrivi_html(previsioni, generato, mod):
             riga("Entrambe a segno", [("Gol", m["gol_gol"]), ("NoGol", m["no_gol"])]) +
             f'<div class="gruppo"><div class="tit">Risultati piu\' probabili</div>'
             f'<div class="punteggi">{punteggi}</div></div>'
-            + blocco_mercato +
+            + blocco_prima + blocco_mercato +
             f'<div class="indici">'
             f'<div><span class="e">Nettezza</span> <b>{net:.0f}</b>/100'
             f'<div class="spiega">quanto il pronostico e\' sbilanciato</div></div>'
