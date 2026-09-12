@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-12T10:04:00.127380+00:00",
+ "generato": "2026-09-12T10:35:12.427735+00:00",
  "modello": "2026-09-12T05:07:32.449102+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Germany - 2. Bundesliga",
    "casa": "VfL Bochum",
    "fuori": "SpVgg Greuther Fürth",
-   "gol_attesi_casa": 1.36,
-   "gol_attesi_fuori": 1.24,
-   "gol_attesi_totali": 2.6,
-   "nettezza": 8.6,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.47,
+   "gol_attesi_fuori": 1.33,
+   "gol_attesi_totali": 2.8,
+   "nettezza": 9.8,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3907,
-    "X": 0.2759,
-    "2": 0.3334,
-    "1X": 0.6666,
-    "12": 0.7241,
-    "X2": 0.6093,
-    "over15": 0.7386,
-    "under15": 0.2614,
-    "over25": 0.4813,
-    "under25": 0.5187,
-    "over35": 0.2637,
-    "under35": 0.7363,
-    "gol_gol": 0.5342,
-    "no_gol": 0.4658,
+    "1": 0.3986,
+    "X": 0.2639,
+    "2": 0.3375,
+    "1X": 0.6625,
+    "12": 0.7361,
+    "X2": 0.6014,
+    "over15": 0.7754,
+    "under15": 0.2246,
+    "over25": 0.5312,
+    "under25": 0.4688,
+    "over35": 0.3087,
+    "under35": 0.6913,
+    "gol_gol": 0.573,
+    "no_gol": 0.427,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1315
+      "prob": 0.1248
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0873
      },
      {
       "risultato": "1-0",
-      "prob": 0.0949
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0858
+      "prob": 0.0831
      }
     ]
    },
+   "prima": {
+    "1": 0.3907,
+    "X": 0.2759,
+    "2": 0.3334,
+    "attesi": "1.36-1.24"
+   },
+   "spostamento": 0.012,
    "mercato": {
     "1": 0.4879,
     "X": 0.2517,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0972,
-    "X": 0.0242,
-    "2": 0.0731
+    "1": -0.0893,
+    "X": 0.0122,
+    "2": 0.0772
    },
-   "divergenza_max": 0.0972
+   "divergenza_max": 0.0893
   },
   {
    "fixture_id": 1576171,
@@ -67,45 +74,65 @@
    "campionato": "Germany - 2. Bundesliga",
    "casa": "Eintracht Braunschweig",
    "fuori": "Dynamo Dresden",
-   "gol_attesi_casa": 1.31,
-   "gol_attesi_fuori": 1.34,
-   "gol_attesi_totali": 2.65,
-   "nettezza": 5.4,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.35,
+   "gol_attesi_fuori": 1.35,
+   "gol_attesi_totali": 2.7,
+   "nettezza": 4.9,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3572,
-    "X": 0.2733,
-    "2": 0.3695,
-    "1X": 0.6305,
-    "12": 0.7267,
-    "X2": 0.6428,
-    "over15": 0.7486,
-    "under15": 0.2514,
-    "over25": 0.4944,
-    "under25": 0.5056,
-    "over35": 0.2752,
-    "under35": 0.7248,
-    "gol_gol": 0.5454,
-    "no_gol": 0.4546,
+    "1": 0.3636,
+    "X": 0.2705,
+    "2": 0.3659,
+    "1X": 0.6341,
+    "12": 0.7295,
+    "X2": 0.6364,
+    "over15": 0.7572,
+    "under15": 0.2428,
+    "over25": 0.506,
+    "under25": 0.494,
+    "over35": 0.2856,
+    "under35": 0.7144,
+    "gol_gol": 0.5546,
+    "no_gol": 0.4454,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1302
+      "prob": 0.1287
      },
      {
       "risultato": "0-1",
-      "prob": 0.0883
+      "prob": 0.0848
      },
      {
       "risultato": "1-0",
-      "prob": 0.0864
+      "prob": 0.0845
      }
     ]
-   }
+   },
+   "prima": {
+    "1": 0.3572,
+    "X": 0.2733,
+    "2": 0.3695,
+    "attesi": "1.31-1.34"
+   },
+   "spostamento": 0.0064,
+   "mercato": {
+    "1": 0.3467,
+    "X": 0.2664,
+    "2": 0.3869,
+    "margine": 0.0727,
+    "bookmaker": 9
+   },
+   "divergenza": {
+    "1": 0.0169,
+    "X": 0.0041,
+    "2": -0.021
+   },
+   "divergenza_max": 0.021
   },
   {
    "fixture_id": 1576175,
@@ -114,44 +141,64 @@
    "casa": "1. FC Magdeburg",
    "fuori": "1. FC Kaiserslautern",
    "gol_attesi_casa": 1.16,
-   "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 2.02,
-   "nettezza": 13.1,
-   "affidabilita": 84.0,
+   "gol_attesi_fuori": 0.93,
+   "gol_attesi_totali": 2.09,
+   "nettezza": 10.6,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4205,
-    "X": 0.3154,
-    "2": 0.2641,
-    "1X": 0.7359,
-    "12": 0.6846,
-    "X2": 0.5795,
-    "over15": 0.6051,
-    "under15": 0.3949,
-    "over25": 0.3278,
-    "under25": 0.6722,
-    "over35": 0.1459,
-    "under35": 0.8541,
-    "gol_gol": 0.4018,
-    "no_gol": 0.5982,
+    "1": 0.4038,
+    "X": 0.3107,
+    "2": 0.2854,
+    "1X": 0.7146,
+    "12": 0.6893,
+    "X2": 0.5962,
+    "over15": 0.6254,
+    "under15": 0.3746,
+    "over25": 0.3487,
+    "under25": 0.6513,
+    "over35": 0.1602,
+    "under35": 0.8398,
+    "gol_gol": 0.4231,
+    "no_gol": 0.5769,
     "punteggi_probabili": [
      {
+      "risultato": "1-1",
+      "prob": 0.1401
+     },
+     {
       "risultato": "1-0",
-      "prob": 0.1476
+      "prob": 0.1366
      },
      {
       "risultato": "0-0",
-      "prob": 0.1397
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1389
+      "prob": 0.1299
      }
     ]
-   }
+   },
+   "prima": {
+    "1": 0.4205,
+    "X": 0.3154,
+    "2": 0.2641,
+    "attesi": "1.16-0.86"
+   },
+   "spostamento": 0.0213,
+   "mercato": {
+    "1": 0.4472,
+    "X": 0.2556,
+    "2": 0.2973,
+    "margine": 0.0711,
+    "bookmaker": 9
+   },
+   "divergenza": {
+    "1": -0.0434,
+    "X": 0.0551,
+    "2": -0.0119
+   },
+   "divergenza_max": 0.0551
   },
   {
    "fixture_id": 1563156,
