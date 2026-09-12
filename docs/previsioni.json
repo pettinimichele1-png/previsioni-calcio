@@ -1,139 +1,7 @@
 {
- "generato": "2026-09-12T16:35:54.087338+00:00",
+ "generato": "2026-09-12T17:04:05.156947+00:00",
  "modello": "2026-09-12T05:07:32.449102+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1552164,
-   "data": "2026-09-12T16:45:00+00:00",
-   "campionato": "Netherlands - Eredivisie",
-   "casa": "GO Ahead Eagles",
-   "fuori": "Groningen",
-   "gol_attesi_casa": 1.64,
-   "gol_attesi_fuori": 1.51,
-   "gol_attesi_totali": 3.15,
-   "nettezza": 10.6,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.404,
-    "X": 0.2465,
-    "2": 0.3495,
-    "1X": 0.6505,
-    "12": 0.7535,
-    "X2": 0.596,
-    "over15": 0.8275,
-    "under15": 0.1725,
-    "over25": 0.6097,
-    "under25": 0.3903,
-    "over35": 0.3864,
-    "under35": 0.6136,
-    "gol_gol": 0.6334,
-    "no_gol": 0.3666,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1114
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0869
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0802
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4013,
-    "X": 0.2451,
-    "2": 0.3536,
-    "attesi": "1.65-1.54"
-   },
-   "spostamento": 0.0041,
-   "mercato": {
-    "1": 0.4128,
-    "X": 0.2405,
-    "2": 0.3467,
-    "margine": 0.0671,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0088,
-    "X": 0.006,
-    "2": 0.0028
-   },
-   "divergenza_max": 0.0088
-  },
-  {
-   "fixture_id": 1555391,
-   "data": "2026-09-12T17:00:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "FC Lugano",
-   "fuori": "BSC Young Boys",
-   "gol_attesi_casa": 1.84,
-   "gol_attesi_fuori": 1.53,
-   "gol_attesi_totali": 3.37,
-   "nettezza": 17.2,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4478,
-    "X": 0.2345,
-    "2": 0.3177,
-    "1X": 0.6823,
-    "12": 0.7655,
-    "X2": 0.5522,
-    "over15": 0.8546,
-    "under15": 0.1454,
-    "over25": 0.6545,
-    "under25": 0.3455,
-    "over35": 0.4351,
-    "under35": 0.5649,
-    "gol_gol": 0.6638,
-    "no_gol": 0.3362,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1016
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0891
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.074
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4453,
-    "X": 0.2366,
-    "2": 0.3182,
-    "attesi": "1.81-1.51"
-   },
-   "spostamento": 0.0025,
-   "mercato": {
-    "1": 0.419,
-    "X": 0.2374,
-    "2": 0.3436,
-    "margine": 0.0748,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0288,
-    "X": -0.0029,
-    "2": -0.0259
-   },
-   "divergenza_max": 0.0288
-  },
   {
    "fixture_id": 1575495,
    "data": "2026-09-12T17:00:00+00:00",
@@ -201,314 +69,57 @@
    "divergenza_max": 0.1323
   },
   {
-   "fixture_id": 1584403,
-   "data": "2026-09-12T17:00:00+00:00",
-   "campionato": "Turkey - Süper Lig",
-   "casa": "Alanyaspor",
-   "fuori": "Göztepe",
-   "gol_attesi_casa": 1.4,
-   "gol_attesi_fuori": 0.97,
-   "gol_attesi_totali": 2.37,
-   "nettezza": 19.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.462,
-    "X": 0.2837,
-    "2": 0.2543,
-    "1X": 0.7457,
-    "12": 0.7163,
-    "X2": 0.538,
-    "over15": 0.6902,
-    "under15": 0.3098,
-    "over25": 0.4212,
-    "under25": 0.5788,
-    "over35": 0.214,
-    "under35": 0.786,
-    "gol_gol": 0.4732,
-    "no_gol": 0.5268,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1334
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1249
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1003
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4325,
-    "X": 0.2916,
-    "2": 0.2759,
-    "attesi": "1.31-0.99"
-   },
-   "spostamento": 0.0295,
-   "mercato": {
-    "1": 0.4266,
-    "X": 0.2856,
-    "2": 0.2878,
-    "margine": 0.0743,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0354,
-    "X": -0.0019,
-    "2": -0.0335
-   },
-   "divergenza_max": 0.0354
-  },
-  {
-   "fixture_id": 1584410,
-   "data": "2026-09-12T17:00:00+00:00",
-   "campionato": "Turkey - Süper Lig",
-   "casa": "Konyaspor",
-   "fuori": "Trabzonspor",
-   "gol_attesi_casa": 1.49,
-   "gol_attesi_fuori": 1.68,
-   "gol_attesi_totali": 3.17,
-   "nettezza": 12.8,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3363,
-    "X": 0.2451,
-    "2": 0.4185,
-    "1X": 0.5815,
-    "12": 0.7549,
-    "X2": 0.6637,
-    "over15": 0.8295,
-    "under15": 0.1705,
-    "over25": 0.6128,
-    "under25": 0.3872,
-    "over35": 0.3898,
-    "under35": 0.6102,
-    "gol_gol": 0.6348,
-    "no_gol": 0.3652,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1106
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0884
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0783
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3562,
-    "X": 0.245,
-    "2": 0.3989,
-    "attesi": "1.54-1.64"
-   },
-   "spostamento": 0.0199,
-   "mercato": {
-    "1": 0.2602,
-    "X": 0.2585,
-    "2": 0.4813,
-    "margine": 0.0736,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0761,
-    "X": -0.0134,
-    "2": -0.0628
-   },
-   "divergenza_max": 0.0761
-  },
-  {
-   "fixture_id": 1585749,
-   "data": "2026-09-12T17:00:00+00:00",
-   "campionato": "Turkey - 1. Lig",
-   "casa": "Bodrum FK",
-   "fuori": "Batman Petrolspor",
-   "gol_attesi_casa": 1.24,
-   "gol_attesi_fuori": 1.38,
-   "gol_attesi_totali": 2.61,
-   "nettezza": 9.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.33,
-    "X": 0.2748,
-    "2": 0.3952,
-    "1X": 0.6048,
-    "12": 0.7252,
-    "X2": 0.67,
-    "over15": 0.7416,
-    "under15": 0.2584,
-    "over25": 0.4852,
-    "under25": 0.5148,
-    "over35": 0.2671,
-    "under35": 0.7329,
-    "gol_gol": 0.537,
-    "no_gol": 0.463,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.131
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0946
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0859
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3234,
-    "X": 0.2827,
-    "2": 0.3939,
-    "attesi": "1.17-1.32"
-   },
-   "spostamento": 0.0079,
-   "mercato": {
-    "1": 0.3498,
-    "X": 0.2912,
-    "2": 0.359,
-    "margine": 0.1011,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0198,
-    "X": -0.0164,
-    "2": 0.0362
-   },
-   "divergenza_max": 0.0362
-  },
-  {
-   "fixture_id": 1585757,
-   "data": "2026-09-12T17:00:00+00:00",
-   "campionato": "Turkey - 1. Lig",
-   "casa": "Ümraniyespor",
-   "fuori": "Antalyaspor",
-   "gol_attesi_casa": 1.69,
-   "gol_attesi_fuori": 1.27,
-   "gol_attesi_totali": 2.97,
-   "nettezza": 20.1,
-   "affidabilita": 92.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4672,
-    "X": 0.2497,
-    "2": 0.2831,
-    "1X": 0.7169,
-    "12": 0.7503,
-    "X2": 0.5328,
-    "over15": 0.8018,
-    "under15": 0.1982,
-    "over25": 0.5699,
-    "under25": 0.4301,
-    "over35": 0.3459,
-    "under35": 0.6541,
-    "gol_gol": 0.5937,
-    "no_gol": 0.4063,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1164
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.094
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0814
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4517,
-    "X": 0.2509,
-    "2": 0.2974,
-    "attesi": "1.67-1.31"
-   },
-   "spostamento": 0.0155,
-   "mercato": {
-    "1": 0.3176,
-    "X": 0.2764,
-    "2": 0.406,
-    "margine": 0.1013,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1496,
-    "X": -0.0267,
-    "2": -0.1229
-   },
-   "divergenza_max": 0.1496
-  },
-  {
    "fixture_id": 1561929,
    "data": "2026-09-12T17:30:00+00:00",
    "campionato": "Austria - Bundesliga",
    "casa": "Wolfsberger AC",
    "fuori": "Rapid Vienna",
-   "gol_attesi_casa": 1.03,
-   "gol_attesi_fuori": 1.8,
-   "gol_attesi_totali": 2.83,
-   "nettezza": 32.5,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.13,
+   "gol_attesi_fuori": 1.87,
+   "gol_attesi_totali": 3.0,
+   "nettezza": 31.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2084,
-    "X": 0.2418,
-    "2": 0.5498,
-    "1X": 0.4502,
-    "12": 0.7582,
-    "X2": 0.7916,
-    "over15": 0.7786,
-    "under15": 0.2214,
-    "over25": 0.5365,
-    "under25": 0.4635,
-    "over35": 0.3136,
-    "under35": 0.6864,
-    "gol_gol": 0.5408,
-    "no_gol": 0.4592,
+    "1": 0.2218,
+    "X": 0.2356,
+    "2": 0.5426,
+    "1X": 0.4574,
+    "12": 0.7644,
+    "X2": 0.7782,
+    "over15": 0.8066,
+    "under15": 0.1934,
+    "over25": 0.5776,
+    "under25": 0.4224,
+    "over35": 0.3535,
+    "under35": 0.6465,
+    "gol_gol": 0.5781,
+    "no_gol": 0.4219,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1149
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1013
+      "prob": 0.1102
      },
      {
       "risultato": "1-2",
-      "prob": 0.0985
+      "prob": 0.0984
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.0878
      }
     ]
    },
+   "prima": {
+    "1": 0.2084,
+    "X": 0.2418,
+    "2": 0.5498,
+    "attesi": "1.03-1.80"
+   },
+   "spostamento": 0.0134,
    "mercato": {
     "1": 0.1885,
     "X": 0.2136,
@@ -517,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0199,
-    "X": 0.0282,
-    "2": -0.0481
+    "1": 0.0333,
+    "X": 0.022,
+    "2": -0.0553
    },
-   "divergenza_max": 0.0481
+   "divergenza_max": 0.0553
   },
   {
    "fixture_id": 1601526,
@@ -529,45 +140,52 @@
    "campionato": "Italy - Serie B",
    "casa": "Cesena",
    "fuori": "Cremonese",
-   "gol_attesi_casa": 1.58,
-   "gol_attesi_fuori": 1.05,
-   "gol_attesi_totali": 2.63,
-   "nettezza": 23.8,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.6,
+   "gol_attesi_fuori": 1.1,
+   "gol_attesi_totali": 2.7,
+   "nettezza": 22.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4921,
-    "X": 0.2629,
-    "2": 0.245,
-    "1X": 0.755,
-    "12": 0.7371,
-    "X2": 0.5079,
-    "over15": 0.7448,
-    "under15": 0.2552,
-    "over25": 0.4897,
-    "under25": 0.5103,
-    "over35": 0.2711,
-    "under35": 0.7289,
-    "gol_gol": 0.5222,
-    "no_gol": 0.4778,
+    "1": 0.4817,
+    "X": 0.2611,
+    "2": 0.2572,
+    "1X": 0.7428,
+    "12": 0.7389,
+    "X2": 0.5183,
+    "over15": 0.757,
+    "under15": 0.243,
+    "over25": 0.506,
+    "under25": 0.494,
+    "over35": 0.2856,
+    "under35": 0.7144,
+    "gol_gol": 0.5386,
+    "no_gol": 0.4614,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1254
+      "prob": 0.1244
      },
      {
       "risultato": "1-0",
-      "prob": 0.108
+      "prob": 0.1014
      },
      {
       "risultato": "2-1",
-      "prob": 0.0946
+      "prob": 0.0945
      }
     ]
    },
+   "prima": {
+    "1": 0.4921,
+    "X": 0.2629,
+    "2": 0.245,
+    "attesi": "1.58-1.05"
+   },
+   "spostamento": 0.0122,
    "mercato": {
     "1": 0.3042,
     "X": 0.295,
@@ -576,11 +194,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1879,
-    "X": -0.0321,
-    "2": -0.1558
+    "1": 0.1775,
+    "X": -0.0339,
+    "2": -0.1436
    },
-   "divergenza_max": 0.1879
+   "divergenza_max": 0.1775
   },
   {
    "fixture_id": 1505524,
@@ -2221,16 +1839,16 @@
     ]
    },
    "mercato": {
-    "1": 0.309,
+    "1": 0.3092,
     "X": 0.3007,
-    "2": 0.3903,
+    "2": 0.3901,
     "margine": 0.0975,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0257,
+    "1": 0.0255,
     "X": -0.0325,
-    "2": 0.0067
+    "2": 0.0069
    },
    "divergenza_max": 0.0325
   },
@@ -2457,18 +2075,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4401,
-    "X": 0.2511,
-    "2": 0.3088,
-    "margine": 0.0805,
+    "1": 0.4396,
+    "X": 0.2508,
+    "2": 0.3095,
+    "margine": 0.0807,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0181,
-    "X": 0.0172,
-    "2": -0.0353
+    "1": 0.0186,
+    "X": 0.0175,
+    "2": -0.036
    },
-   "divergenza_max": 0.0353
+   "divergenza_max": 0.036
   },
   {
    "fixture_id": 1576174,
@@ -2516,18 +2134,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5508,
-    "X": 0.2202,
-    "2": 0.229,
-    "margine": 0.0794,
+    "1": 0.5494,
+    "X": 0.2211,
+    "2": 0.2296,
+    "margine": 0.0788,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0504,
-    "X": -0.0033,
-    "2": 0.0537
+    "1": -0.049,
+    "X": -0.0042,
+    "2": 0.0531
    },
-   "divergenza_max": 0.0537
+   "divergenza_max": 0.0531
   },
   {
    "fixture_id": 1576178,
@@ -2575,18 +2193,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2937,
-    "X": 0.2553,
-    "2": 0.4511,
-    "margine": 0.0799,
+    "1": 0.294,
+    "X": 0.2547,
+    "2": 0.4513,
+    "margine": 0.0811,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1142,
-    "X": 0.0171,
-    "2": -0.1315
+    "1": 0.1139,
+    "X": 0.0177,
+    "2": -0.1317
    },
-   "divergenza_max": 0.1315
+   "divergenza_max": 0.1317
   },
   {
    "fixture_id": 1494275,
@@ -3519,18 +3137,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4424,
-    "X": 0.2906,
-    "2": 0.267,
-    "margine": 0.0996,
+    "1": 0.4463,
+    "X": 0.2905,
+    "2": 0.2632,
+    "margine": 0.0968,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.2014,
-    "X": -0.0755,
-    "2": -0.1259
+    "1": 0.1975,
+    "X": -0.0754,
+    "2": -0.1221
    },
-   "divergenza_max": 0.2014
+   "divergenza_max": 0.1975
   },
   {
    "fixture_id": 1575159,
@@ -3578,18 +3196,18 @@
     ]
    },
    "mercato": {
-    "1": 0.7009,
-    "X": 0.1776,
-    "2": 0.1215,
-    "margine": 0.0612,
+    "1": 0.7007,
+    "X": 0.1771,
+    "2": 0.1222,
+    "margine": 0.0615,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0183,
-    "X": 0.0215,
-    "2": -0.0033
+    "1": -0.0181,
+    "X": 0.022,
+    "2": -0.004
    },
-   "divergenza_max": 0.0215
+   "divergenza_max": 0.022
   },
   {
    "fixture_id": 1549020,
@@ -3696,18 +3314,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4103,
+    "1": 0.4104,
     "X": 0.2911,
     "2": 0.2986,
-    "margine": 0.08,
+    "margine": 0.0788,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0202,
+    "1": -0.0203,
     "X": 0.0127,
     "2": 0.0075
    },
-   "divergenza_max": 0.0202
+   "divergenza_max": 0.0203
   },
   {
    "fixture_id": 1585752,
@@ -3755,18 +3373,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4009,
-    "X": 0.284,
-    "2": 0.3151,
-    "margine": 0.1021,
+    "1": 0.4008,
+    "X": 0.2842,
+    "2": 0.3149,
+    "margine": 0.1015,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1061,
-    "X": -0.0149,
-    "2": 0.121
+    "1": -0.106,
+    "X": -0.0151,
+    "2": 0.1212
    },
-   "divergenza_max": 0.121
+   "divergenza_max": 0.1212
   },
   {
    "fixture_id": 1585756,
@@ -3814,18 +3432,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4665,
-    "X": 0.2753,
-    "2": 0.2582,
-    "margine": 0.102,
+    "1": 0.468,
+    "X": 0.2733,
+    "2": 0.2587,
+    "margine": 0.1014,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0189,
-    "X": 0.0004,
-    "2": 0.0184
+    "1": -0.0204,
+    "X": 0.0024,
+    "2": 0.0179
    },
-   "divergenza_max": 0.0189
+   "divergenza_max": 0.0204
   },
   {
    "fixture_id": 1569925,
@@ -4168,15 +3786,15 @@
     ]
    },
    "mercato": {
-    "1": 0.3225,
-    "X": 0.2964,
+    "1": 0.3218,
+    "X": 0.2971,
     "2": 0.3811,
-    "margine": 0.0983,
+    "margine": 0.0985,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0314,
-    "X": -0.0232,
+    "1": -0.0307,
+    "X": -0.0239,
     "2": 0.0546
    },
    "divergenza_max": 0.0546
@@ -4581,18 +4199,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3775,
-    "X": 0.3016,
-    "2": 0.3209,
-    "margine": 0.0782,
+    "1": 0.377,
+    "X": 0.302,
+    "2": 0.321,
+    "margine": 0.0786,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": 0.1159,
-    "X": -0.0337,
-    "2": -0.0822
+    "1": 0.1164,
+    "X": -0.0341,
+    "2": -0.0823
    },
-   "divergenza_max": 0.1159
+   "divergenza_max": 0.1164
   },
   {
    "fixture_id": 1552759,
@@ -4697,20 +4315,7 @@
       "prob": 0.0942
      }
     ]
-   },
-   "mercato": {
-    "1": 0.2473,
-    "X": 0.2908,
-    "2": 0.4619,
-    "margine": 0.0785,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0914,
-    "X": -0.0067,
-    "2": -0.0847
-   },
-   "divergenza_max": 0.0914
+   }
   },
   {
    "fixture_id": 1601529,
@@ -4756,20 +4361,7 @@
       "prob": 0.0974
      }
     ]
-   },
-   "mercato": {
-    "1": 0.4228,
-    "X": 0.3036,
-    "2": 0.2736,
-    "margine": 0.0799,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0057,
-    "X": -0.0177,
-    "2": 0.012
-   },
-   "divergenza_max": 0.0177
+   }
   },
   {
    "fixture_id": 1505529,
@@ -5053,18 +4645,18 @@
     ]
    },
    "mercato": {
-    "1": 0.0703,
-    "X": 0.1153,
-    "2": 0.8145,
-    "margine": 0.0603,
+    "1": 0.0697,
+    "X": 0.1152,
+    "2": 0.8151,
+    "margine": 0.0606,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1313,
-    "X": 0.076,
-    "2": -0.2074
+    "1": 0.1319,
+    "X": 0.0761,
+    "2": -0.208
    },
-   "divergenza_max": 0.2074
+   "divergenza_max": 0.208
   },
   {
    "fixture_id": 1549019,
@@ -5230,18 +4822,18 @@
     ]
    },
    "mercato": {
-    "1": 0.1165,
-    "X": 0.2143,
-    "2": 0.6692,
-    "margine": 0.0801,
+    "1": 0.1171,
+    "X": 0.2144,
+    "2": 0.6685,
+    "margine": 0.0812,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1871,
-    "X": 0.0605,
-    "2": -0.2476
+    "1": 0.1865,
+    "X": 0.0604,
+    "2": -0.2469
    },
-   "divergenza_max": 0.2476
+   "divergenza_max": 0.2469
   },
   {
    "fixture_id": 1569923,
@@ -5466,18 +5058,18 @@
     ]
    },
    "mercato": {
-    "1": 0.815,
-    "X": 0.1283,
-    "2": 0.0567,
-    "margine": 0.0727,
+    "1": 0.8165,
+    "X": 0.1272,
+    "2": 0.0563,
+    "margine": 0.074,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.125,
-    "X": 0.063,
-    "2": 0.062
+    "1": -0.1265,
+    "X": 0.0641,
+    "2": 0.0624
    },
-   "divergenza_max": 0.125
+   "divergenza_max": 0.1265
   },
   {
    "fixture_id": 1584404,
@@ -5525,18 +5117,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3716,
-    "X": 0.2769,
-    "2": 0.3516,
-    "margine": 0.0783,
+    "1": 0.3714,
+    "X": 0.2768,
+    "2": 0.3518,
+    "margine": 0.0786,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0769,
-    "X": -0.0288,
-    "2": -0.0482
+    "1": 0.0771,
+    "X": -0.0287,
+    "2": -0.0484
    },
-   "divergenza_max": 0.0769
+   "divergenza_max": 0.0771
   },
   {
    "fixture_id": 1584407,
@@ -5584,18 +5176,18 @@
     ]
    },
    "mercato": {
-    "1": 0.7085,
-    "X": 0.1807,
-    "2": 0.1107,
+    "1": 0.7091,
+    "X": 0.1805,
+    "2": 0.1103,
     "margine": 0.0801,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0242,
-    "X": 0.011,
-    "2": 0.0133
+    "1": -0.0248,
+    "X": 0.0112,
+    "2": 0.0137
    },
-   "divergenza_max": 0.0242
+   "divergenza_max": 0.0248
   },
   {
    "fixture_id": 1585751,
@@ -6056,18 +5648,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3892,
-    "X": 0.3005,
-    "2": 0.3103,
-    "margine": 0.0795,
+    "1": 0.3888,
+    "X": 0.3007,
+    "2": 0.3105,
+    "margine": 0.0796,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0554,
-    "X": -0.0213,
-    "2": -0.0341
+    "1": 0.0558,
+    "X": -0.0215,
+    "2": -0.0343
    },
-   "divergenza_max": 0.0554
+   "divergenza_max": 0.0558
   },
   {
    "fixture_id": 1593316,
@@ -6587,18 +6179,18 @@
     ]
    },
    "mercato": {
-    "1": 0.1657,
-    "X": 0.22,
-    "2": 0.6143,
+    "1": 0.1669,
+    "X": 0.2178,
+    "2": 0.6152,
     "margine": 0.0766,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0538,
-    "X": 0.022,
-    "2": -0.0757
+    "1": 0.0526,
+    "X": 0.0242,
+    "2": -0.0766
    },
-   "divergenza_max": 0.0757
+   "divergenza_max": 0.0766
   },
   {
    "fixture_id": 1549487,
@@ -7826,18 +7418,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4365,
-    "X": 0.3024,
-    "2": 0.2611,
+    "1": 0.4361,
+    "X": 0.3026,
+    "2": 0.2612,
     "margine": 0.1011,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0521,
-    "X": -0.0303,
-    "2": -0.0218
+    "1": 0.0525,
+    "X": -0.0305,
+    "2": -0.0219
    },
-   "divergenza_max": 0.0521
+   "divergenza_max": 0.0525
   },
   {
    "fixture_id": 1584408,
@@ -7944,18 +7536,18 @@
     ]
    },
    "mercato": {
-    "1": 0.6312,
-    "X": 0.2213,
-    "2": 0.1476,
-    "margine": 0.1088,
+    "1": 0.6353,
+    "X": 0.2181,
+    "2": 0.1465,
+    "margine": 0.1085,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0962,
-    "X": 0.0126,
-    "2": 0.0835
+    "1": -0.1003,
+    "X": 0.0158,
+    "2": 0.0846
    },
-   "divergenza_max": 0.0962
+   "divergenza_max": 0.1003
   },
   {
    "fixture_id": 1575499,
