@@ -89,6 +89,27 @@ def crea_tabella(conn):
     conn.commit()
 
 
+def crea_tabella_versioni(conn):
+    """
+    Conserva una fotografia per ogni VERSIONE della previsione: quella
+    fatta al mattino con le formazioni stimate e quella rifatta quando
+    escono le ufficiali. Serve a vedere quanto le formazioni vere
+    spostano il pronostico, e se lo migliorano.
+    """
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS archivio_versioni (
+            fixture_id INTEGER,
+            tipo TEXT,              -- 'nessuna', 'probabile', 'ufficiale'
+            data TEXT, campionato TEXT, casa TEXT, fuori TEXT,
+            p1 REAL, px REAL, p2 REAL,
+            over25 REAL, gol_gol REAL,
+            gol_attesi_casa REAL, gol_attesi_fuori REAL,
+            nettezza REAL, archiviato_il TEXT,
+            PRIMARY KEY (fixture_id, tipo))
+    """)
+    conn.commit()
+
+
 def quote_1x2(voce):
     """Probabilita' 1X2 medie tra i bookmaker, tolto il margine."""
     raccolte = []
@@ -134,7 +155,31 @@ def archivia(conn):
     print(f"Previsioni da archiviare: {len(previsioni)}")
 
     crea_tabella(conn)
+    crea_tabella_versioni(conn)
     cur = conn.cursor()
+
+    # ogni versione viene conservata: la prima con le formazioni stimate,
+    # e quella rifatta quando escono le ufficiali
+    adesso_iso = datetime.now(timezone.utc).isoformat()
+    versioni = 0
+    for p in previsioni:
+        m = p["mercati"]
+        tipo = p.get("formazioni", "nessuna")
+        cur.execute("SELECT 1 FROM archivio_versioni WHERE fixture_id=? AND tipo=?",
+                    (p["fixture_id"], tipo))
+        if cur.fetchone() and tipo != "ufficiale":
+            continue          # la prima stima non si sovrascrive
+        cur.execute("""INSERT OR REPLACE INTO archivio_versioni
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (p["fixture_id"], tipo, p["data"], p["campionato"],
+                     p["casa"], p["fuori"], m["1"], m["X"], m["2"],
+                     m.get("over25"), m.get("gol_gol"),
+                     p.get("gol_attesi_casa"), p.get("gol_attesi_fuori"),
+                     p.get("nettezza"), adesso_iso))
+        versioni += 1
+    conn.commit()
+    print(f"  versioni salvate in questo giro: {versioni}")
+
     cur.execute("SELECT fixture_id FROM archivio_previsioni")
     gia = {r[0] for r in cur.fetchall()}
     nuove = [p for p in previsioni if p["fixture_id"] not in gia]
@@ -346,6 +391,79 @@ def report(conn):
             print(f"  superare il mercato di piu' di quella soglia, non solo di poco.")
         else:
             print("\nTroppo pochi casi di forte divergenza per concludere.")
+
+    # ---- formazioni probabili contro ufficiali --------------------
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='archivio_versioni'")
+    if cur.fetchone():
+        cur.execute("""
+            SELECT pr.fixture_id, pr.casa, pr.fuori,
+                   pr.p1, pr.px, pr.p2, uf.p1, uf.px, uf.p2,
+                   f.goals_home, f.goals_away
+            FROM archivio_versioni pr
+            JOIN archivio_versioni uf
+              ON uf.fixture_id = pr.fixture_id AND uf.tipo = 'ufficiale'
+            JOIN fixtures f ON f.id = pr.fixture_id
+            WHERE pr.tipo IN ('probabile', 'nessuna')
+              AND f.goals_home IS NOT NULL AND f.status IN ('FT','AET','PEN')
+        """)
+        coppie_v = cur.fetchall()
+
+        print("\n" + "=" * 70)
+        print("LE FORMAZIONI UFFICIALI CAMBIANO LE PREVISIONI?")
+        print("=" * 70)
+
+        if len(coppie_v) < 10:
+            print(f"Solo {len(coppie_v)} partite hanno entrambe le versioni.")
+            print("Servono piu' giornate: la fascia live deve intercettare le")
+            print("formazioni ufficiali prima del fischio d'inizio.")
+        else:
+            spostamenti = []
+            prima_p, dopo_p = [], []
+            for (fid, casa, fuori, a1, ax, a2, b1, bx, b2, gc, ga) in coppie_v:
+                esito = "1" if gc > ga else ("X" if gc == ga else "2")
+                spostamenti.append((max(abs(a1-b1), abs(ax-bx), abs(a2-b2)),
+                                    casa, fuori, (a1, ax, a2), (b1, bx, b2), esito))
+                prima_p.append(perdita(a1, ax, a2, esito))
+                dopo_p.append(perdita(b1, bx, b2, esito))
+
+            medio = sum(s[0] for s in spostamenti) / len(spostamenti)
+            grandi = sum(1 for s in spostamenti if s[0] >= 0.05)
+            print(f"Partite con entrambe le versioni: {len(coppie_v)}")
+            print(f"Spostamento medio della probabilita': {medio*100:.1f} punti")
+            print(f"Partite spostate di 5 punti o piu': {grandi} "
+                  f"({grandi/len(coppie_v):.0%})")
+
+            mp, md = sum(prima_p)/len(prima_p), sum(dopo_p)/len(dopo_p)
+            print(f"\n  log loss con formazioni stimate:  {mp:.4f}")
+            print(f"  log loss con formazioni ufficiali: {md:.4f}")
+
+            random.seed(SEED + 1)
+            idx = list(range(len(coppie_v)))
+            diffs = []
+            for _ in range(N_BOOTSTRAP):
+                c = [random.choice(idx) for _ in idx]
+                diffs.append(sum(prima_p[i] - dopo_p[i] for i in c) / len(c))
+            media_d = sum(diffs) / len(diffs)
+            lo_d, hi_d = intervallo(diffs)
+            print(f"  guadagno delle ufficiali: {media_d:+.4f}")
+            print(f"  intervallo 95%: [{lo_d:+.4f}, {hi_d:+.4f}]")
+            if lo_d > 0:
+                print("  ESITO: le formazioni ufficiali MIGLIORANO le previsioni.")
+                print("  E' la prova che gli indicatori di formazione servono.")
+            elif hi_d < 0:
+                print("  ESITO: le previsioni peggiorano usando le ufficiali.")
+                print("  Andrebbe rivisto il modo in cui pesiamo le assenze.")
+            else:
+                print("  ESITO: non distinguibile con questo numero di partite.")
+
+            print("\n  Dove le formazioni hanno spostato di piu':")
+            print(f"  {'partita':<34} {'prima':>14} {'dopo':>14} {'esito':>6}")
+            print("  " + "-" * 70)
+            for s in sorted(spostamenti, reverse=True)[:8]:
+                _, casa, fuori, prima, dopo, esito = s
+                pa = "/".join(f"{x*100:.0f}" for x in prima)
+                do = "/".join(f"{x*100:.0f}" for x in dopo)
+                print(f"  {(casa + ' - ' + fuori)[:33]:<34} {pa:>14} {do:>14} {esito:>6}")
 
     # ---- calibrazione --------------------------------------------
     print("\n" + "=" * 70)
