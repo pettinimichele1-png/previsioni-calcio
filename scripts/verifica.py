@@ -485,6 +485,54 @@ def report(conn):
         print(f"{lo_f:.0%}-{hi_f:.0%}{'':<8} {len(g):>6} {att:>9.1%} {rea:>8.1%} "
               f"{att-rea:>+8.1%}")
 
+    # ---- gli altri mercati ----------------------------------------
+    print("\n" + "=" * 70)
+    print("ALTRI MERCATI")
+    print("=" * 70)
+    print("Finora guardavamo solo 1X2. Questi mercati derivano dalla stessa")
+    print("matrice dei punteggi, ma possono essere calibrati diversamente.\n")
+
+    mercati_extra = [
+        ("Over 2.5", "over25",
+         lambda r: 1 if (r["goals_home"] + r["goals_away"]) >= 3 else 0),
+        ("Gol/Gol", "gol_gol",
+         lambda r: 1 if (r["goals_home"] > 0 and r["goals_away"] > 0) else 0),
+    ]
+
+    print(f"{'mercato':<12} {'casi':>6} {'previsto':>10} {'reale':>9} "
+          f"{'scarto':>9} {'log loss':>10} {'vs fisso':>10}")
+    print("-" * 70)
+
+    for etichetta, campo, avvenuto_di in mercati_extra:
+        g = [r for r in righe if r.get(campo) is not None]
+        if len(g) < 20:
+            print(f"{etichetta:<12} {len(g):>6}  troppo poche partite")
+            continue
+        previsto = sum(r[campo] for r in g) / len(g)
+        reale = sum(avvenuto_di(r) for r in g) / len(g)
+
+        # log loss del mercato binario
+        ll = 0.0
+        for r in g:
+            p = r[campo] if avvenuto_di(r) else 1 - r[campo]
+            ll -= math.log(max(p, 1e-15))
+        ll /= len(g)
+
+        # riferimento: prevedere sempre la frequenza media
+        base = 0.0
+        for r in g:
+            p = reale if avvenuto_di(r) else 1 - reale
+            base -= math.log(max(p, 1e-15))
+        base /= len(g)
+        guadagno = (1 - ll / base) * 100 if base > 0 else 0
+
+        print(f"{etichetta:<12} {len(g):>6} {previsto:>9.1%} {reale:>8.1%} "
+              f"{previsto-reale:>+8.1%} {ll:>10.4f} {guadagno:>+9.2f}%")
+
+    print("\nLo scarto dice se il mercato e' calibrato: vicino a zero significa")
+    print("che in media prevediamo la frequenza giusta. Il confronto con il")
+    print("riferimento fisso dice se distinguiamo le partite fra loro.")
+
     # ---- scomposizione -------------------------------------------
     print("\n" + "=" * 70)
     print("DOVE FUNZIONA MEGLIO")
@@ -525,16 +573,57 @@ def report(conn):
 
 
 def scrivi_html(riepilogo, righe, con_quote):
-    ultime = sorted(righe, key=lambda r: r["data"], reverse=True)[:25]
-    voci = []
-    for r in ultime:
-        p = {"1": r["p1"], "X": r["px"], "2": r["p2"]}[r["esito"]]
-        colore = "bene" if p >= 0.45 else ("male" if p < 0.25 else "medio")
+    """
+    Pagina di verifica: riquadri di sintesi e la tabella COMPLETA delle
+    partite verificate, con l'esito di tutti i mercati che seguiamo.
+    """
+    tutte = sorted(righe, key=lambda r: r["data"], reverse=True)
+
+    def esito_over(r):
+        return (r["goals_home"] + r["goals_away"]) >= 3
+
+    def esito_gg(r):
+        return r["goals_home"] > 0 and r["goals_away"] > 0
+
+    def colore(p, avvenuto):
+        """Verde se avevamo dato probabilita' alta a cio' che e' successo."""
+        p = p if avvenuto else 1 - p
+        return "bene" if p >= 0.55 else ("male" if p < 0.35 else "medio")
+
+    voci, mese_corrente = [], None
+    for r in tutte:
+        mese = r["data"][:7]
+        if mese != mese_corrente:
+            mese_corrente = mese
+            voci.append(f'<tr class="mese"><td colspan="6">{mese}</td></tr>')
+
+        esito = r["esito"]
+        p_esito = {"1": r["p1"], "X": r["px"], "2": r["p2"]}[esito]
+
+        if r.get("over25") is not None:
+            ov = esito_over(r)
+            cella_ov = (f'<td class="{colore(r["over25"], ov)}">'
+                        f'{r["over25"]*100:.0f}%<br>'
+                        f'<span class="reale">{"Over" if ov else "Under"}</span></td>')
+        else:
+            cella_ov = '<td class="vuoto">-</td>'
+
+        if r.get("gol_gol") is not None:
+            gg = esito_gg(r)
+            cella_gg = (f'<td class="{colore(r["gol_gol"], gg)}">'
+                        f'{r["gol_gol"]*100:.0f}%<br>'
+                        f'<span class="reale">{"Gol" if gg else "NoGol"}</span></td>')
+        else:
+            cella_gg = '<td class="vuoto">-</td>'
+
         voci.append(
-            f'<tr><td class="d">{r["data"][:10]}</td>'
-            f'<td class="s">{r["casa"]} - {r["fuori"]}</td>'
-            f'<td>{r["goals_home"]}-{r["goals_away"]}</td>'
-            f'<td class="{colore}">{p*100:.0f}%</td></tr>')
+            f'<tr><td class="d">{r["data"][8:10]}/{r["data"][5:7]}</td>'
+            f'<td class="s">{r["casa"]} - {r["fuori"]}'
+            f'<br><span class="lega">{r.get("campionato","")}</span></td>'
+            f'<td class="ris">{r["goals_home"]}-{r["goals_away"]}</td>'
+            f'<td class="{colore(p_esito, True)}">{p_esito*100:.0f}%<br>'
+            f'<span class="reale">{esito}</span></td>'
+            f'{cella_ov}{cella_gg}</tr>')
 
     blocco_mercato = ""
     if con_quote:
@@ -549,9 +638,8 @@ def scrivi_html(riepilogo, righe, con_quote):
  <div class="spiega">
   su {riepilogo['con_quote']} partite con quote &middot;
   differenza {v:+.4f} di log loss, intervallo 95% [{lo:+.4f}, {hi:+.4f}]<br>
-  Il confronto e' fatto sulle probabilita' dei bookmaker tolto il loro
-  margine, sulle stesse partite e con le quote fotografate al momento
-  della previsione.
+  Il confronto usa le probabilita' dei bookmaker tolto il loro margine,
+  sulle stesse partite, con le quote fotografate quando abbiamo previsto.
  </div>
 </div>"""
 
@@ -569,13 +657,21 @@ def scrivi_html(riepilogo, righe, con_quote):
  .grande {{ font-size:22px; font-weight:600; }}
  .spiega {{ font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }}
  table {{ width:100%; border-collapse:collapse; font-size:12px; background:#fff; }}
- th {{ background:#2c3e50; color:#fff; padding:6px 4px; font-size:10px; }}
- td {{ padding:6px 4px; border-bottom:1px solid #eef1f4; text-align:center; }}
- .d {{ font-size:10px; color:#7b8794; }}
- .s {{ text-align:left; }}
- .bene {{ color:#1e7d3c; font-weight:600; }}
- .medio {{ color:#b8860b; }}
- .male {{ color:#b03030; }}
+ th {{ background:#2c3e50; color:#fff; padding:6px 3px; font-size:10px;
+       position:sticky; top:0; }}
+ td {{ padding:6px 3px; border-bottom:1px solid #eef1f4; text-align:center;
+       vertical-align:middle; }}
+ .mese td {{ background:#eef1f4; font-weight:600; text-align:left;
+             font-size:11px; padding:5px 8px; }}
+ .d {{ font-size:10px; color:#7b8794; white-space:nowrap; }}
+ .s {{ text-align:left; font-size:12px; }}
+ .lega {{ font-size:9px; color:#97a3ae; }}
+ .ris {{ font-weight:600; white-space:nowrap; }}
+ .reale {{ font-size:9px; color:#5b6b7b; }}
+ .bene {{ background:#e3f2e3; color:#15642f; font-weight:600; }}
+ .medio {{ background:#fdf6e3; color:#8a6d1f; }}
+ .male {{ background:#fbebeb; color:#8f2626; }}
+ .vuoto {{ color:#c4ccd3; }}
  .nota {{ margin-top:14px; font-size:10px; color:#7b8794; line-height:1.7; }}
 </style></head><body>
 <h1>Verifica delle previsioni</h1>
@@ -590,15 +686,18 @@ def scrivi_html(riepilogo, righe, con_quote):
 {blocco_mercato}
 <div class="riquadro" style="padding:0;overflow:hidden">
  <table>
-  <tr><th>Data</th><th>Partita</th><th>Esito</th><th>Prob. data</th></tr>
+  <tr><th>Data</th><th>Partita</th><th>Ris.</th>
+      <th>Esito<br>1X2</th><th>Over<br>2.5</th><th>Gol<br>Gol</th></tr>
   {''.join(voci)}
  </table>
 </div>
 <div class="nota">
-La colonna "Prob. data" mostra che probabilita' avevamo assegnato
-all'esito poi avvenuto. Un modello ben calibrato sbaglia spesso: cio'
-che conta non e' azzeccare il singolo pronostico, ma che le probabilita'
-corrispondano alle frequenze reali nel lungo periodo.
+In ogni colonna dei mercati la percentuale e' quella che avevamo
+assegnato a cio' che poi e' successo, e sotto c'e' l'esito reale.
+Verde quando avevamo dato oltre il 55%, rosso sotto il 35%.<br><br>
+Un modello ben calibrato sbaglia spesso: quello che conta non e'
+azzeccare il singolo pronostico, ma che le probabilita' corrispondano
+alle frequenze reali nel lungo periodo.
 </div>
 </body></html>"""
     with open(USCITA_HTML, "w", encoding="utf-8") as f:
