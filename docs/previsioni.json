@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-13T18:37:33.395419+00:00",
+ "generato": "2026-09-13T19:03:18.147501+00:00",
  "modello": "2026-09-13T05:08:40.005861+00:00",
  "previsioni": [
   {
@@ -60,270 +60,6 @@
     "2": 0.0668
    },
    "divergenza_max": 0.0668
-  },
-  {
-   "fixture_id": 1550124,
-   "data": "2026-09-13T18:45:00+00:00",
-   "campionato": "Italy - Serie A",
-   "casa": "Sassuolo",
-   "fuori": "Juventus",
-   "gol_attesi_casa": 1.2,
-   "gol_attesi_fuori": 1.49,
-   "gol_attesi_totali": 2.68,
-   "nettezza": 14.8,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.2996,
-    "X": 0.2681,
-    "2": 0.4323,
-    "1X": 0.5677,
-    "12": 0.7319,
-    "X2": 0.7004,
-    "over15": 0.7546,
-    "under15": 0.2454,
-    "over25": 0.5026,
-    "under25": 0.4974,
-    "over35": 0.2825,
-    "under35": 0.7175,
-    "gol_gol": 0.5464,
-    "no_gol": 0.4536,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1276
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0954
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0903
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3216,
-    "X": 0.2718,
-    "2": 0.4066,
-    "attesi": "1.24-1.42"
-   },
-   "spostamento": 0.0257,
-   "mercato": {
-    "1": 0.1795,
-    "X": 0.2431,
-    "2": 0.5775,
-    "margine": 0.0541,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1201,
-    "X": 0.025,
-    "2": -0.1452
-   },
-   "divergenza_max": 0.1452
-  },
-  {
-   "fixture_id": 1552757,
-   "data": "2026-09-13T18:45:00+00:00",
-   "campionato": "France - Ligue 1",
-   "casa": "Stade Brestois 29",
-   "fuori": "Paris Saint Germain",
-   "gol_attesi_casa": 1.36,
-   "gol_attesi_fuori": 2.02,
-   "gol_attesi_totali": 3.38,
-   "nettezza": 28.2,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.2536,
-    "X": 0.2248,
-    "2": 0.5216,
-    "1X": 0.4784,
-    "12": 0.7752,
-    "X2": 0.7464,
-    "over15": 0.8557,
-    "under15": 0.1443,
-    "over25": 0.6566,
-    "under25": 0.3434,
-    "over35": 0.4374,
-    "under35": 0.5626,
-    "gol_gol": 0.65,
-    "no_gol": 0.35,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.0983
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0944
-     },
-     {
-      "risultato": "0-2",
-      "prob": 0.0692
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.2796,
-    "X": 0.2367,
-    "2": 0.4836,
-    "attesi": "1.37-1.85"
-   },
-   "spostamento": 0.038,
-   "mercato": {
-    "1": 0.0767,
-    "X": 0.1367,
-    "2": 0.7865,
-    "margine": 0.0548,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1769,
-    "X": 0.0881,
-    "2": -0.2649
-   },
-   "divergenza_max": 0.2649
-  },
-  {
-   "fixture_id": 1520871,
-   "data": "2026-09-13T19:00:00+00:00",
-   "campionato": "Brazil - Serie B",
-   "casa": "Atletico Goianiense",
-   "fuori": "Criciuma",
-   "gol_attesi_casa": 1.28,
-   "gol_attesi_fuori": 1.04,
-   "gol_attesi_totali": 2.32,
-   "nettezza": 11.6,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 27,
-   "partite_storia_fuori": 27,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4108,
-    "X": 0.2927,
-    "2": 0.2965,
-    "1X": 0.7035,
-    "12": 0.7073,
-    "X2": 0.5892,
-    "over15": 0.6808,
-    "under15": 0.3192,
-    "over25": 0.4099,
-    "under25": 0.5901,
-    "over35": 0.2052,
-    "under35": 0.7948,
-    "gol_gol": 0.4741,
-    "no_gol": 0.5259,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1374
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1187
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1046
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.404,
-    "X": 0.2978,
-    "2": 0.2982,
-    "attesi": "1.24-1.02"
-   },
-   "spostamento": 0.0068,
-   "mercato": {
-    "1": 0.4076,
-    "X": 0.3026,
-    "2": 0.2898,
-    "margine": 0.0832,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0032,
-    "X": -0.0099,
-    "2": 0.0067
-   },
-   "divergenza_max": 0.0099
-  },
-  {
-   "fixture_id": 1549781,
-   "data": "2026-09-13T19:00:00+00:00",
-   "campionato": "Colombia - Primera A",
-   "casa": "Deportivo Pereira",
-   "fuori": "Bucaramanga",
-   "gol_attesi_casa": 1.09,
-   "gol_attesi_fuori": 1.1,
-   "gol_attesi_totali": 2.18,
-   "nettezza": 2.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 25,
-   "partite_storia_fuori": 25,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3451,
-    "X": 0.3059,
-    "2": 0.349,
-    "1X": 0.651,
-    "12": 0.6941,
-    "X2": 0.6549,
-    "over15": 0.6484,
-    "under15": 0.3516,
-    "over25": 0.3732,
-    "under25": 0.6268,
-    "over35": 0.1777,
-    "under35": 0.8223,
-    "gol_gol": 0.4484,
-    "no_gol": 0.5516,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.141
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1192
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1166
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3418,
-    "X": 0.3093,
-    "2": 0.3489,
-    "attesi": "1.07-1.08"
-   },
-   "spostamento": 0.0034,
-   "mercato": {
-    "1": 0.1437,
-    "X": 0.231,
-    "2": 0.6253,
-    "margine": 0.0692,
-    "bookmaker": 8
-   },
-   "divergenza": {
-    "1": 0.2014,
-    "X": 0.0749,
-    "2": -0.2763
-   },
-   "divergenza_max": 0.2763
   },
   {
    "fixture_id": 1569924,
@@ -463,34 +199,34 @@
    "campionato": "Portugal - Primeira Liga",
    "casa": "Famalicao",
    "fuori": "Sporting CP",
-   "gol_attesi_casa": 1.06,
-   "gol_attesi_fuori": 1.8,
-   "gol_attesi_totali": 2.86,
-   "nettezza": 31.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.11,
+   "gol_attesi_fuori": 1.82,
+   "gol_attesi_totali": 2.93,
+   "nettezza": 30.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2165,
-    "X": 0.2423,
-    "2": 0.5412,
-    "1X": 0.4588,
-    "12": 0.7577,
-    "X2": 0.7835,
-    "over15": 0.784,
-    "under15": 0.216,
-    "over25": 0.5442,
-    "under25": 0.4558,
-    "over35": 0.3209,
-    "under35": 0.6791,
-    "gol_gol": 0.5507,
-    "no_gol": 0.4493,
+    "1": 0.2235,
+    "X": 0.2401,
+    "2": 0.5365,
+    "1X": 0.4635,
+    "12": 0.7599,
+    "X2": 0.7765,
+    "over15": 0.7954,
+    "under15": 0.2046,
+    "over25": 0.5607,
+    "under25": 0.4393,
+    "over35": 0.3368,
+    "under35": 0.6632,
+    "gol_gol": 0.5663,
+    "no_gol": 0.4337,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1148
+      "prob": 0.1131
      },
      {
       "risultato": "1-2",
@@ -498,10 +234,17 @@
      },
      {
       "risultato": "0-1",
-      "prob": 0.0978
+      "prob": 0.0921
      }
     ]
    },
+   "prima": {
+    "1": 0.2195,
+    "X": 0.242,
+    "2": 0.5386,
+    "attesi": "1.07-1.80"
+   },
+   "spostamento": 0.004,
    "mercato": {
     "1": 0.1478,
     "X": 0.217,
@@ -510,11 +253,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0687,
-    "X": 0.0253,
-    "2": -0.094
+    "1": 0.0757,
+    "X": 0.0231,
+    "2": -0.0987
    },
-   "divergenza_max": 0.094
+   "divergenza_max": 0.0987
   },
   {
    "fixture_id": 1549487,
@@ -2621,18 +2364,18 @@
     ]
    },
    "mercato": {
-    "1": 0.6387,
-    "X": 0.22,
-    "2": 0.1414,
-    "margine": 0.1138,
+    "1": 0.6401,
+    "X": 0.2188,
+    "2": 0.141,
+    "margine": 0.1139,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0348,
-    "X": -0.0485,
-    "2": 0.0136
+    "1": 0.0334,
+    "X": -0.0473,
+    "2": 0.014
    },
-   "divergenza_max": 0.0485
+   "divergenza_max": 0.0473
   },
   {
    "fixture_id": 1520872,
@@ -2680,18 +2423,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3734,
-    "X": 0.3011,
-    "2": 0.3255,
-    "margine": 0.0846,
+    "1": 0.3729,
+    "X": 0.3014,
+    "2": 0.3257,
+    "margine": 0.0836,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0473,
-    "X": 0.0053,
-    "2": 0.0421
+    "1": -0.0468,
+    "X": 0.005,
+    "2": 0.0419
    },
-   "divergenza_max": 0.0473
+   "divergenza_max": 0.0468
   },
   {
    "fixture_id": 1549774,
@@ -2739,18 +2482,18 @@
     ]
    },
    "mercato": {
-    "1": 0.6648,
-    "X": 0.2179,
-    "2": 0.1173,
-    "margine": 0.0863,
+    "1": 0.6688,
+    "X": 0.2147,
+    "2": 0.1165,
+    "margine": 0.0861,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0414,
-    "X": -0.0279,
-    "2": -0.0135
+    "1": 0.0374,
+    "X": -0.0247,
+    "2": -0.0127
    },
-   "divergenza_max": 0.0414
+   "divergenza_max": 0.0374
   },
   {
    "fixture_id": 1553125,
@@ -2975,18 +2718,18 @@
     ]
    },
    "mercato": {
-    "1": 0.8085,
-    "X": 0.1194,
+    "1": 0.8086,
+    "X": 0.1193,
     "2": 0.0721,
-    "margine": 0.0666,
+    "margine": 0.0665,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": -0.0988,
-    "X": 0.0551,
+    "1": -0.0989,
+    "X": 0.0552,
     "2": 0.0437
    },
-   "divergenza_max": 0.0988
+   "divergenza_max": 0.0989
   },
   {
    "fixture_id": 1570383,
@@ -3375,18 +3118,18 @@
     ]
    },
    "mercato": {
-    "1": 0.7259,
+    "1": 0.7261,
     "X": 0.1833,
-    "2": 0.0909,
-    "margine": 0.0776,
+    "2": 0.0906,
+    "margine": 0.0773,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": 0.0269,
+    "1": 0.0267,
     "X": -0.0145,
-    "2": -0.0125
+    "2": -0.0122
    },
-   "divergenza_max": 0.0269
+   "divergenza_max": 0.0267
   },
   {
    "fixture_id": 1520878,
@@ -3434,18 +3177,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4832,
-    "X": 0.2789,
+    "1": 0.4827,
+    "X": 0.2793,
     "2": 0.238,
-    "margine": 0.0858,
+    "margine": 0.0856,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0158,
-    "X": -0.0335,
+    "1": 0.0163,
+    "X": -0.0339,
     "2": 0.0176
    },
-   "divergenza_max": 0.0335
+   "divergenza_max": 0.0339
   },
   {
    "fixture_id": 1520874,
@@ -4011,18 +3754,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5292,
-    "X": 0.2767,
-    "2": 0.1941,
-    "margine": 0.0634,
+    "1": 0.53,
+    "X": 0.2765,
+    "2": 0.1935,
+    "margine": 0.0631,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0873,
-    "X": 0.0093,
-    "2": 0.078
+    "1": -0.0881,
+    "X": 0.0095,
+    "2": 0.0786
    },
-   "divergenza_max": 0.0873
+   "divergenza_max": 0.0881
   },
   {
    "fixture_id": 1570390,
@@ -4070,18 +3813,18 @@
     ]
    },
    "mercato": {
-    "1": 0.271,
-    "X": 0.2523,
-    "2": 0.4767,
-    "margine": 0.0633,
+    "1": 0.2717,
+    "X": 0.252,
+    "2": 0.4763,
+    "margine": 0.0642,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0664,
-    "X": 0.0015,
-    "2": -0.0679
+    "1": 0.0657,
+    "X": 0.0018,
+    "2": -0.0675
    },
-   "divergenza_max": 0.0679
+   "divergenza_max": 0.0675
   }
  ]
 }
