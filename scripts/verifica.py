@@ -585,10 +585,18 @@ def scrivi_html(riepilogo, righe, con_quote):
     def esito_gg(r):
         return r["goals_home"] > 0 and r["goals_away"] > 0
 
-    def colore(p, avvenuto):
-        """Verde se avevamo dato probabilita' alta a cio' che e' successo."""
-        p = p if avvenuto else 1 - p
-        return "bene" if p >= 0.55 else ("male" if p < 0.35 else "medio")
+    def prob_avvenuto(p, avvenuto):
+        """
+        Probabilita' che avevamo dato a cio' che e' POI successo.
+        Se l'evento non si e' verificato, quella giusta e' il complemento:
+        un Over al 33% significa che all'Under davamo il 67%.
+        """
+        return p if avvenuto else 1 - p
+
+    def colore(p_avvenuto):
+        """Verde se avevamo visto giusto, rosso se avevamo sbagliato."""
+        return "bene" if p_avvenuto >= 0.55 else (
+            "male" if p_avvenuto < 0.35 else "medio")
 
     voci, mese_corrente = [], None
     for r in tutte:
@@ -602,16 +610,18 @@ def scrivi_html(riepilogo, righe, con_quote):
 
         if r.get("over25") is not None:
             ov = esito_over(r)
-            cella_ov = (f'<td class="{colore(r["over25"], ov)}">'
-                        f'{r["over25"]*100:.0f}%<br>'
+            p_ov = prob_avvenuto(r["over25"], ov)
+            cella_ov = (f'<td class="{colore(p_ov)}">'
+                        f'{p_ov*100:.0f}%<br>'
                         f'<span class="reale">{"Over" if ov else "Under"}</span></td>')
         else:
             cella_ov = '<td class="vuoto">-</td>'
 
         if r.get("gol_gol") is not None:
             gg = esito_gg(r)
-            cella_gg = (f'<td class="{colore(r["gol_gol"], gg)}">'
-                        f'{r["gol_gol"]*100:.0f}%<br>'
+            p_gg = prob_avvenuto(r["gol_gol"], gg)
+            cella_gg = (f'<td class="{colore(p_gg)}">'
+                        f'{p_gg*100:.0f}%<br>'
                         f'<span class="reale">{"Gol" if gg else "NoGol"}</span></td>')
         else:
             cella_gg = '<td class="vuoto">-</td>'
@@ -621,7 +631,7 @@ def scrivi_html(riepilogo, righe, con_quote):
             f'<td class="s">{r["casa"]} - {r["fuori"]}'
             f'<br><span class="lega">{r.get("campionato","")}</span></td>'
             f'<td class="ris">{r["goals_home"]}-{r["goals_away"]}</td>'
-            f'<td class="{colore(p_esito, True)}">{p_esito*100:.0f}%<br>'
+            f'<td class="{colore(p_esito)}">{p_esito*100:.0f}%<br>'
             f'<span class="reale">{esito}</span></td>'
             f'{cella_ov}{cella_gg}</tr>')
 
