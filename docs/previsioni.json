@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-13T20:35:43.908090+00:00",
+ "generato": "2026-09-13T21:03:04.710838+00:00",
  "modello": "2026-09-13T05:08:40.005861+00:00",
  "previsioni": [
   {
@@ -67,42 +67,42 @@
    "campionato": "Brazil - Serie B",
    "casa": "Juventude",
    "fuori": "Athletic Club",
-   "gol_attesi_casa": 1.52,
+   "gol_attesi_casa": 1.5,
    "gol_attesi_fuori": 0.88,
-   "gol_attesi_totali": 2.39,
-   "nettezza": 27.5,
-   "affidabilita": 92.0,
+   "gol_attesi_totali": 2.38,
+   "nettezza": 26.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
    "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.517,
-    "X": 0.2717,
-    "2": 0.2113,
-    "1X": 0.7887,
-    "12": 0.7283,
-    "X2": 0.483,
-    "over15": 0.6961,
-    "under15": 0.3039,
-    "over25": 0.4284,
-    "under25": 0.5716,
-    "over35": 0.2198,
-    "under35": 0.7802,
+    "1": 0.5091,
+    "X": 0.2742,
+    "2": 0.2167,
+    "1X": 0.7833,
+    "12": 0.7258,
+    "X2": 0.4909,
+    "over15": 0.6932,
+    "under15": 0.3068,
+    "over25": 0.4249,
+    "under25": 0.5751,
+    "over35": 0.217,
+    "under35": 0.783,
     "gol_gol": 0.4616,
     "no_gol": 0.5384,
     "punteggi_probabili": [
      {
       "risultato": "1-0",
-      "prob": 0.1325
+      "prob": 0.1323
      },
      {
       "risultato": "1-1",
-      "prob": 0.1275
+      "prob": 0.1286
      },
      {
       "risultato": "2-0",
-      "prob": 0.1051
+      "prob": 0.1035
      }
     ]
    },
@@ -112,7 +112,7 @@
     "2": 0.2163,
     "attesi": "1.48-0.88"
    },
-   "spostamento": 0.009,
+   "spostamento": 0.0016,
    "mercato": {
     "1": 0.5516,
     "X": 0.2767,
@@ -121,11 +121,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0346,
-    "X": -0.005,
-    "2": 0.0396
+    "1": -0.0425,
+    "X": -0.0025,
+    "2": 0.045
    },
-   "divergenza_max": 0.0396
+   "divergenza_max": 0.045
   },
   {
    "fixture_id": 1549775,
@@ -133,58 +133,65 @@
    "campionato": "Colombia - Primera A",
    "casa": "Atletico Nacional",
    "fuori": "Águilas Doradas",
-   "gol_attesi_casa": 2.56,
+   "gol_attesi_casa": 2.52,
    "gol_attesi_fuori": 1.28,
-   "gol_attesi_totali": 3.84,
-   "nettezza": 47.2,
-   "affidabilita": 84.0,
+   "gol_attesi_totali": 3.8,
+   "nettezza": 46.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 30,
    "partite_storia_fuori": 25,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6477,
-    "X": 0.1826,
-    "2": 0.1698,
-    "1X": 0.8302,
-    "12": 0.8174,
-    "X2": 0.3523,
-    "over15": 0.8994,
-    "under15": 0.1006,
-    "over25": 0.7372,
-    "under25": 0.2628,
-    "over35": 0.5341,
-    "under35": 0.4659,
-    "gol_gol": 0.6692,
-    "no_gol": 0.3308,
+    "1": 0.6403,
+    "X": 0.1856,
+    "2": 0.1741,
+    "1X": 0.8259,
+    "12": 0.8144,
+    "X2": 0.3597,
+    "over15": 0.8962,
+    "under15": 0.1038,
+    "over25": 0.7309,
+    "under25": 0.2691,
+    "over35": 0.5261,
+    "under35": 0.4739,
+    "gol_gol": 0.6672,
+    "no_gol": 0.3328,
     "punteggi_probabili": [
      {
       "risultato": "2-1",
-      "prob": 0.0903
+      "prob": 0.091
      },
      {
       "risultato": "3-1",
-      "prob": 0.0771
+      "prob": 0.0765
      },
      {
       "risultato": "1-1",
-      "prob": 0.074
+      "prob": 0.0758
      }
     ]
    },
+   "prima": {
+    "1": 0.653,
+    "X": 0.1809,
+    "2": 0.1661,
+    "attesi": "2.58-1.27"
+   },
+   "spostamento": 0.0127,
    "mercato": {
-    "1": 0.6779,
-    "X": 0.2124,
-    "2": 0.1097,
-    "margine": 0.0787,
+    "1": 0.684,
+    "X": 0.2096,
+    "2": 0.1064,
+    "margine": 0.0769,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0302,
-    "X": -0.0298,
-    "2": 0.0601
+    "1": -0.0437,
+    "X": -0.024,
+    "2": 0.0677
    },
-   "divergenza_max": 0.0601
+   "divergenza_max": 0.0677
   },
   {
    "fixture_id": 1520875,
@@ -192,45 +199,52 @@
    "campionato": "Brazil - Serie B",
    "casa": "Fortaleza EC",
    "fuori": "Ceara",
-   "gol_attesi_casa": 1.96,
-   "gol_attesi_fuori": 1.0,
-   "gol_attesi_totali": 2.95,
-   "nettezza": 38.8,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.04,
+   "gol_attesi_fuori": 1.02,
+   "gol_attesi_totali": 3.06,
+   "nettezza": 40.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5923,
-    "X": 0.2259,
-    "2": 0.1818,
-    "1X": 0.8182,
-    "12": 0.7741,
-    "X2": 0.4077,
-    "over15": 0.7986,
-    "under15": 0.2014,
-    "over25": 0.5659,
-    "under25": 0.4341,
-    "over35": 0.3419,
-    "under35": 0.6581,
-    "gol_gol": 0.5464,
-    "no_gol": 0.4536,
+    "1": 0.6036,
+    "X": 0.2187,
+    "2": 0.1777,
+    "1X": 0.8223,
+    "12": 0.7813,
+    "X2": 0.3964,
+    "over15": 0.8141,
+    "under15": 0.1859,
+    "over25": 0.5894,
+    "under25": 0.4106,
+    "over35": 0.3654,
+    "under35": 0.6346,
+    "gol_gol": 0.561,
+    "no_gol": 0.439,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1068
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.1
+      "prob": 0.1026
      },
      {
       "risultato": "2-1",
       "prob": 0.0995
+     },
+     {
+      "risultato": "2-0",
+      "prob": 0.0975
      }
     ]
    },
+   "prima": {
+    "1": 0.5874,
+    "X": 0.2276,
+    "2": 0.1849,
+    "attesi": "1.94-1.00"
+   },
+   "spostamento": 0.0162,
    "mercato": {
     "1": 0.4897,
     "X": 0.292,
@@ -239,11 +253,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1026,
-    "X": -0.0661,
-    "2": -0.0365
+    "1": 0.1139,
+    "X": -0.0733,
+    "2": -0.0406
    },
-   "divergenza_max": 0.1026
+   "divergenza_max": 0.1139
   },
   {
    "fixture_id": 1520879,
@@ -251,45 +265,52 @@
    "campionato": "Brazil - Serie B",
    "casa": "Novorizontino",
    "fuori": "Cuiaba",
-   "gol_attesi_casa": 1.63,
+   "gol_attesi_casa": 1.62,
    "gol_attesi_fuori": 1.07,
-   "gol_attesi_totali": 2.7,
-   "nettezza": 25.1,
-   "affidabilita": 84.0,
+   "gol_attesi_totali": 2.69,
+   "nettezza": 24.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5005,
-    "X": 0.2579,
-    "2": 0.2416,
-    "1X": 0.7584,
-    "12": 0.7421,
-    "X2": 0.4995,
-    "over15": 0.7571,
-    "under15": 0.2429,
-    "over25": 0.5063,
-    "under25": 0.4937,
-    "over35": 0.2858,
-    "under35": 0.7142,
-    "gol_gol": 0.5333,
-    "no_gol": 0.4667,
+    "1": 0.4955,
+    "X": 0.2593,
+    "2": 0.2451,
+    "1X": 0.7549,
+    "12": 0.7407,
+    "X2": 0.5045,
+    "over15": 0.7553,
+    "under15": 0.2447,
+    "over25": 0.5037,
+    "under25": 0.4963,
+    "over35": 0.2835,
+    "under35": 0.7165,
+    "gol_gol": 0.5327,
+    "no_gol": 0.4673,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1229
+      "prob": 0.1236
      },
      {
       "risultato": "1-0",
-      "prob": 0.104
+      "prob": 0.1041
      },
      {
       "risultato": "2-1",
-      "prob": 0.0957
+      "prob": 0.0953
      }
     ]
    },
+   "prima": {
+    "1": 0.4984,
+    "X": 0.26,
+    "2": 0.2416,
+    "attesi": "1.61-1.05"
+   },
+   "spostamento": 0.0035,
    "mercato": {
     "1": 0.5568,
     "X": 0.2707,
@@ -298,11 +319,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0563,
-    "X": -0.0128,
-    "2": 0.0691
+    "1": -0.0613,
+    "X": -0.0114,
+    "2": 0.0726
    },
-   "divergenza_max": 0.0691
+   "divergenza_max": 0.0726
   },
   {
    "fixture_id": 1505523,
@@ -527,18 +548,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4542,
-    "X": 0.2913,
-    "2": 0.2545,
-    "margine": 0.0836,
+    "1": 0.4556,
+    "X": 0.2904,
+    "2": 0.254,
+    "margine": 0.0845,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0469,
-    "X": -0.0358,
-    "2": -0.0111
+    "1": 0.0455,
+    "X": -0.0349,
+    "2": -0.0106
    },
-   "divergenza_max": 0.0469
+   "divergenza_max": 0.0455
   },
   {
    "fixture_id": 1549777,
