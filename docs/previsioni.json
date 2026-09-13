@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-13T15:35:18.940815+00:00",
+ "generato": "2026-09-13T16:03:32.627181+00:00",
  "modello": "2026-09-13T05:08:40.005861+00:00",
  "previsioni": [
   {
@@ -121,248 +121,57 @@
    "divergenza_max": 0.0668
   },
   {
-   "fixture_id": 1549019,
-   "data": "2026-09-13T16:00:00+00:00",
-   "campionato": "Denmark - Superliga",
-   "casa": "FC Nordsjaelland",
-   "fuori": "Aarhus",
-   "gol_attesi_casa": 2.2,
-   "gol_attesi_fuori": 1.49,
-   "gol_attesi_totali": 3.7,
-   "nettezza": 30.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5335,
-    "X": 0.2121,
-    "2": 0.2544,
-    "1X": 0.7456,
-    "12": 0.7879,
-    "X2": 0.4665,
-    "over15": 0.8875,
-    "under15": 0.1125,
-    "over25": 0.7139,
-    "under25": 0.2861,
-    "over35": 0.5049,
-    "under35": 0.4951,
-    "gol_gol": 0.6938,
-    "no_gol": 0.3062,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-1",
-      "prob": 0.09
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.0857
-     },
-     {
-      "risultato": "2-2",
-      "prob": 0.0672
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5309,
-    "X": 0.2132,
-    "2": 0.2559,
-    "attesi": "2.19-1.49"
-   },
-   "spostamento": 0.0026,
-   "mercato": {
-    "1": 0.515,
-    "X": 0.2403,
-    "2": 0.2447,
-    "margine": 0.0781,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0185,
-    "X": -0.0282,
-    "2": 0.0097
-   },
-   "divergenza_max": 0.0282
-  },
-  {
-   "fixture_id": 1550123,
-   "data": "2026-09-13T16:00:00+00:00",
-   "campionato": "Italy - Serie A",
-   "casa": "Napoli",
-   "fuori": "Bologna",
-   "gol_attesi_casa": 1.7,
-   "gol_attesi_fuori": 1.28,
-   "gol_attesi_totali": 2.98,
-   "nettezza": 19.9,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4658,
-    "X": 0.2493,
-    "2": 0.2849,
-    "1X": 0.7151,
-    "12": 0.7507,
-    "X2": 0.5342,
-    "over15": 0.8038,
-    "under15": 0.1962,
-    "over25": 0.5729,
-    "under25": 0.4271,
-    "over35": 0.3488,
-    "under35": 0.6512,
-    "gol_gol": 0.5964,
-    "no_gol": 0.4036,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.116
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0938
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0805
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4282,
-    "X": 0.2568,
-    "2": 0.315,
-    "attesi": "1.58-1.33"
-   },
-   "spostamento": 0.0376,
-   "mercato": {
-    "1": 0.5064,
-    "X": 0.2679,
-    "2": 0.2257,
-    "margine": 0.0551,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0406,
-    "X": -0.0186,
-    "2": 0.0592
-   },
-   "divergenza_max": 0.0592
-  },
-  {
-   "fixture_id": 1593310,
-   "data": "2026-09-13T16:00:00+00:00",
-   "campionato": "Greece - Super League 1",
-   "casa": "Asteras Tripolis",
-   "fuori": "AEK Athens FC",
-   "gol_attesi_casa": 1.17,
-   "gol_attesi_fuori": 1.37,
-   "gol_attesi_totali": 2.54,
-   "nettezza": 11.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 13,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3147,
-    "X": 0.2784,
-    "2": 0.4069,
-    "1X": 0.5931,
-    "12": 0.7216,
-    "X2": 0.6853,
-    "over15": 0.728,
-    "under15": 0.272,
-    "over25": 0.4675,
-    "under25": 0.5325,
-    "over35": 0.2519,
-    "under35": 0.7481,
-    "gol_gol": 0.5217,
-    "no_gol": 0.4783,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1327
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1013
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0865
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3036,
-    "X": 0.2748,
-    "2": 0.4216,
-    "attesi": "1.17-1.42"
-   },
-   "spostamento": 0.0147,
-   "mercato": {
-    "1": 0.1161,
-    "X": 0.2082,
-    "2": 0.6757,
-    "margine": 0.0766,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1986,
-    "X": 0.0702,
-    "2": -0.2688
-   },
-   "divergenza_max": 0.2688
-  },
-  {
    "fixture_id": 1569923,
    "data": "2026-09-13T16:30:00+00:00",
    "campionato": "Spain - Segunda División",
    "casa": "Mallorca",
    "fuori": "Sabadell",
-   "gol_attesi_casa": 1.2,
-   "gol_attesi_fuori": 1.13,
-   "gol_attesi_totali": 2.33,
-   "nettezza": 5.3,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.23,
+   "gol_attesi_fuori": 1.24,
+   "gol_attesi_totali": 2.47,
+   "nettezza": 4.2,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3686,
-    "X": 0.2949,
-    "2": 0.3365,
-    "1X": 0.6635,
-    "12": 0.7051,
-    "X2": 0.6314,
-    "over15": 0.6815,
-    "under15": 0.3185,
-    "over25": 0.4106,
-    "under25": 0.5894,
-    "over35": 0.2058,
-    "under35": 0.7942,
-    "gol_gol": 0.4786,
-    "no_gol": 0.5214,
+    "1": 0.3541,
+    "X": 0.2847,
+    "2": 0.3612,
+    "1X": 0.6388,
+    "12": 0.7153,
+    "X2": 0.6459,
+    "over15": 0.7135,
+    "under15": 0.2865,
+    "over25": 0.4492,
+    "under25": 0.5508,
+    "over35": 0.2366,
+    "under35": 0.7634,
+    "gol_gol": 0.5099,
+    "no_gol": 0.4901,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1386
+      "prob": 0.1354
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.0985
      },
      {
       "risultato": "1-0",
-      "prob": 0.1103
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1044
+      "prob": 0.0972
      }
     ]
    },
+   "prima": {
+    "1": 0.3753,
+    "X": 0.2955,
+    "2": 0.3292,
+    "attesi": "1.20-1.11"
+   },
+   "spostamento": 0.032,
    "mercato": {
     "1": 0.504,
     "X": 0.2837,
@@ -371,11 +180,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1354,
-    "X": 0.0112,
-    "2": 0.1243
+    "1": -0.1499,
+    "X": 0.001,
+    "2": 0.149
    },
-   "divergenza_max": 0.1354
+   "divergenza_max": 0.1499
   },
   {
    "fixture_id": 1570375,
@@ -383,45 +192,52 @@
    "campionato": "Spain - La Liga",
    "casa": "Getafe",
    "fuori": "Deportivo La Coruna",
-   "gol_attesi_casa": 1.32,
-   "gol_attesi_fuori": 1.07,
+   "gol_attesi_casa": 1.29,
+   "gol_attesi_fuori": 1.1,
    "gol_attesi_totali": 2.39,
-   "nettezza": 12.4,
-   "affidabilita": 84.0,
+   "nettezza": 10.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4161,
-    "X": 0.2878,
-    "2": 0.296,
-    "1X": 0.704,
-    "12": 0.7122,
-    "X2": 0.5839,
-    "over15": 0.6951,
-    "under15": 0.3049,
-    "over25": 0.4267,
-    "under25": 0.5733,
-    "over35": 0.2184,
-    "under35": 0.7816,
-    "gol_gol": 0.4873,
-    "no_gol": 0.5127,
+    "1": 0.4022,
+    "X": 0.2884,
+    "2": 0.3093,
+    "1X": 0.6907,
+    "12": 0.7116,
+    "X2": 0.5978,
+    "over15": 0.6967,
+    "under15": 0.3033,
+    "over25": 0.4287,
+    "under25": 0.5713,
+    "over35": 0.22,
+    "under35": 0.78,
+    "gol_gol": 0.4908,
+    "no_gol": 0.5092,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.136
+      "prob": 0.1364
      },
      {
       "risultato": "1-0",
-      "prob": 0.1146
+      "prob": 0.1115
      },
      {
       "risultato": "0-0",
-      "prob": 0.0984
+      "prob": 0.0978
      }
     ]
    },
+   "prima": {
+    "1": 0.4159,
+    "X": 0.2879,
+    "2": 0.2962,
+    "attesi": "1.32-1.07"
+   },
+   "spostamento": 0.0137,
    "mercato": {
     "1": 0.3566,
     "X": 0.3326,
@@ -430,11 +246,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0595,
-    "X": -0.0448,
-    "2": -0.0148
+    "1": 0.0456,
+    "X": -0.0442,
+    "2": -0.0015
    },
-   "divergenza_max": 0.0595
+   "divergenza_max": 0.0456
   },
   {
    "fixture_id": 1575492,
@@ -4009,18 +3825,18 @@
     ]
    },
    "mercato": {
-    "1": 0.518,
+    "1": 0.5185,
     "X": 0.2531,
-    "2": 0.2289,
-    "margine": 0.0741,
+    "2": 0.2284,
+    "margine": 0.0747,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": -0.1584,
+    "1": -0.1589,
     "X": 0.0196,
-    "2": 0.1388
+    "2": 0.1393
    },
-   "divergenza_max": 0.1584
+   "divergenza_max": 0.1589
   },
   {
    "fixture_id": 1555368,
@@ -4186,18 +4002,18 @@
     ]
    },
    "mercato": {
-    "1": 0.8065,
-    "X": 0.1201,
-    "2": 0.0733,
-    "margine": 0.0659,
+    "1": 0.8085,
+    "X": 0.1194,
+    "2": 0.0721,
+    "margine": 0.0666,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": -0.0968,
-    "X": 0.0544,
-    "2": 0.0425
+    "1": -0.0988,
+    "X": 0.0551,
+    "2": 0.0437
    },
-   "divergenza_max": 0.0968
+   "divergenza_max": 0.0988
   },
   {
    "fixture_id": 1570383,
@@ -5222,18 +5038,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5141,
-    "X": 0.2785,
-    "2": 0.2074,
-    "margine": 0.0624,
+    "1": 0.5292,
+    "X": 0.2767,
+    "2": 0.1941,
+    "margine": 0.0634,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0722,
-    "X": 0.0075,
-    "2": 0.0647
+    "1": -0.0873,
+    "X": 0.0093,
+    "2": 0.078
    },
-   "divergenza_max": 0.0722
+   "divergenza_max": 0.0873
   },
   {
    "fixture_id": 1570390,
@@ -5281,18 +5097,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2709,
-    "X": 0.2522,
-    "2": 0.4769,
-    "margine": 0.0636,
+    "1": 0.271,
+    "X": 0.2523,
+    "2": 0.4767,
+    "margine": 0.0633,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0665,
-    "X": 0.0016,
-    "2": -0.0681
+    "1": 0.0664,
+    "X": 0.0015,
+    "2": -0.0679
    },
-   "divergenza_max": 0.0681
+   "divergenza_max": 0.0679
   }
  ]
 }
