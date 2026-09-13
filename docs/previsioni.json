@@ -1,66 +1,7 @@
 {
- "generato": "2026-09-13T16:03:32.627181+00:00",
+ "generato": "2026-09-13T16:36:11.951377+00:00",
  "modello": "2026-09-13T05:08:40.005861+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1505529,
-   "data": "2026-09-13T15:30:00+00:00",
-   "campionato": "Chile - Primera División",
-   "casa": "Universidad de Concepcion",
-   "fuori": "Huachipato",
-   "gol_attesi_casa": 1.59,
-   "gol_attesi_fuori": 1.01,
-   "gol_attesi_totali": 2.6,
-   "nettezza": 25.3,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 22,
-   "partite_storia_fuori": 21,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.5019,
-    "X": 0.2628,
-    "2": 0.2353,
-    "1X": 0.7647,
-    "12": 0.7372,
-    "X2": 0.4981,
-    "over15": 0.7392,
-    "under15": 0.2608,
-    "over25": 0.4824,
-    "under25": 0.5176,
-    "over35": 0.2647,
-    "under35": 0.7353,
-    "gol_gol": 0.513,
-    "no_gol": 0.487,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1252
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1118
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0948
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.457,
-    "X": 0.2666,
-    "2": 0.2764,
-    "margine": 0.0881,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0449,
-    "X": -0.0038,
-    "2": -0.0411
-   },
-   "divergenza_max": 0.0449
-  },
   {
    "fixture_id": 1549482,
    "data": "2026-09-13T15:30:00+00:00",
@@ -121,182 +62,57 @@
    "divergenza_max": 0.0668
   },
   {
-   "fixture_id": 1569923,
-   "data": "2026-09-13T16:30:00+00:00",
-   "campionato": "Spain - Segunda División",
-   "casa": "Mallorca",
-   "fuori": "Sabadell",
-   "gol_attesi_casa": 1.23,
-   "gol_attesi_fuori": 1.24,
-   "gol_attesi_totali": 2.47,
-   "nettezza": 4.2,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3541,
-    "X": 0.2847,
-    "2": 0.3612,
-    "1X": 0.6388,
-    "12": 0.7153,
-    "X2": 0.6459,
-    "over15": 0.7135,
-    "under15": 0.2865,
-    "over25": 0.4492,
-    "under25": 0.5508,
-    "over35": 0.2366,
-    "under35": 0.7634,
-    "gol_gol": 0.5099,
-    "no_gol": 0.4901,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1354
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0985
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0972
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3753,
-    "X": 0.2955,
-    "2": 0.3292,
-    "attesi": "1.20-1.11"
-   },
-   "spostamento": 0.032,
-   "mercato": {
-    "1": 0.504,
-    "X": 0.2837,
-    "2": 0.2122,
-    "margine": 0.0789,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.1499,
-    "X": 0.001,
-    "2": 0.149
-   },
-   "divergenza_max": 0.1499
-  },
-  {
-   "fixture_id": 1570375,
-   "data": "2026-09-13T16:30:00+00:00",
-   "campionato": "Spain - La Liga",
-   "casa": "Getafe",
-   "fuori": "Deportivo La Coruna",
-   "gol_attesi_casa": 1.29,
-   "gol_attesi_fuori": 1.1,
-   "gol_attesi_totali": 2.39,
-   "nettezza": 10.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4022,
-    "X": 0.2884,
-    "2": 0.3093,
-    "1X": 0.6907,
-    "12": 0.7116,
-    "X2": 0.5978,
-    "over15": 0.6967,
-    "under15": 0.3033,
-    "over25": 0.4287,
-    "under25": 0.5713,
-    "over35": 0.22,
-    "under35": 0.78,
-    "gol_gol": 0.4908,
-    "no_gol": 0.5092,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1364
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1115
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.0978
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4159,
-    "X": 0.2879,
-    "2": 0.2962,
-    "attesi": "1.32-1.07"
-   },
-   "spostamento": 0.0137,
-   "mercato": {
-    "1": 0.3566,
-    "X": 0.3326,
-    "2": 0.3108,
-    "margine": 0.0563,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0456,
-    "X": -0.0442,
-    "2": -0.0015
-   },
-   "divergenza_max": 0.0456
-  },
-  {
    "fixture_id": 1575492,
    "data": "2026-09-13T17:00:00+00:00",
    "campionato": "Portugal - Primeira Liga",
    "casa": "Arouca",
    "fuori": "Santa Clara",
-   "gol_attesi_casa": 1.22,
-   "gol_attesi_fuori": 1.35,
-   "gol_attesi_totali": 2.57,
-   "nettezza": 8.7,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.21,
+   "gol_attesi_fuori": 1.42,
+   "gol_attesi_totali": 2.64,
+   "nettezza": 11.9,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3309,
-    "X": 0.2776,
-    "2": 0.3915,
-    "1X": 0.6085,
-    "12": 0.7224,
-    "X2": 0.6691,
-    "over15": 0.7333,
-    "under15": 0.2667,
-    "over25": 0.4743,
-    "under25": 0.5257,
-    "over35": 0.2577,
-    "under35": 0.7423,
-    "gol_gol": 0.5286,
-    "no_gol": 0.4714,
+    "1": 0.3153,
+    "X": 0.2724,
+    "2": 0.4124,
+    "1X": 0.5876,
+    "12": 0.7276,
+    "X2": 0.6847,
+    "over15": 0.746,
+    "under15": 0.254,
+    "over25": 0.491,
+    "under25": 0.509,
+    "over35": 0.2722,
+    "under35": 0.7278,
+    "gol_gol": 0.5399,
+    "no_gol": 0.4601,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1323
+      "prob": 0.1298
      },
      {
       "risultato": "0-1",
-      "prob": 0.0969
+      "prob": 0.0956
      },
      {
-      "risultato": "1-0",
-      "prob": 0.0871
+      "risultato": "1-2",
+      "prob": 0.088
      }
     ]
    },
+   "prima": {
+    "1": 0.3311,
+    "X": 0.2775,
+    "2": 0.3914,
+    "attesi": "1.22-1.35"
+   },
+   "spostamento": 0.021,
    "mercato": {
     "1": 0.3641,
     "X": 0.3085,
@@ -305,11 +121,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0332,
-    "X": -0.0309,
-    "2": 0.0641
+    "1": -0.0488,
+    "X": -0.0361,
+    "2": 0.085
    },
-   "divergenza_max": 0.0641
+   "divergenza_max": 0.085
   },
   {
    "fixture_id": 1575493,
@@ -317,45 +133,52 @@
    "campionato": "Portugal - Primeira Liga",
    "casa": "Benfica",
    "fuori": "GIL Vicente",
-   "gol_attesi_casa": 2.19,
-   "gol_attesi_fuori": 0.82,
-   "gol_attesi_totali": 3.01,
-   "nettezza": 52.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.26,
+   "gol_attesi_fuori": 0.85,
+   "gol_attesi_totali": 3.11,
+   "nettezza": 53.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6808,
-    "X": 0.1959,
-    "2": 0.1233,
-    "1X": 0.8767,
-    "12": 0.8041,
-    "X2": 0.3192,
-    "over15": 0.8064,
-    "under15": 0.1936,
-    "over25": 0.5784,
-    "under25": 0.4216,
-    "over35": 0.3543,
-    "under35": 0.6457,
-    "gol_gol": 0.5019,
-    "no_gol": 0.4981,
+    "1": 0.6894,
+    "X": 0.1896,
+    "2": 0.1211,
+    "1X": 0.8789,
+    "12": 0.8104,
+    "X2": 0.3106,
+    "over15": 0.8207,
+    "under15": 0.1793,
+    "over25": 0.6005,
+    "under25": 0.3995,
+    "over35": 0.3768,
+    "under35": 0.6232,
+    "gol_gol": 0.5158,
+    "no_gol": 0.4842,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1181
+      "prob": 0.1144
      },
      {
       "risultato": "1-0",
-      "prob": 0.1036
+      "prob": 0.0968
      },
      {
       "risultato": "2-1",
-      "prob": 0.097
+      "prob": 0.0968
      }
     ]
    },
+   "prima": {
+    "1": 0.69,
+    "X": 0.1913,
+    "2": 0.1187,
+    "attesi": "2.23-0.82"
+   },
+   "spostamento": 0.0024,
    "mercato": {
     "1": 0.8364,
     "X": 0.1119,
@@ -364,11 +187,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1556,
-    "X": 0.084,
-    "2": 0.0716
+    "1": -0.147,
+    "X": 0.0777,
+    "2": 0.0694
    },
-   "divergenza_max": 0.1556
+   "divergenza_max": 0.147
   },
   {
    "fixture_id": 1584404,
@@ -435,45 +258,52 @@
    "campionato": "Turkey - Süper Lig",
    "casa": "Galatasaray",
    "fuori": "Kocaelispor",
-   "gol_attesi_casa": 2.21,
-   "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 3.07,
-   "nettezza": 51.6,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.23,
+   "gol_attesi_fuori": 0.9,
+   "gol_attesi_totali": 3.13,
+   "nettezza": 50.7,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6776,
-    "X": 0.195,
-    "2": 0.1273,
-    "1X": 0.8727,
-    "12": 0.805,
-    "X2": 0.3224,
-    "over15": 0.8153,
-    "under15": 0.1847,
-    "over25": 0.592,
-    "under25": 0.408,
-    "over35": 0.368,
-    "under35": 0.632,
-    "gol_gol": 0.5169,
-    "no_gol": 0.4831,
+    "1": 0.671,
+    "X": 0.1953,
+    "2": 0.1336,
+    "1X": 0.8664,
+    "12": 0.8047,
+    "X2": 0.329,
+    "over15": 0.8239,
+    "under15": 0.1761,
+    "over25": 0.6054,
+    "under25": 0.3946,
+    "over35": 0.3818,
+    "under35": 0.6182,
+    "gol_gol": 0.534,
+    "no_gol": 0.466,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1138
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0984
+      "prob": 0.1088
      },
      {
       "risultato": "2-1",
-      "prob": 0.0975
+      "prob": 0.0979
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0931
      }
     ]
    },
+   "prima": {
+    "1": 0.6843,
+    "X": 0.1917,
+    "2": 0.124,
+    "attesi": "2.25-0.85"
+   },
+   "spostamento": 0.0133,
    "mercato": {
     "1": 0.7468,
     "X": 0.1636,
@@ -482,11 +312,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0692,
-    "X": 0.0314,
-    "2": 0.0377
+    "1": -0.0758,
+    "X": 0.0317,
+    "2": 0.044
    },
-   "divergenza_max": 0.0692
+   "divergenza_max": 0.0758
   },
   {
    "fixture_id": 1585751,
@@ -494,45 +324,52 @@
    "campionato": "Turkey - 1. Lig",
    "casa": "Bursaspor",
    "fuori": "Esenler Erokspor",
-   "gol_attesi_casa": 1.81,
-   "gol_attesi_fuori": 0.95,
-   "gol_attesi_totali": 2.76,
-   "nettezza": 35.4,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.83,
+   "gol_attesi_fuori": 0.96,
+   "gol_attesi_totali": 2.79,
+   "nettezza": 36.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5692,
-    "X": 0.2402,
-    "2": 0.1906,
-    "1X": 0.8094,
-    "12": 0.7598,
-    "X2": 0.4308,
-    "over15": 0.7671,
-    "under15": 0.2329,
-    "over25": 0.5205,
-    "under25": 0.4795,
-    "over35": 0.2987,
-    "under35": 0.7013,
-    "gol_gol": 0.5185,
-    "no_gol": 0.4815,
+    "1": 0.5731,
+    "X": 0.2378,
+    "2": 0.189,
+    "1X": 0.811,
+    "12": 0.7622,
+    "X2": 0.4269,
+    "over15": 0.7723,
+    "under15": 0.2277,
+    "over25": 0.5277,
+    "under25": 0.4723,
+    "over35": 0.3054,
+    "under35": 0.6946,
+    "gol_gol": 0.523,
+    "no_gol": 0.477,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1145
+      "prob": 0.1133
      },
      {
       "risultato": "1-0",
-      "prob": 0.1091
+      "prob": 0.1072
      },
      {
       "risultato": "2-0",
-      "prob": 0.1035
+      "prob": 0.103
      }
     ]
    },
+   "prima": {
+    "1": 0.567,
+    "X": 0.2408,
+    "2": 0.1922,
+    "attesi": "1.80-0.96"
+   },
+   "spostamento": 0.0061,
    "mercato": {
     "1": 0.5242,
     "X": 0.2493,
@@ -541,11 +378,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.045,
-    "X": -0.0091,
-    "2": -0.0359
+    "1": 0.0489,
+    "X": -0.0115,
+    "2": -0.0375
    },
-   "divergenza_max": 0.045
+   "divergenza_max": 0.0489
   },
   {
    "fixture_id": 1585753,
@@ -554,44 +391,51 @@
    "casa": "Fatih Karagümrük",
    "fuori": "Manisa F.K.",
    "gol_attesi_casa": 1.77,
-   "gol_attesi_fuori": 1.38,
-   "gol_attesi_totali": 3.16,
-   "nettezza": 19.3,
-   "affidabilita": 84.0,
+   "gol_attesi_fuori": 1.41,
+   "gol_attesi_totali": 3.18,
+   "nettezza": 18.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4622,
-    "X": 0.2419,
-    "2": 0.2959,
-    "1X": 0.7041,
-    "12": 0.7581,
-    "X2": 0.5378,
-    "over15": 0.8284,
-    "under15": 0.1716,
-    "over25": 0.6112,
-    "under25": 0.3888,
-    "over35": 0.388,
-    "under35": 0.612,
-    "gol_gol": 0.6275,
-    "no_gol": 0.3725,
+    "1": 0.4538,
+    "X": 0.2418,
+    "2": 0.3044,
+    "1X": 0.6956,
+    "12": 0.7582,
+    "X2": 0.5462,
+    "over15": 0.8314,
+    "under15": 0.1686,
+    "over25": 0.6159,
+    "under25": 0.3841,
+    "over35": 0.393,
+    "under35": 0.607,
+    "gol_gol": 0.6326,
+    "no_gol": 0.3674,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1096
+      "prob": 0.1091
      },
      {
       "risultato": "2-1",
-      "prob": 0.0926
+      "prob": 0.0917
      },
      {
       "risultato": "1-2",
-      "prob": 0.0723
+      "prob": 0.0735
      }
     ]
    },
+   "prima": {
+    "1": 0.4598,
+    "X": 0.2433,
+    "2": 0.2969,
+    "attesi": "1.76-1.38"
+   },
+   "spostamento": 0.0075,
    "mercato": {
     "1": 0.4845,
     "X": 0.2604,
@@ -600,11 +444,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0223,
-    "X": -0.0185,
-    "2": 0.0408
+    "1": -0.0307,
+    "X": -0.0186,
+    "2": 0.0493
    },
-   "divergenza_max": 0.0408
+   "divergenza_max": 0.0493
   },
   {
    "fixture_id": 1494757,
@@ -2833,7 +2677,20 @@
       "prob": 0.0823
      }
     ]
-   }
+   },
+   "mercato": {
+    "1": 0.6408,
+    "X": 0.216,
+    "2": 0.1432,
+    "margine": 0.1038,
+    "bookmaker": 9
+   },
+   "divergenza": {
+    "1": -0.1022,
+    "X": 0.0161,
+    "2": 0.0861
+   },
+   "divergenza_max": 0.1022
   },
   {
    "fixture_id": 1575499,
