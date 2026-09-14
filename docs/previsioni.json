@@ -1,177 +1,59 @@
 {
- "generato": "2026-09-14T16:03:14.020462+00:00",
+ "generato": "2026-09-14T16:37:50.952557+00:00",
  "modello": "2026-09-14T05:08:38.076362+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1550118,
-   "data": "2026-09-14T16:30:00+00:00",
-   "campionato": "Italy - Serie A",
-   "casa": "Como",
-   "fuori": "Parma",
-   "gol_attesi_casa": 2.32,
-   "gol_attesi_fuori": 0.73,
-   "gol_attesi_totali": 3.05,
-   "nettezza": 59.0,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 10,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.7269,
-    "X": 0.1768,
-    "2": 0.0963,
-    "1X": 0.9037,
-    "12": 0.8232,
-    "X2": 0.2731,
-    "over15": 0.8119,
-    "under15": 0.1881,
-    "over25": 0.5874,
-    "under25": 0.4126,
-    "over35": 0.3633,
-    "under35": 0.6367,
-    "gol_gol": 0.4709,
-    "no_gol": 0.5291,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-0",
-      "prob": 0.1276
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.106
-     },
-     {
-      "risultato": "3-0",
-      "prob": 0.0987
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.7728,
-    "X": 0.1542,
-    "2": 0.0731,
-    "margine": 0.0537,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0459,
-    "X": 0.0226,
-    "2": 0.0232
-   },
-   "divergenza_max": 0.0459
-  },
-  {
-   "fixture_id": 1550125,
-   "data": "2026-09-14T16:30:00+00:00",
-   "campionato": "Italy - Serie A",
-   "casa": "Torino",
-   "fuori": "AS Roma",
-   "gol_attesi_casa": 1.02,
-   "gol_attesi_fuori": 3.03,
-   "gol_attesi_totali": 4.05,
-   "nettezza": 65.6,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.0927,
-    "X": 0.1365,
-    "2": 0.7709,
-    "1X": 0.2291,
-    "12": 0.8635,
-    "X2": 0.9073,
-    "over15": 0.9144,
-    "under15": 0.0856,
-    "over25": 0.7684,
-    "under25": 0.2316,
-    "over35": 0.5747,
-    "under35": 0.4253,
-    "gol_gol": 0.6119,
-    "no_gol": 0.3881,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-3",
-      "prob": 0.0827
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0819
-     },
-     {
-      "risultato": "0-3",
-      "prob": 0.0809
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.1293,
-    "X": 0.1631,
-    "2": 0.7075,
-    "attesi": "1.14-2.74"
-   },
-   "spostamento": 0.0634,
-   "mercato": {
-    "1": 0.1581,
-    "X": 0.2255,
-    "2": 0.6165,
-    "margine": 0.0551,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0654,
-    "X": -0.089,
-    "2": 0.1544
-   },
-   "divergenza_max": 0.1544
-  },
   {
    "fixture_id": 1494274,
    "data": "2026-09-14T17:00:00+00:00",
    "campionato": "Sweden - Allsvenskan",
    "casa": "Djurgardens IF",
    "fuori": "Gais",
-   "gol_attesi_casa": 1.63,
-   "gol_attesi_fuori": 0.89,
-   "gol_attesi_totali": 2.52,
-   "nettezza": 31.4,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.71,
+   "gol_attesi_fuori": 0.91,
+   "gol_attesi_totali": 2.62,
+   "nettezza": 33.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5424,
-    "X": 0.2587,
-    "2": 0.199,
-    "1X": 0.801,
-    "12": 0.7413,
-    "X2": 0.4576,
-    "over15": 0.7226,
-    "under15": 0.2774,
-    "over25": 0.4613,
-    "under25": 0.5387,
-    "over35": 0.2467,
-    "under35": 0.7533,
-    "gol_gol": 0.4797,
-    "no_gol": 0.5203,
+    "1": 0.5553,
+    "X": 0.2504,
+    "2": 0.1943,
+    "1X": 0.8057,
+    "12": 0.7496,
+    "X2": 0.4447,
+    "over15": 0.7418,
+    "under15": 0.2582,
+    "over25": 0.4861,
+    "under25": 0.5139,
+    "over35": 0.2679,
+    "under35": 0.7321,
+    "gol_gol": 0.4954,
+    "no_gol": 0.5046,
     "punteggi_probabili": [
      {
-      "risultato": "1-0",
-      "prob": 0.1253
+      "risultato": "1-1",
+      "prob": 0.1192
      },
      {
-      "risultato": "1-1",
-      "prob": 0.1226
+      "risultato": "1-0",
+      "prob": 0.1188
      },
      {
       "risultato": "2-0",
-      "prob": 0.1069
+      "prob": 0.1061
      }
     ]
    },
+   "prima": {
+    "1": 0.535,
+    "X": 0.2614,
+    "2": 0.2036,
+    "attesi": "1.61-0.90"
+   },
+   "spostamento": 0.0203,
    "mercato": {
     "1": 0.6226,
     "X": 0.2208,
@@ -180,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0802,
-    "X": 0.0379,
-    "2": 0.0423
+    "1": -0.0673,
+    "X": 0.0296,
+    "2": 0.0376
    },
-   "divergenza_max": 0.0802
+   "divergenza_max": 0.0673
   },
   {
    "fixture_id": 1494280,
@@ -192,45 +74,52 @@
    "campionato": "Sweden - Allsvenskan",
    "casa": "Sirius",
    "fuori": "Degerfors IF",
-   "gol_attesi_casa": 1.47,
+   "gol_attesi_casa": 1.5,
    "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 2.33,
-   "nettezza": 26.5,
-   "affidabilita": 84.0,
+   "gol_attesi_totali": 2.36,
+   "nettezza": 27.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5099,
-    "X": 0.2771,
-    "2": 0.213,
-    "1X": 0.787,
-    "12": 0.7229,
-    "X2": 0.4901,
-    "over15": 0.6823,
-    "under15": 0.3177,
-    "over25": 0.4121,
-    "under25": 0.5879,
-    "over35": 0.2069,
-    "under35": 0.7931,
-    "gol_gol": 0.4501,
-    "no_gol": 0.5499,
+    "1": 0.5142,
+    "X": 0.2743,
+    "2": 0.2115,
+    "1X": 0.7885,
+    "12": 0.7257,
+    "X2": 0.4858,
+    "over15": 0.689,
+    "under15": 0.311,
+    "over25": 0.4199,
+    "under25": 0.5801,
+    "over35": 0.213,
+    "under35": 0.787,
+    "gol_gol": 0.4553,
+    "no_gol": 0.5447,
     "punteggi_probabili": [
      {
       "risultato": "1-0",
-      "prob": 0.137
+      "prob": 0.135
      },
      {
       "risultato": "1-1",
-      "prob": 0.129
+      "prob": 0.1282
      },
      {
       "risultato": "2-0",
-      "prob": 0.1054
+      "prob": 0.1055
      }
     ]
    },
+   "prima": {
+    "1": 0.508,
+    "X": 0.2789,
+    "2": 0.2132,
+    "attesi": "1.46-0.85"
+   },
+   "spostamento": 0.0062,
    "mercato": {
     "1": 0.647,
     "X": 0.2099,
@@ -239,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1371,
-    "X": 0.0672,
-    "2": 0.0699
+    "1": -0.1328,
+    "X": 0.0644,
+    "2": 0.0684
    },
-   "divergenza_max": 0.1371
+   "divergenza_max": 0.1328
   },
   {
    "fixture_id": 1494756,
@@ -251,45 +140,52 @@
    "campionato": "Norway - Eliteserien",
    "casa": "Bodo/Glimt",
    "fuori": "Sandefjord",
-   "gol_attesi_casa": 2.75,
-   "gol_attesi_fuori": 0.64,
-   "gol_attesi_totali": 3.39,
-   "nettezza": 71.6,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.86,
+   "gol_attesi_fuori": 0.66,
+   "gol_attesi_totali": 3.52,
+   "nettezza": 73.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.8109,
-    "X": 0.1308,
-    "2": 0.0583,
-    "1X": 0.9417,
-    "12": 0.8692,
-    "X2": 0.1891,
-    "over15": 0.8542,
-    "under15": 0.1458,
-    "over25": 0.6569,
-    "under25": 0.3431,
-    "over35": 0.4374,
-    "under35": 0.5626,
-    "gol_gol": 0.4436,
-    "no_gol": 0.5564,
+    "1": 0.821,
+    "X": 0.1233,
+    "2": 0.0557,
+    "1X": 0.9443,
+    "12": 0.8767,
+    "X2": 0.179,
+    "over15": 0.8687,
+    "under15": 0.1313,
+    "over25": 0.682,
+    "under25": 0.318,
+    "over35": 0.4663,
+    "under35": 0.5337,
+    "gol_gol": 0.4563,
+    "no_gol": 0.5437,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1282
+      "prob": 0.1217
      },
      {
       "risultato": "3-0",
-      "prob": 0.1175
+      "prob": 0.1162
      },
      {
-      "risultato": "1-0",
-      "prob": 0.0903
+      "risultato": "4-0",
+      "prob": 0.0832
      }
     ]
    },
+   "prima": {
+    "1": 0.8064,
+    "X": 0.1326,
+    "2": 0.061,
+    "attesi": "2.75-0.66"
+   },
+   "spostamento": 0.0146,
    "mercato": {
     "1": 0.8171,
     "X": 0.113,
@@ -298,11 +194,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0062,
-    "X": 0.0178,
-    "2": -0.0116
+    "1": 0.0039,
+    "X": 0.0103,
+    "2": -0.0142
    },
-   "divergenza_max": 0.0178
+   "divergenza_max": 0.0142
   },
   {
    "fixture_id": 1549018,
@@ -310,45 +206,52 @@
    "campionato": "Denmark - Superliga",
    "casa": "FC Midtjylland",
    "fuori": "Brondby",
-   "gol_attesi_casa": 1.56,
-   "gol_attesi_fuori": 1.24,
-   "gol_attesi_totali": 2.8,
-   "nettezza": 16.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.63,
+   "gol_attesi_fuori": 1.31,
+   "gol_attesi_totali": 2.94,
+   "nettezza": 16.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4409,
-    "X": 0.2609,
-    "2": 0.2982,
-    "1X": 0.7018,
-    "12": 0.7391,
-    "X2": 0.5591,
-    "over15": 0.7753,
-    "under15": 0.2247,
-    "over25": 0.5312,
-    "under25": 0.4688,
-    "over35": 0.3087,
-    "under35": 0.6913,
-    "gol_gol": 0.5679,
-    "no_gol": 0.4321,
+    "1": 0.4432,
+    "X": 0.2536,
+    "2": 0.3032,
+    "1X": 0.6968,
+    "12": 0.7464,
+    "X2": 0.5568,
+    "over15": 0.798,
+    "under15": 0.202,
+    "over25": 0.5641,
+    "under25": 0.4359,
+    "over35": 0.3402,
+    "under35": 0.6598,
+    "gol_gol": 0.5936,
+    "no_gol": 0.4064,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1235
+      "prob": 0.1184
      },
      {
       "risultato": "2-1",
-      "prob": 0.0917
+      "prob": 0.0919
      },
      {
       "risultato": "1-0",
-      "prob": 0.0887
+      "prob": 0.0802
      }
     ]
    },
+   "prima": {
+    "1": 0.4462,
+    "X": 0.2601,
+    "2": 0.2936,
+    "attesi": "1.57-1.23"
+   },
+   "spostamento": 0.0096,
    "mercato": {
     "1": 0.5238,
     "X": 0.2466,
@@ -357,11 +260,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0829,
-    "X": 0.0143,
-    "2": 0.0686
+    "1": -0.0806,
+    "X": 0.007,
+    "2": 0.0736
    },
-   "divergenza_max": 0.0829
+   "divergenza_max": 0.0806
   },
   {
    "fixture_id": 1553167,
@@ -370,44 +273,51 @@
    "casa": "Radomiak Radom",
    "fuori": "Piast Gliwice",
    "gol_attesi_casa": 1.05,
-   "gol_attesi_fuori": 1.26,
-   "gol_attesi_totali": 2.31,
-   "nettezza": 10.7,
-   "affidabilita": 84.0,
+   "gol_attesi_fuori": 1.31,
+   "gol_attesi_totali": 2.37,
+   "nettezza": 12.8,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3013,
-    "X": 0.2944,
-    "2": 0.4044,
-    "1X": 0.5956,
-    "12": 0.7056,
-    "X2": 0.6987,
-    "over15": 0.6772,
-    "under15": 0.3228,
-    "over25": 0.4057,
-    "under25": 0.5943,
-    "over35": 0.202,
-    "under35": 0.798,
-    "gol_gol": 0.4715,
-    "no_gol": 0.5285,
+    "1": 0.2924,
+    "X": 0.2888,
+    "2": 0.4187,
+    "1X": 0.5813,
+    "12": 0.7112,
+    "X2": 0.7076,
+    "over15": 0.6911,
+    "under15": 0.3089,
+    "over25": 0.422,
+    "under25": 0.578,
+    "over35": 0.2147,
+    "under35": 0.7853,
+    "gol_gol": 0.4829,
+    "no_gol": 0.5171,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.138
+      "prob": 0.1362
      },
      {
       "risultato": "0-1",
-      "prob": 0.1187
+      "prob": 0.1166
      },
      {
       "risultato": "0-0",
-      "prob": 0.1062
+      "prob": 0.1001
      }
     ]
    },
+   "prima": {
+    "1": 0.3032,
+    "X": 0.2948,
+    "2": 0.4019,
+    "attesi": "1.05-1.25"
+   },
+   "spostamento": 0.0168,
    "mercato": {
     "1": 0.3961,
     "X": 0.2678,
@@ -416,11 +326,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0948,
-    "X": 0.0266,
-    "2": 0.0682
+    "1": -0.1037,
+    "X": 0.021,
+    "2": 0.0825
    },
-   "divergenza_max": 0.0948
+   "divergenza_max": 0.1037
   },
   {
    "fixture_id": 1576489,
@@ -428,45 +338,52 @@
    "campionato": "Portugal - Segunda Liga",
    "casa": "FC Porto B",
    "fuori": "Vizela",
-   "gol_attesi_casa": 0.69,
-   "gol_attesi_fuori": 1.04,
-   "gol_attesi_totali": 1.72,
-   "nettezza": 13.9,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 0.76,
+   "gol_attesi_fuori": 1.06,
+   "gol_attesi_totali": 1.82,
+   "nettezza": 12.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2315,
-    "X": 0.3428,
-    "2": 0.4257,
-    "1X": 0.5743,
-    "12": 0.6572,
-    "X2": 0.7685,
-    "over15": 0.5198,
-    "under15": 0.4802,
-    "over25": 0.2485,
-    "under25": 0.7515,
-    "over35": 0.0964,
-    "under35": 0.9036,
-    "gol_gol": 0.3264,
-    "no_gol": 0.6736,
+    "1": 0.2502,
+    "X": 0.3339,
+    "2": 0.4158,
+    "1X": 0.5842,
+    "12": 0.6661,
+    "X2": 0.7498,
+    "over15": 0.5502,
+    "under15": 0.4498,
+    "over25": 0.2753,
+    "under25": 0.7247,
+    "over35": 0.1123,
+    "under35": 0.8877,
+    "gol_gol": 0.3546,
+    "no_gol": 0.6454,
     "punteggi_probabili": [
      {
       "risultato": "0-0",
-      "prob": 0.1851
+      "prob": 0.1682
      },
      {
       "risultato": "0-1",
-      "prob": 0.179
+      "prob": 0.1655
      },
      {
       "risultato": "1-1",
-      "prob": 0.1333
+      "prob": 0.1369
      }
     ]
    },
+   "prima": {
+    "1": 0.2366,
+    "X": 0.347,
+    "2": 0.4164,
+    "attesi": "0.69-1.01"
+   },
+   "spostamento": 0.0136,
    "mercato": {
     "1": 0.2491,
     "X": 0.2801,
@@ -475,11 +392,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0176,
-    "X": 0.0627,
-    "2": -0.0451
+    "1": 0.0011,
+    "X": 0.0538,
+    "2": -0.055
    },
-   "divergenza_max": 0.0627
+   "divergenza_max": 0.055
   },
   {
    "fixture_id": 1576492,
@@ -487,45 +404,52 @@
    "campionato": "Portugal - Segunda Liga",
    "casa": "Sporting CP B",
    "fuori": "Lusitânia Lourosa",
-   "gol_attesi_casa": 1.49,
-   "gol_attesi_fuori": 0.97,
-   "gol_attesi_totali": 2.46,
-   "nettezza": 23.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.61,
+   "gol_attesi_fuori": 0.98,
+   "gol_attesi_totali": 2.59,
+   "nettezza": 27.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4879,
-    "X": 0.2736,
-    "2": 0.2384,
-    "1X": 0.7616,
-    "12": 0.7264,
-    "X2": 0.5121,
-    "over15": 0.71,
-    "under15": 0.29,
-    "over25": 0.4452,
-    "under25": 0.5548,
-    "over35": 0.2334,
-    "under35": 0.7666,
-    "gol_gol": 0.4861,
-    "no_gol": 0.5139,
+    "1": 0.5139,
+    "X": 0.2614,
+    "2": 0.2246,
+    "1X": 0.7754,
+    "12": 0.7386,
+    "X2": 0.4861,
+    "over15": 0.7356,
+    "under15": 0.2644,
+    "over25": 0.4778,
+    "under25": 0.5222,
+    "over35": 0.2607,
+    "under35": 0.7393,
+    "gol_gol": 0.505,
+    "no_gol": 0.495,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1296
+      "prob": 0.1245
      },
      {
       "risultato": "1-0",
-      "prob": 0.1216
+      "prob": 0.1151
      },
      {
       "risultato": "2-0",
-      "prob": 0.0953
+      "prob": 0.0972
      }
     ]
    },
+   "prima": {
+    "1": 0.4886,
+    "X": 0.2721,
+    "2": 0.2393,
+    "attesi": "1.50-0.98"
+   },
+   "spostamento": 0.0253,
    "mercato": {
     "1": 0.4248,
     "X": 0.2973,
@@ -534,11 +458,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0631,
-    "X": -0.0237,
-    "2": -0.0395
+    "1": 0.0891,
+    "X": -0.0359,
+    "2": -0.0533
    },
-   "divergenza_max": 0.0631
+   "divergenza_max": 0.0891
   },
   {
    "fixture_id": 1584408,
@@ -605,45 +529,52 @@
    "campionato": "Turkey - 1. Lig",
    "casa": "Kayserispor",
    "fuori": "İstanbulspor",
-   "gol_attesi_casa": 1.91,
-   "gol_attesi_fuori": 1.2,
-   "gol_attesi_totali": 3.1,
-   "nettezza": 30.0,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.98,
+   "gol_attesi_fuori": 1.22,
+   "gol_attesi_totali": 3.2,
+   "nettezza": 31.8,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5336,
-    "X": 0.2333,
-    "2": 0.2331,
-    "1X": 0.7669,
-    "12": 0.7667,
-    "X2": 0.4664,
-    "over15": 0.8209,
-    "under15": 0.1791,
-    "over25": 0.5995,
-    "under25": 0.4005,
-    "over35": 0.3758,
-    "under35": 0.6242,
-    "gol_gol": 0.5994,
-    "no_gol": 0.4006,
+    "1": 0.5455,
+    "X": 0.2273,
+    "2": 0.2272,
+    "1X": 0.7728,
+    "12": 0.7727,
+    "X2": 0.4545,
+    "over15": 0.8333,
+    "under15": 0.1667,
+    "over25": 0.6194,
+    "under25": 0.3806,
+    "over35": 0.3967,
+    "under35": 0.6033,
+    "gol_gol": 0.6118,
+    "no_gol": 0.3882,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1076
+      "prob": 0.1035
      },
      {
       "risultato": "2-1",
-      "prob": 0.0977
+      "prob": 0.0975
      },
      {
       "risultato": "2-0",
-      "prob": 0.0815
+      "prob": 0.0801
      }
     ]
    },
+   "prima": {
+    "1": 0.535,
+    "X": 0.2339,
+    "2": 0.2311,
+    "attesi": "1.90-1.18"
+   },
+   "spostamento": 0.0105,
    "mercato": {
     "1": 0.6383,
     "X": 0.217,
@@ -652,11 +583,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1047,
-    "X": 0.0163,
-    "2": 0.0884
+    "1": -0.0928,
+    "X": 0.0103,
+    "2": 0.0825
    },
-   "divergenza_max": 0.1047
+   "divergenza_max": 0.0928
   },
   {
    "fixture_id": 1575499,
