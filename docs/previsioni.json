@@ -1,73 +1,7 @@
 {
- "generato": "2026-09-14T19:36:27.203062+00:00",
+ "generato": "2026-09-14T20:03:30.577635+00:00",
  "modello": "2026-09-14T05:08:38.076362+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1575494,
-   "data": "2026-09-14T19:45:00+00:00",
-   "campionato": "Portugal - Primeira Liga",
-   "casa": "SC Braga",
-   "fuori": "Estoril",
-   "gol_attesi_casa": 1.97,
-   "gol_attesi_fuori": 0.94,
-   "gol_attesi_totali": 2.91,
-   "nettezza": 41.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.6084,
-    "X": 0.2232,
-    "2": 0.1684,
-    "1X": 0.8316,
-    "12": 0.7768,
-    "X2": 0.3916,
-    "over15": 0.7915,
-    "under15": 0.2085,
-    "over25": 0.5555,
-    "under25": 0.4445,
-    "over35": 0.3318,
-    "under35": 0.6682,
-    "gol_gol": 0.5289,
-    "no_gol": 0.4711,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1061
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.1058
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1025
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5926,
-    "X": 0.2363,
-    "2": 0.1711,
-    "attesi": "1.83-0.88"
-   },
-   "spostamento": 0.0158,
-   "mercato": {
-    "1": 0.6901,
-    "X": 0.1984,
-    "2": 0.1114,
-    "margine": 0.0696,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0817,
-    "X": 0.0248,
-    "2": 0.057
-   },
-   "divergenza_max": 0.0817
-  },
   {
    "fixture_id": 1520870,
    "data": "2026-09-14T22:30:00+00:00",
