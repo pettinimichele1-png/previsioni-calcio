@@ -1,250 +1,59 @@
 {
- "generato": "2026-09-14T17:02:46.436663+00:00",
+ "generato": "2026-09-14T17:36:28.897706+00:00",
  "modello": "2026-09-14T05:08:38.076362+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1494280,
-   "data": "2026-09-14T17:00:00+00:00",
-   "campionato": "Sweden - Allsvenskan",
-   "casa": "Sirius",
-   "fuori": "Degerfors IF",
-   "gol_attesi_casa": 1.5,
-   "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 2.36,
-   "nettezza": 27.1,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5142,
-    "X": 0.2743,
-    "2": 0.2115,
-    "1X": 0.7885,
-    "12": 0.7257,
-    "X2": 0.4858,
-    "over15": 0.689,
-    "under15": 0.311,
-    "over25": 0.4199,
-    "under25": 0.5801,
-    "over35": 0.213,
-    "under35": 0.787,
-    "gol_gol": 0.4553,
-    "no_gol": 0.5447,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-0",
-      "prob": 0.135
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1282
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.1055
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.508,
-    "X": 0.2789,
-    "2": 0.2132,
-    "attesi": "1.46-0.85"
-   },
-   "spostamento": 0.0062,
-   "mercato": {
-    "1": 0.647,
-    "X": 0.2099,
-    "2": 0.1431,
-    "margine": 0.0841,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.1328,
-    "X": 0.0644,
-    "2": 0.0684
-   },
-   "divergenza_max": 0.1328
-  },
-  {
-   "fixture_id": 1553167,
-   "data": "2026-09-14T17:00:00+00:00",
-   "campionato": "Poland - Ekstraklasa",
-   "casa": "Radomiak Radom",
-   "fuori": "Piast Gliwice",
-   "gol_attesi_casa": 1.05,
-   "gol_attesi_fuori": 1.31,
-   "gol_attesi_totali": 2.37,
-   "nettezza": 12.8,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.2924,
-    "X": 0.2888,
-    "2": 0.4187,
-    "1X": 0.5813,
-    "12": 0.7112,
-    "X2": 0.7076,
-    "over15": 0.6911,
-    "under15": 0.3089,
-    "over25": 0.422,
-    "under25": 0.578,
-    "over35": 0.2147,
-    "under35": 0.7853,
-    "gol_gol": 0.4829,
-    "no_gol": 0.5171,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1362
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1166
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1001
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3032,
-    "X": 0.2948,
-    "2": 0.4019,
-    "attesi": "1.05-1.25"
-   },
-   "spostamento": 0.0168,
-   "mercato": {
-    "1": 0.3961,
-    "X": 0.2678,
-    "2": 0.3362,
-    "margine": 0.0834,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.1037,
-    "X": 0.021,
-    "2": 0.0825
-   },
-   "divergenza_max": 0.1037
-  },
-  {
-   "fixture_id": 1576489,
-   "data": "2026-09-14T17:00:00+00:00",
-   "campionato": "Portugal - Segunda Liga",
-   "casa": "FC Porto B",
-   "fuori": "Vizela",
-   "gol_attesi_casa": 0.76,
-   "gol_attesi_fuori": 1.06,
-   "gol_attesi_totali": 1.82,
-   "nettezza": 12.4,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.2502,
-    "X": 0.3339,
-    "2": 0.4158,
-    "1X": 0.5842,
-    "12": 0.6661,
-    "X2": 0.7498,
-    "over15": 0.5502,
-    "under15": 0.4498,
-    "over25": 0.2753,
-    "under25": 0.7247,
-    "over35": 0.1123,
-    "under35": 0.8877,
-    "gol_gol": 0.3546,
-    "no_gol": 0.6454,
-    "punteggi_probabili": [
-     {
-      "risultato": "0-0",
-      "prob": 0.1682
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1655
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1369
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.2366,
-    "X": 0.347,
-    "2": 0.4164,
-    "attesi": "0.69-1.01"
-   },
-   "spostamento": 0.0136,
-   "mercato": {
-    "1": 0.2491,
-    "X": 0.2801,
-    "2": 0.4708,
-    "margine": 0.0976,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0011,
-    "X": 0.0538,
-    "2": -0.055
-   },
-   "divergenza_max": 0.055
-  },
   {
    "fixture_id": 1575499,
    "data": "2026-09-14T17:45:00+00:00",
    "campionato": "Portugal - Primeira Liga",
    "casa": "Rio Ave",
    "fuori": "Estrela",
-   "gol_attesi_casa": 1.16,
-   "gol_attesi_fuori": 1.43,
-   "gol_attesi_totali": 2.58,
-   "nettezza": 13.9,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.27,
+   "gol_attesi_fuori": 1.5,
+   "gol_attesi_totali": 2.77,
+   "nettezza": 13.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2992,
-    "X": 0.2746,
-    "2": 0.4261,
-    "1X": 0.5739,
-    "12": 0.7254,
-    "X2": 0.7008,
-    "over15": 0.7351,
-    "under15": 0.2649,
-    "over25": 0.4767,
-    "under25": 0.5233,
-    "over35": 0.2598,
-    "under35": 0.7402,
-    "gol_gol": 0.5266,
-    "no_gol": 0.4734,
+    "1": 0.3155,
+    "X": 0.2644,
+    "2": 0.4202,
+    "1X": 0.5798,
+    "12": 0.7356,
+    "X2": 0.6845,
+    "over15": 0.7699,
+    "under15": 0.2301,
+    "over25": 0.5236,
+    "under25": 0.4764,
+    "over35": 0.3016,
+    "under35": 0.6984,
+    "gol_gol": 0.5648,
+    "no_gol": 0.4352,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1309
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1017
+      "prob": 0.1253
      },
      {
       "risultato": "1-2",
-      "prob": 0.0889
+      "prob": 0.0895
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.088
      }
     ]
    },
+   "prima": {
+    "1": 0.3056,
+    "X": 0.2779,
+    "2": 0.4165,
+    "attesi": "1.15-1.39"
+   },
+   "spostamento": 0.0135,
    "mercato": {
     "1": 0.3495,
     "X": 0.2944,
@@ -253,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0503,
-    "X": -0.0198,
-    "2": 0.07
+    "1": -0.034,
+    "X": -0.03,
+    "2": 0.0641
    },
-   "divergenza_max": 0.07
+   "divergenza_max": 0.0641
   },
   {
    "fixture_id": 1551817,
@@ -324,45 +133,52 @@
    "campionato": "Netherlands - Eerste Divisie",
    "casa": "Jong Utrecht",
    "fuori": "Jong Ajax",
-   "gol_attesi_casa": 1.37,
-   "gol_attesi_fuori": 1.11,
-   "gol_attesi_totali": 2.48,
-   "nettezza": 13.3,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.46,
+   "gol_attesi_fuori": 1.09,
+   "gol_attesi_totali": 2.55,
+   "nettezza": 17.7,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4217,
-    "X": 0.281,
-    "2": 0.2973,
-    "1X": 0.7027,
-    "12": 0.719,
-    "X2": 0.5783,
-    "over15": 0.7158,
-    "under15": 0.2842,
-    "over25": 0.4521,
-    "under25": 0.5479,
-    "over35": 0.239,
-    "under35": 0.761,
-    "gol_gol": 0.5073,
-    "no_gol": 0.4927,
+    "1": 0.4514,
+    "X": 0.2736,
+    "2": 0.2751,
+    "1X": 0.7249,
+    "12": 0.7264,
+    "X2": 0.5486,
+    "over15": 0.7295,
+    "under15": 0.2705,
+    "over25": 0.4695,
+    "under25": 0.5305,
+    "over35": 0.2537,
+    "under35": 0.7463,
+    "gol_gol": 0.516,
+    "no_gol": 0.484,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1336
+      "prob": 0.1303
      },
      {
       "risultato": "1-0",
-      "prob": 0.1081
+      "prob": 0.1078
      },
      {
-      "risultato": "0-0",
-      "prob": 0.0898
+      "risultato": "2-1",
+      "prob": 0.0909
      }
     ]
    },
+   "prima": {
+    "1": 0.424,
+    "X": 0.2816,
+    "2": 0.2944,
+    "attesi": "1.37-1.10"
+   },
+   "spostamento": 0.0274,
    "mercato": {
     "1": 0.4184,
     "X": 0.2393,
@@ -371,11 +187,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0033,
-    "X": 0.0417,
-    "2": -0.045
+    "1": 0.033,
+    "X": 0.0343,
+    "2": -0.0672
    },
-   "divergenza_max": 0.045
+   "divergenza_max": 0.0672
   },
   {
    "fixture_id": 1569918,
@@ -600,18 +416,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4166,
-    "X": 0.2764,
-    "2": 0.307,
-    "margine": 0.0552,
+    "1": 0.4056,
+    "X": 0.2726,
+    "2": 0.3218,
+    "margine": 0.0551,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0288,
-    "X": -0.0202,
-    "2": -0.0086
+    "1": 0.0398,
+    "X": -0.0164,
+    "2": -0.0234
    },
-   "divergenza_max": 0.0288
+   "divergenza_max": 0.0398
   },
   {
    "fixture_id": 1570382,
