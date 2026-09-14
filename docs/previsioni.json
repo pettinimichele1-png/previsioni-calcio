@@ -1,243 +1,59 @@
 {
- "generato": "2026-09-14T17:36:28.897706+00:00",
+ "generato": "2026-09-14T18:03:32.270652+00:00",
  "modello": "2026-09-14T05:08:38.076362+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1575499,
-   "data": "2026-09-14T17:45:00+00:00",
-   "campionato": "Portugal - Primeira Liga",
-   "casa": "Rio Ave",
-   "fuori": "Estrela",
-   "gol_attesi_casa": 1.27,
-   "gol_attesi_fuori": 1.5,
-   "gol_attesi_totali": 2.77,
-   "nettezza": 13.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 10,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3155,
-    "X": 0.2644,
-    "2": 0.4202,
-    "1X": 0.5798,
-    "12": 0.7356,
-    "X2": 0.6845,
-    "over15": 0.7699,
-    "under15": 0.2301,
-    "over25": 0.5236,
-    "under25": 0.4764,
-    "over35": 0.3016,
-    "under35": 0.6984,
-    "gol_gol": 0.5648,
-    "no_gol": 0.4352,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1253
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0895
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.088
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3056,
-    "X": 0.2779,
-    "2": 0.4165,
-    "attesi": "1.15-1.39"
-   },
-   "spostamento": 0.0135,
-   "mercato": {
-    "1": 0.3495,
-    "X": 0.2944,
-    "2": 0.3561,
-    "margine": 0.072,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.034,
-    "X": -0.03,
-    "2": 0.0641
-   },
-   "divergenza_max": 0.0641
-  },
-  {
-   "fixture_id": 1551817,
-   "data": "2026-09-14T18:00:00+00:00",
-   "campionato": "Netherlands - Eerste Divisie",
-   "casa": "Jong PSV U21",
-   "fuori": "Jong AZ",
-   "gol_attesi_casa": 1.59,
-   "gol_attesi_fuori": 1.25,
-   "gol_attesi_totali": 2.83,
-   "nettezza": 17.1,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 12,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.4476,
-    "X": 0.2586,
-    "2": 0.2938,
-    "1X": 0.7062,
-    "12": 0.7414,
-    "X2": 0.5524,
-    "over15": 0.7802,
-    "under15": 0.2198,
-    "over25": 0.5383,
-    "under25": 0.4617,
-    "over35": 0.3153,
-    "under35": 0.6847,
-    "gol_gol": 0.5723,
-    "no_gol": 0.4277,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1222
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0924
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0876
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.3699,
-    "X": 0.2307,
-    "2": 0.3994,
-    "margine": 0.085,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0777,
-    "X": 0.0279,
-    "2": -0.1056
-   },
-   "divergenza_max": 0.1056
-  },
-  {
-   "fixture_id": 1551818,
-   "data": "2026-09-14T18:00:00+00:00",
-   "campionato": "Netherlands - Eerste Divisie",
-   "casa": "Jong Utrecht",
-   "fuori": "Jong Ajax",
-   "gol_attesi_casa": 1.46,
-   "gol_attesi_fuori": 1.09,
-   "gol_attesi_totali": 2.55,
-   "nettezza": 17.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4514,
-    "X": 0.2736,
-    "2": 0.2751,
-    "1X": 0.7249,
-    "12": 0.7264,
-    "X2": 0.5486,
-    "over15": 0.7295,
-    "under15": 0.2705,
-    "over25": 0.4695,
-    "under25": 0.5305,
-    "over35": 0.2537,
-    "under35": 0.7463,
-    "gol_gol": 0.516,
-    "no_gol": 0.484,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1303
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1078
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0909
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.424,
-    "X": 0.2816,
-    "2": 0.2944,
-    "attesi": "1.37-1.10"
-   },
-   "spostamento": 0.0274,
-   "mercato": {
-    "1": 0.4184,
-    "X": 0.2393,
-    "2": 0.3423,
-    "margine": 0.0832,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.033,
-    "X": 0.0343,
-    "2": -0.0672
-   },
-   "divergenza_max": 0.0672
-  },
   {
    "fixture_id": 1569918,
    "data": "2026-09-14T18:30:00+00:00",
    "campionato": "Spain - Segunda División",
    "casa": "Celta de Vigo II",
    "fuori": "Eibar",
-   "gol_attesi_casa": 1.23,
-   "gol_attesi_fuori": 1.52,
-   "gol_attesi_totali": 2.75,
-   "nettezza": 15.3,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.32,
+   "gol_attesi_fuori": 1.6,
+   "gol_attesi_totali": 2.92,
+   "nettezza": 15.2,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 10,
    "partite_storia_fuori": 10,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3003,
-    "X": 0.2643,
-    "2": 0.4354,
-    "1X": 0.5646,
-    "12": 0.7357,
-    "X2": 0.6997,
-    "over15": 0.7659,
-    "under15": 0.2341,
-    "over25": 0.518,
-    "under25": 0.482,
-    "over35": 0.2965,
-    "under35": 0.7035,
-    "gol_gol": 0.5583,
-    "no_gol": 0.4417,
+    "1": 0.3098,
+    "X": 0.2556,
+    "2": 0.4346,
+    "1X": 0.5654,
+    "12": 0.7444,
+    "X2": 0.6902,
+    "over15": 0.794,
+    "under15": 0.206,
+    "over25": 0.5582,
+    "under25": 0.4418,
+    "over35": 0.3344,
+    "under35": 0.6656,
+    "gol_gol": 0.5902,
+    "no_gol": 0.4098,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1255
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0915
+      "prob": 0.1197
      },
      {
       "risultato": "1-2",
-      "prob": 0.091
+      "prob": 0.0912
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.0807
      }
     ]
    },
+   "prima": {
+    "1": 0.3157,
+    "X": 0.2705,
+    "2": 0.4138,
+    "attesi": "1.23-1.44"
+   },
+   "spostamento": 0.0208,
    "mercato": {
     "1": 0.2912,
     "X": 0.2968,
@@ -246,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0091,
-    "X": -0.0325,
-    "2": 0.0235
+    "1": 0.0186,
+    "X": -0.0412,
+    "2": 0.0227
    },
-   "divergenza_max": 0.0325
+   "divergenza_max": 0.0412
   },
   {
    "fixture_id": 1550120,
@@ -1124,18 +940,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4336,
-    "X": 0.2802,
-    "2": 0.2862,
-    "margine": 0.0544,
+    "1": 0.4318,
+    "X": 0.2801,
+    "2": 0.2882,
+    "margine": 0.0563,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0025,
-    "X": 0.0014,
-    "2": 0.0011
+    "1": -0.0007,
+    "X": 0.0015,
+    "2": -0.0009
    },
-   "divergenza_max": 0.0025
+   "divergenza_max": 0.0015
   },
   {
    "fixture_id": 1552143,
@@ -1478,18 +1294,18 @@
     ]
    },
    "mercato": {
-    "1": 0.0941,
-    "X": 0.1485,
-    "2": 0.7573,
-    "margine": 0.0537,
+    "1": 0.092,
+    "X": 0.1446,
+    "2": 0.7634,
+    "margine": 0.0549,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0591,
-    "X": 0.0402,
-    "2": -0.0992
+    "1": 0.0612,
+    "X": 0.0441,
+    "2": -0.1053
    },
-   "divergenza_max": 0.0992
+   "divergenza_max": 0.1053
   },
   {
    "fixture_id": 1520877,
@@ -2776,18 +2592,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3977,
-    "X": 0.2819,
-    "2": 0.3205,
-    "margine": 0.0706,
-    "bookmaker": 7
+    "1": 0.3973,
+    "X": 0.284,
+    "2": 0.3188,
+    "margine": 0.0711,
+    "bookmaker": 8
    },
    "divergenza": {
-    "1": 0.0866,
-    "X": 0.0039,
-    "2": -0.0906
+    "1": 0.087,
+    "X": 0.0018,
+    "2": -0.0889
    },
-   "divergenza_max": 0.0906
+   "divergenza_max": 0.0889
   },
   {
    "fixture_id": 1561935,
