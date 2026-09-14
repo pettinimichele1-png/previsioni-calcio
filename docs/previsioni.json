@@ -1,131 +1,72 @@
 {
- "generato": "2026-09-14T19:04:30.779128+00:00",
+ "generato": "2026-09-14T19:36:27.203062+00:00",
  "modello": "2026-09-14T05:08:38.076362+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1575497,
-   "data": "2026-09-14T19:15:00+00:00",
-   "campionato": "Portugal - Primeira Liga",
-   "casa": "Moreirense",
-   "fuori": "Maritimo",
-   "gol_attesi_casa": 0.95,
-   "gol_attesi_fuori": 1.27,
-   "gol_attesi_totali": 2.21,
-   "nettezza": 14.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 10,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.2706,
-    "X": 0.2984,
-    "2": 0.4311,
-    "1X": 0.5689,
-    "12": 0.7016,
-    "X2": 0.7294,
-    "over15": 0.6555,
-    "under15": 0.3445,
-    "over25": 0.3812,
-    "under25": 0.6188,
-    "over35": 0.1835,
-    "under35": 0.8165,
-    "gol_gol": 0.4463,
-    "no_gol": 0.5537,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1376
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1319
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1157
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.2694,
-    "X": 0.3027,
-    "2": 0.4279,
-    "attesi": "0.92-1.24"
-   },
-   "spostamento": 0.0043,
-   "mercato": {
-    "1": 0.3473,
-    "X": 0.3022,
-    "2": 0.3505,
-    "margine": 0.0708,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0767,
-    "X": -0.0038,
-    "2": 0.0806
-   },
-   "divergenza_max": 0.0806
-  },
   {
    "fixture_id": 1575494,
    "data": "2026-09-14T19:45:00+00:00",
    "campionato": "Portugal - Primeira Liga",
    "casa": "SC Braga",
    "fuori": "Estoril",
-   "gol_attesi_casa": 1.81,
-   "gol_attesi_fuori": 0.88,
-   "gol_attesi_totali": 2.69,
-   "nettezza": 38.5,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.97,
+   "gol_attesi_fuori": 0.94,
+   "gol_attesi_totali": 2.91,
+   "nettezza": 41.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5897,
-    "X": 0.2379,
-    "2": 0.1725,
-    "1X": 0.8275,
-    "12": 0.7621,
-    "X2": 0.4103,
-    "over15": 0.7547,
-    "under15": 0.2453,
-    "over25": 0.5036,
-    "under25": 0.4964,
-    "over35": 0.2834,
-    "under35": 0.7166,
-    "gol_gol": 0.4937,
-    "no_gol": 0.5063,
+    "1": 0.6084,
+    "X": 0.2232,
+    "2": 0.1684,
+    "1X": 0.8316,
+    "12": 0.7768,
+    "X2": 0.3916,
+    "over15": 0.7915,
+    "under15": 0.2085,
+    "over25": 0.5555,
+    "under25": 0.4445,
+    "over35": 0.3318,
+    "under35": 0.6682,
+    "gol_gol": 0.5289,
+    "no_gol": 0.4711,
     "punteggi_probabili": [
      {
-      "risultato": "1-0",
-      "prob": 0.1178
-     },
-     {
       "risultato": "1-1",
-      "prob": 0.1133
+      "prob": 0.1061
      },
      {
       "risultato": "2-0",
-      "prob": 0.1117
+      "prob": 0.1058
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.1025
      }
     ]
    },
+   "prima": {
+    "1": 0.5926,
+    "X": 0.2363,
+    "2": 0.1711,
+    "attesi": "1.83-0.88"
+   },
+   "spostamento": 0.0158,
    "mercato": {
-    "1": 0.6764,
-    "X": 0.2046,
-    "2": 0.119,
-    "margine": 0.071,
+    "1": 0.6901,
+    "X": 0.1984,
+    "2": 0.1114,
+    "margine": 0.0696,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0867,
-    "X": 0.0333,
-    "2": 0.0535
+    "1": -0.0817,
+    "X": 0.0248,
+    "2": 0.057
    },
-   "divergenza_max": 0.0867
+   "divergenza_max": 0.0817
   },
   {
    "fixture_id": 1520870,
