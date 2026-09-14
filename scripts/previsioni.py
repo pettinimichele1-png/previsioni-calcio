@@ -42,6 +42,9 @@ MAX_GOL = 8
 
 USCITA_JSON = "previsioni.json"
 USCITA_HTML = "previsioni.html"
+USCITA_SELEZIONE = "selezione.html"
+SOGLIA_PROB = 0.70          # probabilita' minima dell'esito
+SOGLIA_AFFIDABILITA = 60    # dati sotto questa soglia non entrano
 
 
 def chiamata(endpoint, params):
@@ -314,6 +317,184 @@ def stato_squadre(conn, mod):
     return stato, formazione
 
 
+def leggi_verifica():
+    """
+    Quante volte, finora, si e' avverato cio' a cui davamo oltre il 70%.
+    Senza questo dato la selezione sarebbe solo un'opinione: e' l'unico
+    modo di sapere se in quella fascia siamo affidabili.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT a.p1, a.px, a.p2, f.goals_home, f.goals_away
+            FROM archivio_previsioni a
+            JOIN fixtures f ON f.id = a.fixture_id
+            WHERE f.goals_home IS NOT NULL AND f.status IN ('FT','AET','PEN')
+        """)
+        righe = cur.fetchall()
+        conn.close()
+    except sqlite3.OperationalError:
+        return None
+
+    casi = avverati = 0
+    for p1, px, p2, gc, ga in righe:
+        esito = "1" if gc > ga else ("X" if gc == ga else "2")
+        for et, p in (("1", p1), ("X", px), ("2", p2)):
+            if p is not None and p >= SOGLIA_PROB:
+                casi += 1
+                if et == esito:
+                    avverati += 1
+    return (casi, avverati) if casi else None
+
+
+def scrivi_selezione(previsioni, generato):
+    """
+    Pagina semplice: le partite dove il modello e' sicuro E ha dati solidi.
+    Mostra sempre accanto la probabilita' del mercato, perche' un accordo
+    col mercato e una divergenza vogliono dire cose molto diverse.
+    """
+    scelte = []
+    for p in previsioni:
+        m = p["mercati"]
+        for et, nome in (("1", p["casa"]), ("X", "Pareggio"), ("2", p["fuori"])):
+            if m[et] >= SOGLIA_PROB and p.get("affidabilita", 0) >= SOGLIA_AFFIDABILITA:
+                scelte.append((m[et], p, et, nome))
+    scelte.sort(reverse=True, key=lambda x: x[0])
+
+    verifica = leggi_verifica()
+    if verifica:
+        casi, avverati = verifica
+        if casi >= 20:
+            riquadro = (f'<div class="grande">{avverati/casi:.0%}</div>'
+                        f'<div class="spiega">Finora, su {casi} previsioni date '
+                        f'sopra il {SOGLIA_PROB:.0%}, se ne sono avverate '
+                        f'{avverati}. Se questo numero fosse molto sotto il '
+                        f'{SOGLIA_PROB:.0%}, vorrebbe dire che in questa fascia '
+                        f'siamo troppo ottimisti.</div>')
+        else:
+            riquadro = (f'<div class="grande">{casi} casi</div>'
+                        f'<div class="spiega">Ancora troppo pochi per sapere se '
+                        f'in questa fascia siamo affidabili. Servono almeno una '
+                        f'ventina di partite verificate.</div>')
+    else:
+        riquadro = ('<div class="grande">nessun dato</div>'
+                    '<div class="spiega">La verifica non ha ancora partite '
+                    'concluse da confrontare.</div>')
+
+    voci = []
+    for prob, p, et, nome in scelte:
+        mk = p.get("mercato")
+        if mk:
+            diff = prob - mk[et]
+            if abs(diff) < 0.05:
+                giudizio, classe = "il mercato e' d'accordo", "accordo"
+            elif diff > 0:
+                giudizio, classe = (f"noi {diff*100:+.0f} punti sopra il mercato",
+                                    "divergenza")
+            else:
+                giudizio, classe = (f"noi {diff*100:.0f} punti sotto il mercato",
+                                    "divergenza")
+            riga_mercato = (f'<div class="mercato {classe}">'
+                            f'mercato {mk[et]*100:.0f}% &middot; {giudizio}</div>')
+        else:
+            riga_mercato = '<div class="mercato">quote non disponibili</div>'
+
+        tipo = p.get("formazioni", "nessuna")
+        marchio = ('<span class="uff">formazioni ufficiali</span>'
+                   if tipo == "ufficiale" else
+                   '<span class="prob">formazioni stimate</span>')
+
+        voci.append(
+            f'<div class="scelta">'
+            f'<div class="alto"><span class="ora">{p["data"][8:10]}/{p["data"][5:7]} '
+            f'{p["data"][11:16]}</span>'
+            f'<span class="perc">{prob*100:.0f}%</span></div>'
+            f'<div class="partita">{p["casa"]} - {p["fuori"]}</div>'
+            f'<div class="esito">{nome}</div>'
+            f'{riga_mercato}'
+            f'<div class="sotto"><span class="lega">{p["campionato"]}</span>'
+            f'{marchio}</div>'
+            f'</div>')
+
+    if not voci:
+        voci = ['<div class="vuoto">Nessuna partita supera le soglie in questo '
+                'momento. Non e\' un problema: significa solo che il modello '
+                'non vede nulla di netto fra le partite in programma.</div>']
+
+    html = f"""<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selezione</title>
+<style>
+ body {{ font-family:-apple-system,system-ui,sans-serif; margin:0; padding:12px;
+        background:#f4f5f7; color:#1c2733; }}
+ h1 {{ font-size:18px; margin:0 0 4px; }}
+ .sottotitolo {{ font-size:11px; color:#5b6b7b; margin-bottom:12px; }}
+ .riquadro {{ background:#fff; border-radius:6px; padding:12px; margin-bottom:14px; }}
+ .tit {{ font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+         color:#7b8794; margin-bottom:6px; }}
+ .grande {{ font-size:26px; font-weight:600; }}
+ .spiega {{ font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }}
+ .scelta {{ background:#fff; border-radius:6px; padding:11px 12px;
+            margin-bottom:9px; }}
+ .alto {{ display:flex; justify-content:space-between; align-items:center; }}
+ .ora {{ font-size:11px; color:#7b8794; }}
+ .perc {{ font-size:20px; font-weight:600; color:#1e7d3c; }}
+ .partita {{ font-size:14px; font-weight:500; margin-top:3px; }}
+ .esito {{ font-size:12px; color:#2c3e50; margin-top:2px; }}
+ .mercato {{ font-size:11px; margin-top:6px; padding:4px 7px;
+             border-radius:4px; background:#f2f4f6; color:#5b6b7b; }}
+ .mercato.accordo {{ background:#e8f2e8; color:#2b6b3f; }}
+ .mercato.divergenza {{ background:#fdf6e3; color:#8a6d1f; }}
+ .sotto {{ display:flex; justify-content:space-between; align-items:center;
+           margin-top:7px; }}
+ .lega {{ font-size:10px; color:#97a3ae; }}
+ .uff {{ background:#2c3e50; color:#fff; font-size:9px; padding:2px 6px;
+         border-radius:3px; }}
+ .prob {{ background:#aeb8c2; color:#fff; font-size:9px; padding:2px 6px;
+          border-radius:3px; }}
+ .vuoto {{ background:#fff; border-radius:6px; padding:18px; font-size:12px;
+           color:#5b6b7b; line-height:1.6; }}
+ .nota {{ margin-top:16px; font-size:10px; color:#7b8794; line-height:1.7; }}
+ .collegamento {{ display:inline-block; margin-top:6px; padding:5px 10px;
+                  background:#2c3e50; color:#fff; border-radius:4px;
+                  text-decoration:none; font-size:11px; }}
+ a {{ color:#2c3e50; }}
+</style></head><body>
+<h1>Selezione</h1>
+<div class="sottotitolo">
+Esiti sopra il {SOGLIA_PROB:.0%} su partite con dati solidi &middot;
+aggiornata il {generato[:16].replace('T', ' alle ')} UTC
+</div>
+
+<div class="riquadro">
+ <div class="tit">Quanto ci si puo' fidare di questa fascia</div>
+ {riquadro}
+</div>
+
+{''.join(voci)}
+
+<div class="nota">
+<b>Come leggere questa pagina.</b> Un esito al 70% si verifica sette volte
+su dieci: tre volte su dieci va storto, ed e' normale, non un errore del
+sistema.<br><br>
+Entrano solo le partite dove le squadre hanno storico sufficiente e le
+formazioni sono note: una probabilita' alta costruita su pochi dati non
+vale niente.<br><br>
+Quando il riquadro e' giallo, stiamo dicendo qualcosa di diverso dal
+mercato. Nei nostri test le divergenze grandi si sono rivelate quasi
+sempre errori nostri, non intuizioni: trattale con piu' cautela, non con
+meno.<br><br>
+<a href="index.html">Tutte le partite</a> &middot;
+<a href="verifica.html">Verifica</a>
+</div>
+</body></html>"""
+    with open(USCITA_SELEZIONE, "w", encoding="utf-8") as f:
+        f.write(html)
+    return len(scelte)
+
+
 def main():
     if not os.path.exists(DB_PATH):
         print(f"Database {DB_PATH} non trovato.")
@@ -487,10 +668,12 @@ def main():
         json.dump({"generato": generato, "modello": mod["generato"],
                    "previsioni": previsioni}, f, ensure_ascii=False, indent=1)
     scrivi_html(previsioni, generato, mod)
+    n_scelte = scrivi_selezione(previsioni, generato)
 
     print(f"\nPrevisioni prodotte: {len(previsioni)}")
     print(f"  di cui con formazioni (probabili o ufficiali): {con_formazioni}")
-    print(f"  {USCITA_JSON}\n  {USCITA_HTML}")
+    print(f"  {USCITA_JSON}\n  {USCITA_HTML}"
+          f"\n  {USCITA_SELEZIONE} ({n_scelte} esiti selezionati)")
 
 
 def scrivi_html(previsioni, generato, mod):
@@ -665,6 +848,9 @@ def scrivi_html(previsioni, generato, mod):
  .prob {{ background:#aeb8c2; color:#fff; font-size:8px; padding:1px 4px;
           border-radius:2px; margin-left:5px; }}
  .nota {{ margin-top:16px; font-size:10px; color:#7b8794; line-height:1.7; }}
+ .collegamento {{ display:inline-block; margin-top:6px; padding:5px 10px;
+                  background:#2c3e50; color:#fff; border-radius:4px;
+                  text-decoration:none; font-size:11px; }}
 </style></head><body>
 <h1>Previsioni calcistiche</h1>
 <div class="info">
@@ -672,7 +858,8 @@ Aggiornate il {generato[:16].replace('T', ' alle ')} UTC &middot;
 {len(previsioni)} partite &middot; modello su {mod['partite_addestramento']} partite<br>
 <span class="uff">UFF</span> formazioni ufficiali &middot;
 <span class="prob">prob</span> formazioni probabili &middot;
-tocca una partita per il dettaglio
+tocca una partita per il dettaglio<br>
+<a href="selezione.html" class="collegamento">Vedi solo gli esiti piu' probabili</a>
 </div>
 {''.join(blocchi)}
 <div class="nota">
