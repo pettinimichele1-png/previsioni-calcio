@@ -51,6 +51,7 @@ CARTELLA_STATO = "stato"
 PUBBLICATI = {
     "previsioni.html": "index.html",
     "previsioni.json": "previsioni.json",
+    "selezione.html": "selezione.html",
     "verifica.html": "verifica.html",
     "verifica.json": "verifica.json",
 }
