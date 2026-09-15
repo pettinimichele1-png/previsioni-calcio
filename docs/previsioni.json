@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-15T21:39:01.075123+00:00",
+ "generato": "2026-09-15T22:11:01.190181+00:00",
  "modello": "2026-09-15T15:45:47.090989+00:00",
  "previsioni": [
   {
@@ -8,58 +8,65 @@
    "campionato": "Brazil - Serie B",
    "casa": "Londrina",
    "fuori": "Ponte Preta",
-   "gol_attesi_casa": 2.47,
-   "gol_attesi_fuori": 0.66,
-   "gol_attesi_totali": 3.13,
-   "nettezza": 65.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.66,
+   "gol_attesi_fuori": 0.68,
+   "gol_attesi_totali": 3.34,
+   "nettezza": 68.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.7674,
-    "X": 0.157,
-    "2": 0.0756,
-    "1X": 0.9244,
-    "12": 0.843,
-    "X2": 0.2326,
-    "over15": 0.8229,
-    "under15": 0.1771,
-    "over25": 0.605,
-    "under25": 0.395,
-    "over35": 0.3813,
-    "under35": 0.6187,
-    "gol_gol": 0.4456,
-    "no_gol": 0.5544,
+    "1": 0.7902,
+    "X": 0.1418,
+    "2": 0.0681,
+    "1X": 0.9319,
+    "12": 0.8582,
+    "X2": 0.2098,
+    "over15": 0.8486,
+    "under15": 0.1514,
+    "over25": 0.647,
+    "under25": 0.353,
+    "over35": 0.4265,
+    "under35": 0.5735,
+    "gol_gol": 0.4609,
+    "no_gol": 0.5391,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1335
+      "prob": 0.1259
      },
      {
       "risultato": "3-0",
-      "prob": 0.11
+      "prob": 0.1116
      },
      {
       "risultato": "1-0",
-      "prob": 0.1045
+      "prob": 0.0916
      }
     ]
    },
+   "prima": {
+    "1": 0.7674,
+    "X": 0.157,
+    "2": 0.0756,
+    "attesi": "2.47-0.66"
+   },
+   "spostamento": 0.0228,
    "mercato": {
-    "1": 0.7105,
-    "X": 0.1872,
-    "2": 0.1023,
-    "margine": 0.0787,
+    "1": 0.709,
+    "X": 0.1877,
+    "2": 0.1033,
+    "margine": 0.0782,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0569,
-    "X": -0.0302,
-    "2": -0.0267
+    "1": 0.0812,
+    "X": -0.0459,
+    "2": -0.0352
    },
-   "divergenza_max": 0.0569
+   "divergenza_max": 0.0812
   },
   {
    "fixture_id": 1520878,
@@ -67,58 +74,65 @@
    "campionato": "Brazil - Serie B",
    "casa": "Nautico Recife",
    "fuori": "Operario-PR",
-   "gol_attesi_casa": 1.84,
-   "gol_attesi_fuori": 1.22,
-   "gol_attesi_totali": 3.06,
-   "nettezza": 27.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.94,
+   "gol_attesi_fuori": 1.23,
+   "gol_attesi_totali": 3.17,
+   "nettezza": 30.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5143,
-    "X": 0.2385,
-    "2": 0.2472,
-    "1X": 0.7528,
-    "12": 0.7615,
-    "X2": 0.4857,
-    "over15": 0.8154,
-    "under15": 0.1846,
-    "over25": 0.5909,
-    "under25": 0.4091,
-    "over35": 0.367,
-    "under35": 0.633,
-    "gol_gol": 0.5986,
-    "no_gol": 0.4014,
+    "1": 0.5338,
+    "X": 0.2305,
+    "2": 0.2357,
+    "1X": 0.7643,
+    "12": 0.7695,
+    "X2": 0.4662,
+    "over15": 0.8303,
+    "under15": 0.1697,
+    "over25": 0.6146,
+    "under25": 0.3854,
+    "over35": 0.3916,
+    "under35": 0.6084,
+    "gol_gol": 0.6118,
+    "no_gol": 0.3882,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1104
+      "prob": 0.1051
      },
      {
       "risultato": "2-1",
-      "prob": 0.0969
+      "prob": 0.0972
      },
      {
-      "risultato": "1-0",
-      "prob": 0.0808
+      "risultato": "2-0",
+      "prob": 0.0788
      }
     ]
    },
+   "prima": {
+    "1": 0.5143,
+    "X": 0.2385,
+    "2": 0.2472,
+    "attesi": "1.84-1.22"
+   },
+   "spostamento": 0.0195,
    "mercato": {
-    "1": 0.5085,
-    "X": 0.2767,
-    "2": 0.2148,
-    "margine": 0.077,
+    "1": 0.5099,
+    "X": 0.2762,
+    "2": 0.2139,
+    "margine": 0.0773,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0058,
-    "X": -0.0382,
-    "2": 0.0324
+    "1": 0.0239,
+    "X": -0.0457,
+    "2": 0.0218
    },
-   "divergenza_max": 0.0382
+   "divergenza_max": 0.0457
   },
   {
    "fixture_id": 1520874,
@@ -756,18 +770,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2419,
-    "X": 0.2757,
-    "2": 0.4824,
-    "margine": 0.0865,
+    "1": 0.2388,
+    "X": 0.2753,
+    "2": 0.486,
+    "margine": 0.0821,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0173,
-    "X": -0.047,
-    "2": 0.0642
+    "1": -0.0142,
+    "X": -0.0466,
+    "2": 0.0606
    },
-   "divergenza_max": 0.0642
+   "divergenza_max": 0.0606
   },
   {
    "fixture_id": 1570386,
@@ -815,18 +829,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5617,
-    "X": 0.2581,
-    "2": 0.1801,
-    "margine": 0.0606,
+    "1": 0.5552,
+    "X": 0.2617,
+    "2": 0.1831,
+    "margine": 0.0622,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0465,
-    "X": 0.0064,
-    "2": 0.0402
+    "1": -0.04,
+    "X": 0.0028,
+    "2": 0.0372
    },
-   "divergenza_max": 0.0465
+   "divergenza_max": 0.04
   },
   {
    "fixture_id": 1570390,
@@ -874,18 +888,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2651,
-    "X": 0.2531,
-    "2": 0.4818,
-    "margine": 0.0624,
+    "1": 0.2654,
+    "X": 0.2537,
+    "2": 0.4809,
+    "margine": 0.0619,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1017,
-    "X": -0.0038,
-    "2": -0.0979
+    "1": 0.1014,
+    "X": -0.0044,
+    "2": -0.097
    },
-   "divergenza_max": 0.1017
+   "divergenza_max": 0.1014
   },
   {
    "fixture_id": 1549765,
@@ -3090,18 +3104,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3363,
+    "1": 0.3354,
     "X": 0.2932,
-    "2": 0.3705,
-    "margine": 0.0792,
+    "2": 0.3714,
+    "margine": 0.0788,
     "bookmaker": 8
    },
    "divergenza": {
-    "1": -0.0901,
+    "1": -0.0892,
     "X": -0.0725,
-    "2": 0.1626
+    "2": 0.1617
    },
-   "divergenza_max": 0.1626
+   "divergenza_max": 0.1617
   },
   {
    "fixture_id": 1520887,
