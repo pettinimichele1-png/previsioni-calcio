@@ -1,66 +1,7 @@
 {
- "generato": "2026-09-15T15:46:43.503422+00:00",
+ "generato": "2026-09-15T16:11:25.240768+00:00",
  "modello": "2026-09-15T15:45:47.090989+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1553125,
-   "data": "2026-09-15T16:00:00+00:00",
-   "campionato": "Poland - Ekstraklasa",
-   "casa": "Raków Częstochowa",
-   "fuori": "Zaglebie Lubin",
-   "gol_attesi_casa": 1.36,
-   "gol_attesi_fuori": 1.41,
-   "gol_attesi_totali": 2.77,
-   "nettezza": 6.7,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.3555,
-    "X": 0.2665,
-    "2": 0.3781,
-    "1X": 0.6219,
-    "12": 0.7335,
-    "X2": 0.6445,
-    "over15": 0.7693,
-    "under15": 0.2307,
-    "over25": 0.5228,
-    "under25": 0.4772,
-    "over35": 0.3008,
-    "under35": 0.6992,
-    "gol_gol": 0.5674,
-    "no_gol": 0.4326,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1263
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0847
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0825
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.4858,
-    "X": 0.2646,
-    "2": 0.2495,
-    "margine": 0.0784,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.1303,
-    "X": 0.0019,
-    "2": 0.1286
-   },
-   "divergenza_max": 0.1303
-  },
   {
    "fixture_id": 1555368,
    "data": "2026-09-15T17:00:00+00:00",
