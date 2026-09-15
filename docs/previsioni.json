@@ -1,139 +1,7 @@
 {
- "generato": "2026-09-15T16:41:49.743557+00:00",
+ "generato": "2026-09-15T17:10:33.505107+00:00",
  "modello": "2026-09-15T15:45:47.090989+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1555368,
-   "data": "2026-09-15T17:00:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "Grasshoppers",
-   "fuori": "FC Sion",
-   "gol_attesi_casa": 1.43,
-   "gol_attesi_fuori": 1.59,
-   "gol_attesi_totali": 3.02,
-   "nettezza": 11.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3392,
-    "X": 0.2522,
-    "2": 0.4086,
-    "1X": 0.5914,
-    "12": 0.7478,
-    "X2": 0.6608,
-    "over15": 0.8099,
-    "under15": 0.1901,
-    "over25": 0.5821,
-    "under25": 0.4179,
-    "over35": 0.3581,
-    "under35": 0.6419,
-    "gol_gol": 0.6118,
-    "no_gol": 0.3882,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1164
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0882
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0794
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3429,
-    "X": 0.2539,
-    "2": 0.4032,
-    "attesi": "1.43-1.56"
-   },
-   "spostamento": 0.0054,
-   "mercato": {
-    "1": 0.2496,
-    "X": 0.2411,
-    "2": 0.5093,
-    "margine": 0.077,
-    "bookmaker": 8
-   },
-   "divergenza": {
-    "1": 0.0896,
-    "X": 0.0111,
-    "2": -0.1007
-   },
-   "divergenza_max": 0.1007
-  },
-  {
-   "fixture_id": 1570391,
-   "data": "2026-09-15T17:00:00+00:00",
-   "campionato": "Spain - La Liga",
-   "casa": "Rayo Vallecano",
-   "fuori": "Espanyol",
-   "gol_attesi_casa": 1.37,
-   "gol_attesi_fuori": 1.2,
-   "gol_attesi_totali": 2.58,
-   "nettezza": 10.4,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4025,
-    "X": 0.2767,
-    "2": 0.3207,
-    "1X": 0.6793,
-    "12": 0.7233,
-    "X2": 0.5975,
-    "over15": 0.7341,
-    "under15": 0.2659,
-    "over25": 0.4754,
-    "under25": 0.5246,
-    "over35": 0.2587,
-    "under35": 0.7413,
-    "gol_gol": 0.5285,
-    "no_gol": 0.4715,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1319
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0984
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0864
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3973,
-    "X": 0.2807,
-    "2": 0.322,
-    "attesi": "1.34-1.18"
-   },
-   "spostamento": 0.0052,
-   "mercato": {
-    "1": 0.4069,
-    "X": 0.2837,
-    "2": 0.3095,
-    "margine": 0.0534,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0044,
-    "X": -0.007,
-    "2": 0.0112
-   },
-   "divergenza_max": 0.0112
-  },
   {
    "fixture_id": 1552143,
    "data": "2026-09-15T18:00:00+00:00",
@@ -4107,18 +3975,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3672,
-    "X": 0.2804,
-    "2": 0.3524,
-    "margine": 0.0825,
+    "1": 0.368,
+    "X": 0.2817,
+    "2": 0.3502,
+    "margine": 0.0824,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1036,
-    "X": -0.0169,
-    "2": -0.0867
+    "1": 0.1028,
+    "X": -0.0182,
+    "2": -0.0845
    },
-   "divergenza_max": 0.1036
+   "divergenza_max": 0.1028
   },
   {
    "fixture_id": 1552478,
@@ -5641,18 +5509,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3155,
-    "X": 0.2738,
-    "2": 0.4107,
-    "margine": 0.0812,
+    "1": 0.3151,
+    "X": 0.2737,
+    "2": 0.4112,
+    "margine": 0.0813,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0001,
-    "X": -0.0128,
-    "2": 0.0126
+    "1": 0.0005,
+    "X": -0.0127,
+    "2": 0.0121
    },
-   "divergenza_max": 0.0128
+   "divergenza_max": 0.0127
   },
   {
    "fixture_id": 1584414,
