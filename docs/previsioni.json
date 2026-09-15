@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-15T23:10:16.769103+00:00",
+ "generato": "2026-09-15T23:38:36.917800+00:00",
  "modello": "2026-09-15T15:45:47.090989+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Brazil - Serie B",
    "casa": "CRB",
    "fuori": "Sport Recife",
-   "gol_attesi_casa": 1.8,
-   "gol_attesi_fuori": 1.45,
-   "gol_attesi_totali": 3.25,
-   "nettezza": 18.0,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.81,
+   "gol_attesi_fuori": 1.47,
+   "gol_attesi_totali": 3.28,
+   "nettezza": 17.9,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 27,
    "partite_storia_fuori": 27,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4534,
-    "X": 0.2391,
-    "2": 0.3076,
-    "1X": 0.6924,
-    "12": 0.7609,
-    "X2": 0.5466,
-    "over15": 0.8398,
-    "under15": 0.1602,
-    "over25": 0.6296,
-    "under25": 0.3704,
-    "over35": 0.4076,
-    "under35": 0.5924,
-    "gol_gol": 0.6435,
-    "no_gol": 0.3565,
+    "1": 0.4529,
+    "X": 0.2379,
+    "2": 0.3092,
+    "1X": 0.6908,
+    "12": 0.7621,
+    "X2": 0.5471,
+    "over15": 0.8434,
+    "under15": 0.1566,
+    "over25": 0.6357,
+    "under25": 0.3643,
+    "over35": 0.4143,
+    "under35": 0.5857,
+    "gol_gol": 0.6484,
+    "no_gol": 0.3516,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1065
+      "prob": 0.1053
      },
      {
       "risultato": "2-1",
-      "prob": 0.091
+      "prob": 0.0907
      },
      {
       "risultato": "1-2",
-      "prob": 0.0735
+      "prob": 0.0736
      }
     ]
    },
+   "prima": {
+    "1": 0.4534,
+    "X": 0.2391,
+    "2": 0.3076,
+    "attesi": "1.80-1.45"
+   },
+   "spostamento": 0.0016,
    "mercato": {
     "1": 0.5001,
     "X": 0.2623,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0467,
-    "X": -0.0232,
-    "2": 0.0699
+    "1": -0.0472,
+    "X": -0.0244,
+    "2": 0.0715
    },
-   "divergenza_max": 0.0699
+   "divergenza_max": 0.0715
   },
   {
    "fixture_id": 1549705,
