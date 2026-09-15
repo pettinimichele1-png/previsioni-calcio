@@ -43,7 +43,7 @@ MAX_GOL = 8
 USCITA_JSON = "previsioni.json"
 USCITA_HTML = "previsioni.html"
 USCITA_SELEZIONE = "selezione.html"
-SOGLIA_PROB = 0.70          # probabilita' minima dell'esito
+SOGLIA_VANTAGGIO = 0.05     # vantaggio stimato minimo sulla quota
 SOGLIA_AFFIDABILITA = 60    # dati sotto questa soglia non entrano
 
 
@@ -116,6 +116,75 @@ def mercati(M):
     }
 
 
+def quote_mercati(voce):
+    """
+    Probabilita' implicite in TUTTI i mercati che seguiamo, tolto il
+    margine. La risposta dell'API contiene gia' tutti i mercati di ogni
+    bookmaker: non costa chiamate in piu' leggerli.
+
+    Ogni mercato viene normalizzato per conto suo, perche' ognuno ha il
+    suo margine.
+    """
+    gruppi = {"1x2": [], "ou25": [], "gg": []}
+    quote_grezze = {"1x2": [], "ou25": [], "gg": []}
+
+    for book in voce.get("bookmakers", []) or []:
+        trovati = {}
+        for scommessa in book.get("bets", []) or []:
+            nome = (scommessa.get("name") or "").lower()
+            valori = {}
+            for v in scommessa.get("values", []) or []:
+                et = str(v.get("value", "")).strip().lower()
+                try:
+                    q = float(v.get("odd"))
+                except (TypeError, ValueError):
+                    continue
+                if q <= 1.0:
+                    continue
+                valori[et] = q
+
+            if nome in ("match winner", "1x2", "fulltime result"):
+                c = {k: valori.get(a) for k, a in
+                     (("1", "home"), ("X", "draw"), ("2", "away"))}
+                if all(c.values()):
+                    trovati["1x2"] = c
+            elif nome in ("goals over/under", "over/under"):
+                sopra = valori.get("over 2.5")
+                sotto = valori.get("under 2.5")
+                if sopra and sotto:
+                    trovati["ou25"] = {"over25": sopra, "under25": sotto}
+            elif nome in ("both teams score", "both teams to score"):
+                si, no = valori.get("yes"), valori.get("no")
+                if si and no:
+                    trovati["gg"] = {"gol_gol": si, "no_gol": no}
+
+        for chiave, c in trovati.items():
+            grezze = {k: 1 / q for k, q in c.items()}
+            s = sum(grezze.values())
+            if 1.0 < s < 1.6:
+                gruppi[chiave].append({k: v / s for k, v in grezze.items()})
+                quote_grezze[chiave].append((c, s - 1))
+
+    risultato = {}
+    for chiave, lista in gruppi.items():
+        if not lista:
+            continue
+        n = len(lista)
+        for et in lista[0]:
+            risultato[et] = sum(d[et] for d in lista) / n
+            # quota media effettivamente disponibile, per il calcolo del valore
+            risultato[f"quota_{et}"] = sum(
+                q[0][et] for q in quote_grezze[chiave]) / n
+        risultato[f"margine_{chiave}"] = sum(
+            q[1] for q in quote_grezze[chiave]) / n
+        risultato[f"book_{chiave}"] = n
+
+    if "1" in risultato:
+        risultato["margine"] = risultato.get("margine_1x2", 0)
+        risultato["bookmaker"] = risultato.get("book_1x2", 0)
+    return risultato or None
+
+
 def quote_1x2(voce):
     """
     Probabilita' 1X2 medie tra i bookmaker, tolto il margine.
@@ -181,7 +250,7 @@ def scarica_quote(giorni, id_ammessi):
             for voce in risposta:
                 fid = (voce.get("fixture") or {}).get("id")
                 if fid in id_ammessi:
-                    est = quote_1x2(voce)
+                    est = quote_mercati(voce)
                     if est:
                         quote[fid] = est
             if pagina >= (dati.get("paging") or {}).get("total", 1):
@@ -317,19 +386,19 @@ def stato_squadre(conn, mod):
     return stato, formazione
 
 
-def leggi_verifica():
+def leggi_rendimento():
     """
-    Quante volte, finora, si e' avverato cio' a cui davamo oltre il 70%.
-    Senza questo dato la selezione sarebbe solo un'opinione: e' l'unico
-    modo di sapere se in quella fascia siamo affidabili.
+    Come sarebbero andate le segnalazioni passate. E' l'unico modo di
+    sapere se questo criterio vale qualcosa: senza, la pagina sarebbe
+    una promessa non verificata.
     """
     try:
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
         cur.execute("""
-            SELECT a.p1, a.px, a.p2, f.goals_home, f.goals_away
-            FROM archivio_previsioni a
-            JOIN fixtures f ON f.id = a.fixture_id
+            SELECT s.esito, s.prob_nostra, s.quota, f.goals_home, f.goals_away
+            FROM segnalazioni s
+            JOIN fixtures f ON f.id = s.fixture_id
             WHERE f.goals_home IS NOT NULL AND f.status IN ('FT','AET','PEN')
         """)
         righe = cur.fetchall()
@@ -337,90 +406,143 @@ def leggi_verifica():
     except sqlite3.OperationalError:
         return None
 
-    casi = avverati = 0
-    for p1, px, p2, gc, ga in righe:
-        esito = "1" if gc > ga else ("X" if gc == ga else "2")
-        for et, p in (("1", p1), ("X", px), ("2", p2)):
-            if p is not None and p >= SOGLIA_PROB:
-                casi += 1
-                if et == esito:
-                    avverati += 1
-    return (casi, avverati) if casi else None
+    if not righe:
+        return None
+
+    vinte = 0
+    ritorno = 0.0
+    for esito, prob, quota, gc, ga in righe:
+        avvenuto = {
+            "1": gc > ga, "X": gc == ga, "2": gc < ga,
+            "over25": (gc + ga) >= 3, "under25": (gc + ga) < 3,
+            "gol_gol": gc > 0 and ga > 0, "no_gol": not (gc > 0 and ga > 0),
+        }.get(esito)
+        if avvenuto is None:
+            continue
+        if avvenuto:
+            vinte += 1
+            ritorno += (quota or 0) - 1
+        else:
+            ritorno -= 1
+    return len(righe), vinte, ritorno
+
+
+def salva_segnalazioni(scelte, conn):
+    """Registra cosa e' stato segnalato, per poterlo verificare dopo."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS segnalazioni (
+            fixture_id INTEGER, esito TEXT,
+            data TEXT, casa TEXT, fuori TEXT,
+            prob_nostra REAL, prob_mercato REAL, quota REAL, vantaggio REAL,
+            segnalato_il TEXT,
+            PRIMARY KEY (fixture_id, esito))
+    """)
+    adesso = datetime.now(timezone.utc).isoformat()
+    for v in scelte:
+        conn.execute("""INSERT OR IGNORE INTO segnalazioni
+                        VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                     (v["fixture_id"], v["esito"], v["data"], v["casa"],
+                      v["fuori"], v["prob"], v["mercato"], v["quota"],
+                      v["vantaggio"], adesso))
+    conn.commit()
+
+
+# etichetta leggibile per ogni esito
+NOMI_ESITO = {
+    "1": "Vittoria casa", "X": "Pareggio", "2": "Vittoria trasferta",
+    "over25": "Over 2.5", "under25": "Under 2.5",
+    "gol_gol": "Gol / Gol", "no_gol": "NoGol",
+}
 
 
 def scrivi_selezione(previsioni, generato):
     """
-    Pagina semplice: le partite dove il modello e' sicuro E ha dati solidi.
-    Mostra sempre accanto la probabilita' del mercato, perche' un accordo
-    col mercato e una divergenza vogliono dire cose molto diverse.
+    Le partite dove il modello stima piu' probabilita' di quanta ne
+    implichi la quota. Il vantaggio e' stimato CON LE NOSTRE probabilita':
+    se sono sbagliate, il vantaggio non esiste.
     """
     scelte = []
     for p in previsioni:
-        m = p["mercati"]
-        for et, nome in (("1", p["casa"]), ("X", "Pareggio"), ("2", p["fuori"])):
-            if m[et] >= SOGLIA_PROB and p.get("affidabilita", 0) >= SOGLIA_AFFIDABILITA:
-                scelte.append((m[et], p, et, nome))
-    scelte.sort(reverse=True, key=lambda x: x[0])
-
-    verifica = leggi_verifica()
-    if verifica:
-        casi, avverati = verifica
-        if casi >= 20:
-            riquadro = (f'<div class="grande">{avverati/casi:.0%}</div>'
-                        f'<div class="spiega">Finora, su {casi} previsioni date '
-                        f'sopra il {SOGLIA_PROB:.0%}, se ne sono avverate '
-                        f'{avverati}. Se questo numero fosse molto sotto il '
-                        f'{SOGLIA_PROB:.0%}, vorrebbe dire che in questa fascia '
-                        f'siamo troppo ottimisti.</div>')
-        else:
-            riquadro = (f'<div class="grande">{casi} casi</div>'
-                        f'<div class="spiega">Ancora troppo pochi per sapere se '
-                        f'in questa fascia siamo affidabili. Servono almeno una '
-                        f'ventina di partite verificate.</div>')
-    else:
-        riquadro = ('<div class="grande">nessun dato</div>'
-                    '<div class="spiega">La verifica non ha ancora partite '
-                    'concluse da confrontare.</div>')
-
-    voci = []
-    for prob, p, et, nome in scelte:
+        if p.get("affidabilita", 0) < SOGLIA_AFFIDABILITA:
+            continue
         mk = p.get("mercato")
-        if mk:
-            diff = prob - mk[et]
-            if abs(diff) < 0.05:
-                giudizio, classe = "il mercato e' d'accordo", "accordo"
-            elif diff > 0:
-                giudizio, classe = (f"noi {diff*100:+.0f} punti sopra il mercato",
-                                    "divergenza")
-            else:
-                giudizio, classe = (f"noi {diff*100:.0f} punti sotto il mercato",
-                                    "divergenza")
-            riga_mercato = (f'<div class="mercato {classe}">'
-                            f'mercato {mk[et]*100:.0f}% &middot; {giudizio}</div>')
-        else:
-            riga_mercato = '<div class="mercato">quote non disponibili</div>'
+        if not mk:
+            continue
+        m = p["mercati"]
+        for esito in NOMI_ESITO:
+            if esito not in m or esito not in mk:
+                continue
+            quota = mk.get(f"quota_{esito}")
+            if not quota:
+                continue
+            # valore atteso: probabilita' nostra per quota, meno la posta
+            vantaggio = m[esito] * quota - 1
+            if vantaggio >= SOGLIA_VANTAGGIO:
+                scelte.append({
+                    "fixture_id": p["fixture_id"], "esito": esito,
+                    "data": p["data"], "casa": p["casa"], "fuori": p["fuori"],
+                    "campionato": p["campionato"],
+                    "prob": m[esito], "mercato": mk[esito], "quota": quota,
+                    "vantaggio": vantaggio,
+                    "formazioni": p.get("formazioni", "nessuna"),
+                })
+    scelte.sort(key=lambda x: -x["vantaggio"])
 
-        tipo = p.get("formazioni", "nessuna")
-        marchio = ('<span class="uff">formazioni ufficiali</span>'
-                   if tipo == "ufficiale" else
-                   '<span class="prob">formazioni stimate</span>')
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        salva_segnalazioni(scelte, conn)
+        conn.close()
+    except sqlite3.OperationalError:
+        pass
 
+    # ---- riquadro del rendimento passato --------------------------
+    rend = leggi_rendimento()
+    if rend and rend[0] >= 20:
+        n, vinte, ritorno = rend
+        percentuale = ritorno / n * 100
+        classe = "positivo" if ritorno > 0 else "negativo"
+        riquadro = (
+            f'<div class="grande {classe}">{percentuale:+.1f}%</div>'
+            f'<div class="spiega">Rendimento delle {n} segnalazioni gia&#39; '
+            f'concluse, a puntata costante: {vinte} vinte, {n-vinte} perse.<br>'
+            f'Con cosi&#39; poche giocate questo numero oscilla molto: serve '
+            f'qualche centinaio di casi prima che significhi qualcosa.</div>')
+    elif rend:
+        riquadro = (f'<div class="grande">{rend[0]} concluse</div>'
+                    f'<div class="spiega">Troppo poche per dire se il criterio '
+                    f'funziona. Il conto parte da qui e cresce ogni giorno.</div>')
+    else:
+        riquadro = ('<div class="grande">in attesa</div>'
+                    '<div class="spiega">Nessuna segnalazione ancora conclusa. '
+                    'Il rendimento comparira&#39; qui appena le prime partite '
+                    'saranno giocate.</div>')
+
+    # ---- le segnalazioni ------------------------------------------
+    voci = []
+    for v in scelte:
+        marchio = ('<span class="uff">ufficiali</span>'
+                   if v["formazioni"] == "ufficiale" else
+                   '<span class="prob">stimate</span>')
         voci.append(
             f'<div class="scelta">'
-            f'<div class="alto"><span class="ora">{p["data"][8:10]}/{p["data"][5:7]} '
-            f'{p["data"][11:16]}</span>'
-            f'<span class="perc">{prob*100:.0f}%</span></div>'
-            f'<div class="partita">{p["casa"]} - {p["fuori"]}</div>'
-            f'<div class="esito">{nome}</div>'
-            f'{riga_mercato}'
-            f'<div class="sotto"><span class="lega">{p["campionato"]}</span>'
-            f'{marchio}</div>'
-            f'</div>')
+            f'<div class="alto">'
+            f'<span class="ora">{v["data"][8:10]}/{v["data"][5:7]} '
+            f'{v["data"][11:16]}</span>'
+            f'<span class="quota">{v["quota"]:.2f}</span></div>'
+            f'<div class="partita">{v["casa"]} - {v["fuori"]}</div>'
+            f'<div class="esito">{NOMI_ESITO[v["esito"]]}</div>'
+            f'<div class="numeri">'
+            f'<span>noi <b>{v["prob"]*100:.0f}%</b></span>'
+            f'<span>mercato <b>{v["mercato"]*100:.0f}%</b></span>'
+            f'<span class="vant">vantaggio stimato '
+            f'<b>{v["vantaggio"]*100:+.0f}%</b></span></div>'
+            f'<div class="sotto"><span class="lega">{v["campionato"]}</span>'
+            f'{marchio}</div></div>')
 
     if not voci:
-        voci = ['<div class="vuoto">Nessuna partita supera le soglie in questo '
-                'momento. Non e\' un problema: significa solo che il modello '
-                'non vede nulla di netto fra le partite in programma.</div>']
+        voci = ['<div class="vuoto">Nessuna partita supera la soglia in questo '
+                'momento. Significa che il modello e&#39; sostanzialmente '
+                'd&#39;accordo con le quote: e&#39; la situazione normale.</div>']
 
     html = f"""<!DOCTYPE html>
 <html lang="it"><head><meta charset="utf-8">
@@ -435,18 +557,19 @@ def scrivi_selezione(previsioni, generato):
  .tit {{ font-size:10px; text-transform:uppercase; letter-spacing:.5px;
          color:#7b8794; margin-bottom:6px; }}
  .grande {{ font-size:26px; font-weight:600; }}
+ .grande.positivo {{ color:#1e7d3c; }}
+ .grande.negativo {{ color:#b03030; }}
  .spiega {{ font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }}
  .scelta {{ background:#fff; border-radius:6px; padding:11px 12px;
             margin-bottom:9px; }}
  .alto {{ display:flex; justify-content:space-between; align-items:center; }}
  .ora {{ font-size:11px; color:#7b8794; }}
- .perc {{ font-size:20px; font-weight:600; color:#1e7d3c; }}
+ .quota {{ font-size:20px; font-weight:600; }}
  .partita {{ font-size:14px; font-weight:500; margin-top:3px; }}
- .esito {{ font-size:12px; color:#2c3e50; margin-top:2px; }}
- .mercato {{ font-size:11px; margin-top:6px; padding:4px 7px;
-             border-radius:4px; background:#f2f4f6; color:#5b6b7b; }}
- .mercato.accordo {{ background:#e8f2e8; color:#2b6b3f; }}
- .mercato.divergenza {{ background:#fdf6e3; color:#8a6d1f; }}
+ .esito {{ font-size:13px; color:#1e7d3c; font-weight:600; margin-top:2px; }}
+ .numeri {{ display:flex; flex-wrap:wrap; gap:10px; margin-top:7px;
+            font-size:11px; color:#5b6b7b; }}
+ .vant {{ color:#8a6d1f; }}
  .sotto {{ display:flex; justify-content:space-between; align-items:center;
            margin-top:7px; }}
  .lega {{ font-size:10px; color:#97a3ae; }}
@@ -457,35 +580,31 @@ def scrivi_selezione(previsioni, generato):
  .vuoto {{ background:#fff; border-radius:6px; padding:18px; font-size:12px;
            color:#5b6b7b; line-height:1.6; }}
  .nota {{ margin-top:16px; font-size:10px; color:#7b8794; line-height:1.7; }}
- .collegamento {{ display:inline-block; margin-top:6px; padding:5px 10px;
-                  background:#2c3e50; color:#fff; border-radius:4px;
-                  text-decoration:none; font-size:11px; }}
  a {{ color:#2c3e50; }}
 </style></head><body>
 <h1>Selezione</h1>
 <div class="sottotitolo">
-Esiti sopra il {SOGLIA_PROB:.0%} su partite con dati solidi &middot;
-aggiornata il {generato[:16].replace('T', ' alle ')} UTC
+Esiti dove stimiamo almeno {SOGLIA_VANTAGGIO:.0%} di vantaggio sulla quota
+&middot; aggiornata il {generato[:16].replace('T', ' alle ')} UTC
 </div>
 
 <div class="riquadro">
- <div class="tit">Quanto ci si puo' fidare di questa fascia</div>
+ <div class="tit">Come sono andate finora</div>
  {riquadro}
 </div>
 
 {''.join(voci)}
 
 <div class="nota">
-<b>Come leggere questa pagina.</b> Un esito al 70% si verifica sette volte
-su dieci: tre volte su dieci va storto, ed e' normale, non un errore del
-sistema.<br><br>
-Entrano solo le partite dove le squadre hanno storico sufficiente e le
-formazioni sono note: una probabilita' alta costruita su pochi dati non
-vale niente.<br><br>
-Quando il riquadro e' giallo, stiamo dicendo qualcosa di diverso dal
-mercato. Nei nostri test le divergenze grandi si sono rivelate quasi
-sempre errori nostri, non intuizioni: trattale con piu' cautela, non con
-meno.<br><br>
+<b>Cosa vuol dire "vantaggio stimato".</b> E' calcolato con le NOSTRE
+probabilita': se sono sbagliate, il vantaggio non esiste. Non e' una
+misura del mercato, e' una misura del nostro disaccordo col mercato.<br><br>
+<b>Due cose che sappiamo dai test.</b> Primo: il confronto col mercato
+finora dice "non distinguibile", quindi non abbiamo dimostrato di essere
+migliori delle quote. Secondo: quando divergiamo molto dal mercato, nei
+nostri test avevamo torto noi piu' spesso che ragione.<br><br>
+Il riquadro in alto e' l'unica cosa che potra' dire se questo criterio
+vale qualcosa, e servira' qualche mese di dati.<br><br>
 <a href="index.html">Tutte le partite</a> &middot;
 <a href="verifica.html">Verifica</a>
 </div>
