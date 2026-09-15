@@ -11,18 +11,19 @@
  .tit { font-size:10px; text-transform:uppercase; letter-spacing:.5px;
          color:#7b8794; margin-bottom:6px; }
  .grande { font-size:26px; font-weight:600; }
+ .grande.positivo { color:#1e7d3c; }
+ .grande.negativo { color:#b03030; }
  .spiega { font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }
  .scelta { background:#fff; border-radius:6px; padding:11px 12px;
             margin-bottom:9px; }
  .alto { display:flex; justify-content:space-between; align-items:center; }
  .ora { font-size:11px; color:#7b8794; }
- .perc { font-size:20px; font-weight:600; color:#1e7d3c; }
+ .quota { font-size:20px; font-weight:600; }
  .partita { font-size:14px; font-weight:500; margin-top:3px; }
- .esito { font-size:12px; color:#2c3e50; margin-top:2px; }
- .mercato { font-size:11px; margin-top:6px; padding:4px 7px;
-             border-radius:4px; background:#f2f4f6; color:#5b6b7b; }
- .mercato.accordo { background:#e8f2e8; color:#2b6b3f; }
- .mercato.divergenza { background:#fdf6e3; color:#8a6d1f; }
+ .esito { font-size:13px; color:#1e7d3c; font-weight:600; margin-top:2px; }
+ .numeri { display:flex; flex-wrap:wrap; gap:10px; margin-top:7px;
+            font-size:11px; color:#5b6b7b; }
+ .vant { color:#8a6d1f; }
  .sotto { display:flex; justify-content:space-between; align-items:center;
            margin-top:7px; }
  .lega { font-size:10px; color:#97a3ae; }
@@ -33,35 +34,31 @@
  .vuoto { background:#fff; border-radius:6px; padding:18px; font-size:12px;
            color:#5b6b7b; line-height:1.6; }
  .nota { margin-top:16px; font-size:10px; color:#7b8794; line-height:1.7; }
- .collegamento { display:inline-block; margin-top:6px; padding:5px 10px;
-                  background:#2c3e50; color:#fff; border-radius:4px;
-                  text-decoration:none; font-size:11px; }
  a { color:#2c3e50; }
 </style></head><body>
 <h1>Selezione</h1>
 <div class="sottotitolo">
-Esiti sopra il 70% su partite con dati solidi &middot;
-aggiornata il 2026-09-15 alle 05:08 UTC
+Esiti dove stimiamo almeno 5% di vantaggio sulla quota
+&middot; aggiornata il 2026-09-15 alle 06:06 UTC
 </div>
 
 <div class="riquadro">
- <div class="tit">Quanto ci si puo' fidare di questa fascia</div>
- <div class="grande">10 casi</div><div class="spiega">Ancora troppo pochi per sapere se in questa fascia siamo affidabili. Servono almeno una ventina di partite verificate.</div>
+ <div class="tit">Come sono andate finora</div>
+ <div class="grande">in attesa</div><div class="spiega">Nessuna segnalazione ancora conclusa. Il rendimento comparira&#39; qui appena le prime partite saranno giocate.</div>
 </div>
 
-<div class="scelta"><div class="alto"><span class="ora">16/09 19:30</span><span class="perc">84%</span></div><div class="partita">Barcelona - Racing Santander</div><div class="esito">Barcelona</div><div class="mercato divergenza">mercato 89% &middot; noi -5 punti sotto il mercato</div><div class="sotto"><span class="lega">Spain - La Liga</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">18/09 18:30</span><span class="perc">80%</span></div><div class="partita">Bayern München - Union Berlin</div><div class="esito">Bayern München</div><div class="mercato divergenza">mercato 88% &middot; noi -8 punti sotto il mercato</div><div class="sotto"><span class="lega">Germany - Bundesliga</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">15/09 22:30</span><span class="perc">76%</span></div><div class="partita">Londrina - Ponte Preta</div><div class="esito">Londrina</div><div class="mercato accordo">mercato 72% &middot; il mercato e' d'accordo</div><div class="sotto"><span class="lega">Brazil - Serie B</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">19/09 01:00</span><span class="perc">73%</span></div><div class="partita">Alianza Lima - ADT</div><div class="esito">Alianza Lima</div><div class="mercato accordo">mercato 73% &middot; il mercato e' d'accordo</div><div class="sotto"><span class="lega">Peru - Primera División</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">15/09 18:00</span><span class="perc">71%</span></div><div class="partita">Ajax - Willem II</div><div class="esito">Ajax</div><div class="mercato divergenza">mercato 84% &middot; noi -13 punti sotto il mercato</div><div class="sotto"><span class="lega">Netherlands - Eredivisie</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">18/09 21:00</span><span class="perc">71%</span></div><div class="partita">Águilas Doradas - Deportivo Pereira</div><div class="esito">Águilas Doradas</div><div class="mercato accordo">mercato 67% &middot; il mercato e' d'accordo</div><div class="sotto"><span class="lega">Colombia - Primera A</span><span class="prob">formazioni stimate</span></div></div><div class="scelta"><div class="alto"><span class="ora">19/09 16:00</span><span class="perc">70%</span></div><div class="partita">Molde - Aalesund</div><div class="esito">Molde</div><div class="mercato accordo">mercato 68% &middot; il mercato e' d'accordo</div><div class="sotto"><span class="lega">Norway - Eliteserien</span><span class="prob">formazioni stimate</span></div></div>
+<div class="vuoto">Nessuna partita supera la soglia in questo momento. Significa che il modello e&#39; sostanzialmente d&#39;accordo con le quote: e&#39; la situazione normale.</div>
 
 <div class="nota">
-<b>Come leggere questa pagina.</b> Un esito al 70% si verifica sette volte
-su dieci: tre volte su dieci va storto, ed e' normale, non un errore del
-sistema.<br><br>
-Entrano solo le partite dove le squadre hanno storico sufficiente e le
-formazioni sono note: una probabilita' alta costruita su pochi dati non
-vale niente.<br><br>
-Quando il riquadro e' giallo, stiamo dicendo qualcosa di diverso dal
-mercato. Nei nostri test le divergenze grandi si sono rivelate quasi
-sempre errori nostri, non intuizioni: trattale con piu' cautela, non con
-meno.<br><br>
+<b>Cosa vuol dire "vantaggio stimato".</b> E' calcolato con le NOSTRE
+probabilita': se sono sbagliate, il vantaggio non esiste. Non e' una
+misura del mercato, e' una misura del nostro disaccordo col mercato.<br><br>
+<b>Due cose che sappiamo dai test.</b> Primo: il confronto col mercato
+finora dice "non distinguibile", quindi non abbiamo dimostrato di essere
+migliori delle quote. Secondo: quando divergiamo molto dal mercato, nei
+nostri test avevamo torto noi piu' spesso che ragione.<br><br>
+Il riquadro in alto e' l'unica cosa che potra' dire se questo criterio
+vale qualcosa, e servira' qualche mese di dati.<br><br>
 <a href="index.html">Tutte le partite</a> &middot;
 <a href="verifica.html">Verifica</a>
 </div>
