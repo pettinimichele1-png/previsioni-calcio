@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-15T17:10:33.505107+00:00",
+ "generato": "2026-09-15T17:39:45.366887+00:00",
  "modello": "2026-09-15T15:45:47.090989+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Netherlands - Eredivisie",
    "casa": "Ajax",
    "fuori": "Willem II",
-   "gol_attesi_casa": 2.39,
-   "gol_attesi_fuori": 0.93,
-   "gol_attesi_totali": 3.32,
-   "nettezza": 54.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.42,
+   "gol_attesi_fuori": 0.95,
+   "gol_attesi_totali": 3.37,
+   "nettezza": 54.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 13,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6944,
-    "X": 0.1815,
-    "2": 0.1242,
-    "1X": 0.8758,
-    "12": 0.8185,
-    "X2": 0.3056,
-    "over15": 0.8479,
-    "under15": 0.1521,
-    "over25": 0.6446,
-    "under25": 0.3554,
-    "over35": 0.424,
-    "under35": 0.576,
-    "gol_gol": 0.5532,
-    "no_gol": 0.4468,
+    "1": 0.6939,
+    "X": 0.1803,
+    "2": 0.1258,
+    "1X": 0.8742,
+    "12": 0.8197,
+    "X2": 0.3061,
+    "over15": 0.8537,
+    "under15": 0.1463,
+    "over25": 0.6544,
+    "under25": 0.3456,
+    "over35": 0.4348,
+    "under35": 0.5652,
+    "gol_gol": 0.5626,
+    "no_gol": 0.4374,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1036
+      "prob": 0.1008
      },
      {
       "risultato": "2-1",
-      "prob": 0.096
+      "prob": 0.0957
      },
      {
       "risultato": "1-1",
-      "prob": 0.0842
+      "prob": 0.083
      }
     ]
    },
+   "prima": {
+    "1": 0.6944,
+    "X": 0.1815,
+    "2": 0.1242,
+    "attesi": "2.39-0.93"
+   },
+   "spostamento": 0.0016,
    "mercato": {
     "1": 0.8558,
     "X": 0.093,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1614,
-    "X": 0.0885,
-    "2": 0.073
+    "1": -0.1619,
+    "X": 0.0873,
+    "2": 0.0746
    },
-   "divergenza_max": 0.1614
+   "divergenza_max": 0.1619
   },
   {
    "fixture_id": 1570383,
@@ -67,45 +74,52 @@
    "campionato": "Spain - La Liga",
    "casa": "Alaves",
    "fuori": "Valencia",
-   "gol_attesi_casa": 1.67,
-   "gol_attesi_fuori": 0.83,
-   "gol_attesi_totali": 2.5,
-   "nettezza": 35.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.73,
+   "gol_attesi_fuori": 0.85,
+   "gol_attesi_totali": 2.58,
+   "nettezza": 36.5,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5683,
-    "X": 0.253,
-    "2": 0.1787,
-    "1X": 0.8213,
-    "12": 0.747,
-    "X2": 0.4317,
-    "over15": 0.7186,
-    "under15": 0.2814,
-    "over25": 0.4565,
-    "under25": 0.5435,
-    "over35": 0.2427,
-    "under35": 0.7573,
-    "gol_gol": 0.4634,
-    "no_gol": 0.5366,
+    "1": 0.5768,
+    "X": 0.2468,
+    "2": 0.1764,
+    "1X": 0.8236,
+    "12": 0.7532,
+    "X2": 0.4232,
+    "over15": 0.7337,
+    "under15": 0.2663,
+    "over25": 0.4757,
+    "under25": 0.5243,
+    "over35": 0.2589,
+    "under35": 0.7411,
+    "gol_gol": 0.476,
+    "no_gol": 0.524,
     "punteggi_probabili": [
      {
       "risultato": "1-0",
-      "prob": 0.1314
+      "prob": 0.1258
      },
      {
       "risultato": "1-1",
-      "prob": 0.1193
+      "prob": 0.1171
      },
      {
       "risultato": "2-0",
-      "prob": 0.1146
+      "prob": 0.1135
      }
     ]
    },
+   "prima": {
+    "1": 0.5683,
+    "X": 0.253,
+    "2": 0.1787,
+    "attesi": "1.67-0.83"
+   },
+   "spostamento": 0.0085,
    "mercato": {
     "1": 0.5574,
     "X": 0.2677,
@@ -114,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0109,
-    "X": -0.0147,
-    "2": 0.0037
+    "1": 0.0194,
+    "X": -0.0209,
+    "2": 0.0014
    },
-   "divergenza_max": 0.0147
+   "divergenza_max": 0.0209
   },
   {
    "fixture_id": 1553112,
@@ -8394,18 +8408,18 @@
     ]
    },
    "mercato": {
-    "1": 0.0836,
+    "1": 0.0834,
     "X": 0.1477,
-    "2": 0.7687,
-    "margine": 0.0671,
+    "2": 0.7688,
+    "margine": 0.0669,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0882,
+    "1": 0.0884,
     "X": 0.0679,
-    "2": -0.1561
+    "2": -0.1562
    },
-   "divergenza_max": 0.1561
+   "divergenza_max": 0.1562
   },
   {
    "fixture_id": 1520888,
