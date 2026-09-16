@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-16T06:21:28.053597+00:00",
+ "generato": "2026-09-16T09:11:19.319431+00:00",
  "modello": "2026-09-16T05:16:44.709747+00:00",
  "previsioni": [
   {
@@ -48,18 +48,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4292,
-    "X": 0.2675,
-    "2": 0.3033,
-    "margine": 0.083,
+    "1": 0.4129,
+    "X": 0.2701,
+    "2": 0.3171,
+    "margine": 0.0828,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0902,
-    "X": -0.0175,
-    "2": -0.0727
+    "1": 0.1065,
+    "X": -0.0201,
+    "2": -0.0865
    },
-   "divergenza_max": 0.0902
+   "divergenza_max": 0.1065
   },
   {
    "fixture_id": 1555369,
@@ -107,18 +107,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4781,
-    "X": 0.2375,
-    "2": 0.2844,
-    "margine": 0.0826,
+    "1": 0.4425,
+    "X": 0.2475,
+    "2": 0.31,
+    "margine": 0.0806,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0187,
-    "X": 0.0086,
-    "2": -0.0273
+    "1": 0.0543,
+    "X": -0.0014,
+    "2": -0.0529
    },
-   "divergenza_max": 0.0273
+   "divergenza_max": 0.0543
   },
   {
    "fixture_id": 1555370,
@@ -166,18 +166,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3406,
-    "X": 0.2549,
-    "2": 0.4045,
-    "margine": 0.0817,
+    "1": 0.3934,
+    "X": 0.2524,
+    "2": 0.3542,
+    "margine": 0.0797,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0745,
-    "X": 0.0285,
-    "2": 0.046
+    "1": -0.1273,
+    "X": 0.031,
+    "2": 0.0963
    },
-   "divergenza_max": 0.0745
+   "divergenza_max": 0.1273
   },
   {
    "fixture_id": 1570384,
@@ -461,18 +461,18 @@
     ]
    },
    "mercato": {
-    "1": 0.457,
-    "X": 0.2879,
-    "2": 0.2551,
-    "margine": 0.0822,
+    "1": 0.4381,
+    "X": 0.2917,
+    "2": 0.2702,
+    "margine": 0.0835,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0351,
-    "X": -0.0523,
-    "2": 0.0172
+    "1": 0.054,
+    "X": -0.0561,
+    "2": 0.0021
    },
-   "divergenza_max": 0.0523
+   "divergenza_max": 0.0561
   },
   {
    "fixture_id": 1549810,
@@ -520,18 +520,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2385,
-    "X": 0.2752,
-    "2": 0.4863,
-    "margine": 0.0814,
+    "1": 0.2335,
+    "X": 0.2733,
+    "2": 0.4932,
+    "margine": 0.0809,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0283,
-    "X": -0.0521,
-    "2": 0.0803
+    "1": -0.0233,
+    "X": -0.0502,
+    "2": 0.0734
    },
-   "divergenza_max": 0.0803
+   "divergenza_max": 0.0734
   },
   {
    "fixture_id": 1570386,
@@ -579,18 +579,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5607,
-    "X": 0.2589,
-    "2": 0.1804,
-    "margine": 0.064,
-    "bookmaker": 9
+    "1": 0.5653,
+    "X": 0.2563,
+    "2": 0.1784,
+    "margine": 0.047,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0325,
-    "X": 0.0032,
-    "2": 0.0293
+    "1": -0.0371,
+    "X": 0.0058,
+    "2": 0.0313
    },
-   "divergenza_max": 0.0325
+   "divergenza_max": 0.0371
   },
   {
    "fixture_id": 1570390,
@@ -638,18 +638,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2651,
-    "X": 0.2536,
-    "2": 0.4813,
-    "margine": 0.0622,
-    "bookmaker": 9
+    "1": 0.2642,
+    "X": 0.2518,
+    "2": 0.484,
+    "margine": 0.0492,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0858,
-    "X": -0.0088,
-    "2": -0.0769
+    "1": 0.0867,
+    "X": -0.007,
+    "2": -0.0796
    },
-   "divergenza_max": 0.0858
+   "divergenza_max": 0.0867
   },
   {
    "fixture_id": 1549765,
@@ -2644,18 +2644,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5068,
-    "X": 0.2726,
-    "2": 0.2207,
-    "margine": 0.0631,
-    "bookmaker": 9
+    "1": 0.5085,
+    "X": 0.2716,
+    "2": 0.2199,
+    "margine": 0.0581,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.004,
-    "X": -0.0118,
-    "2": 0.0077
+    "1": 0.0023,
+    "X": -0.0108,
+    "2": 0.0085
    },
-   "divergenza_max": 0.0118
+   "divergenza_max": 0.0108
   },
   {
    "fixture_id": 1549491,
@@ -2762,18 +2762,18 @@
     ]
    },
    "mercato": {
-    "1": 0.6791,
-    "X": 0.2053,
-    "2": 0.1156,
-    "margine": 0.0774,
+    "1": 0.6802,
+    "X": 0.2052,
+    "2": 0.1146,
+    "margine": 0.0779,
     "bookmaker": 7
    },
    "divergenza": {
-    "1": 0.0356,
-    "X": -0.0359,
-    "2": 0.0003
+    "1": 0.0345,
+    "X": -0.0358,
+    "2": 0.0013
    },
-   "divergenza_max": 0.0359
+   "divergenza_max": 0.0358
   },
   {
    "fixture_id": 1520889,
@@ -3409,20 +3409,7 @@
       "prob": 0.0926
      }
     ]
-   },
-   "mercato": {
-    "1": 0.3683,
-    "X": 0.2813,
-    "2": 0.3503,
-    "margine": 0.0787,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0942,
-    "X": -0.0139,
-    "2": -0.0802
-   },
-   "divergenza_max": 0.0942
+   }
   },
   {
    "fixture_id": 1552478,
@@ -4884,20 +4871,7 @@
       "prob": 0.0954
      }
     ]
-   },
-   "mercato": {
-    "1": 0.5535,
-    "X": 0.2429,
-    "2": 0.2036,
-    "margine": 0.0774,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0645,
-    "X": 0.0132,
-    "2": 0.0513
-   },
-   "divergenza_max": 0.0645
+   }
   },
   {
    "fixture_id": 1563178,
@@ -4943,20 +4917,7 @@
       "prob": 0.0867
      }
     ]
-   },
-   "mercato": {
-    "1": 0.3157,
-    "X": 0.2727,
-    "2": 0.4116,
-    "margine": 0.0781,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0108,
-    "X": -0.0122,
-    "2": 0.023
-   },
-   "divergenza_max": 0.023
+   }
   },
   {
    "fixture_id": 1584414,
@@ -6053,18 +6014,18 @@
     ]
    },
    "mercato": {
-    "1": 0.55,
-    "X": 0.223,
-    "2": 0.227,
-    "margine": 0.0761,
-    "bookmaker": 8
+    "1": 0.5514,
+    "X": 0.2237,
+    "2": 0.2249,
+    "margine": 0.0777,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.1198,
-    "X": 0.0437,
-    "2": 0.0761
+    "1": -0.1212,
+    "X": 0.043,
+    "2": 0.0782
    },
-   "divergenza_max": 0.1198
+   "divergenza_max": 0.1212
   },
   {
    "fixture_id": 1555396,
@@ -6112,18 +6073,18 @@
     ]
    },
    "mercato": {
-    "1": 0.553,
-    "X": 0.219,
-    "2": 0.2281,
-    "margine": 0.0785,
-    "bookmaker": 7
+    "1": 0.5537,
+    "X": 0.2202,
+    "2": 0.2261,
+    "margine": 0.0805,
+    "bookmaker": 5
    },
    "divergenza": {
-    "1": -0.072,
-    "X": 0.0247,
-    "2": 0.0472
+    "1": -0.0727,
+    "X": 0.0235,
+    "2": 0.0492
    },
-   "divergenza_max": 0.072
+   "divergenza_max": 0.0727
   },
   {
    "fixture_id": 1593318,
@@ -7292,18 +7253,18 @@
     ]
    },
    "mercato": {
-    "1": 0.635,
-    "X": 0.2049,
-    "2": 0.1602,
-    "margine": 0.0781,
-    "bookmaker": 8
+    "1": 0.6327,
+    "X": 0.207,
+    "2": 0.1604,
+    "margine": 0.0805,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0134,
-    "X": 0.0033,
-    "2": 0.01
+    "1": -0.0111,
+    "X": 0.0012,
+    "2": 0.0098
    },
-   "divergenza_max": 0.0134
+   "divergenza_max": 0.0111
   },
   {
    "fixture_id": 1576186,
@@ -9285,18 +9246,18 @@
     ]
    },
    "mercato": {
-    "1": 0.441,
-    "X": 0.3101,
-    "2": 0.2489,
-    "margine": 0.0654,
-    "bookmaker": 9
+    "1": 0.442,
+    "X": 0.3102,
+    "2": 0.2478,
+    "margine": 0.0603,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0859,
-    "X": 0.0038,
-    "2": 0.0821
+    "1": -0.0869,
+    "X": 0.0037,
+    "2": 0.0832
    },
-   "divergenza_max": 0.0859
+   "divergenza_max": 0.0869
   },
   {
    "fixture_id": 1494770,
@@ -10747,18 +10708,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2449,
-    "X": 0.2419,
-    "2": 0.5132,
-    "margine": 0.0636,
-    "bookmaker": 9
+    "1": 0.2436,
+    "X": 0.2436,
+    "2": 0.5128,
+    "margine": 0.0594,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0017,
-    "X": -0.014,
-    "2": 0.0123
+    "1": 0.003,
+    "X": -0.0157,
+    "2": 0.0127
    },
-   "divergenza_max": 0.014
+   "divergenza_max": 0.0157
   },
   {
    "fixture_id": 1494282,
@@ -12163,18 +12124,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3325,
-    "X": 0.2815,
-    "2": 0.386,
-    "margine": 0.0649,
-    "bookmaker": 9
+    "1": 0.3342,
+    "X": 0.2795,
+    "2": 0.3862,
+    "margine": 0.0596,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0942,
-    "X": -0.0315,
-    "2": -0.0627
+    "1": 0.0925,
+    "X": -0.0295,
+    "2": -0.0629
    },
-   "divergenza_max": 0.0942
+   "divergenza_max": 0.0925
   },
   {
    "fixture_id": 1570402,
@@ -12222,18 +12183,18 @@
     ]
    },
    "mercato": {
-    "1": 0.6004,
-    "X": 0.2203,
-    "2": 0.1792,
-    "margine": 0.0676,
-    "bookmaker": 9
+    "1": 0.6006,
+    "X": 0.2216,
+    "2": 0.1778,
+    "margine": 0.0623,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0219,
-    "X": -0.0134,
-    "2": 0.0354
+    "1": -0.0221,
+    "X": -0.0147,
+    "2": 0.0368
    },
-   "divergenza_max": 0.0354
+   "divergenza_max": 0.0368
   },
   {
    "fixture_id": 1593319,
@@ -13330,18 +13291,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3454,
-    "X": 0.2783,
-    "2": 0.3763,
-    "margine": 0.0636,
-    "bookmaker": 9
+    "1": 0.3471,
+    "X": 0.2779,
+    "2": 0.375,
+    "margine": 0.0588,
+    "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0634,
-    "X": 0.0047,
-    "2": -0.0681
+    "1": 0.0617,
+    "X": 0.0051,
+    "2": -0.0668
    },
-   "divergenza_max": 0.0681
+   "divergenza_max": 0.0668
   },
   {
    "fixture_id": 1575503,
@@ -13401,6 +13362,374 @@
     "2": 0.0514
    },
    "divergenza_max": 0.0514
+  },
+  {
+   "fixture_id": 1639788,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Aucas",
+   "fuori": "Macara",
+   "gol_attesi_casa": 1.15,
+   "gol_attesi_fuori": 0.99,
+   "gol_attesi_totali": 2.14,
+   "nettezza": 8.1,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.387,
+    "X": 0.3081,
+    "2": 0.3048,
+    "1X": 0.6952,
+    "12": 0.6919,
+    "X2": 0.613,
+    "over15": 0.6378,
+    "under15": 0.3622,
+    "over25": 0.3617,
+    "under25": 0.6383,
+    "over35": 0.1694,
+    "under35": 0.8306,
+    "gol_gol": 0.4365,
+    "no_gol": 0.5635,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1406
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.1286
+     },
+     {
+      "risultato": "0-0",
+      "prob": 0.1241
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639789,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Barcelona SC",
+   "fuori": "Independiente del Valle",
+   "gol_attesi_casa": 2.06,
+   "gol_attesi_fuori": 1.95,
+   "gol_attesi_totali": 4.01,
+   "nettezza": 12.1,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4138,
+    "X": 0.214,
+    "2": 0.3723,
+    "1X": 0.6277,
+    "12": 0.786,
+    "X2": 0.5862,
+    "over15": 0.9125,
+    "under15": 0.0875,
+    "over25": 0.7627,
+    "under25": 0.2373,
+    "over35": 0.5675,
+    "under35": 0.4325,
+    "gol_gol": 0.7516,
+    "no_gol": 0.2484,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.0767
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0751
+     },
+     {
+      "risultato": "2-2",
+      "prob": 0.0732
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639790,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "LDU de Quito",
+   "fuori": "Universidad Catolica",
+   "gol_attesi_casa": 1.34,
+   "gol_attesi_fuori": 1.25,
+   "gol_attesi_totali": 2.59,
+   "nettezza": 7.4,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.3827,
+    "X": 0.277,
+    "2": 0.3403,
+    "1X": 0.6597,
+    "12": 0.723,
+    "X2": 0.6173,
+    "over15": 0.7362,
+    "under15": 0.2638,
+    "over25": 0.4781,
+    "under25": 0.5219,
+    "over35": 0.261,
+    "under35": 0.739,
+    "gol_gol": 0.5322,
+    "no_gol": 0.4678,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1321
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0945
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.0877
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639818,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Deportivo Cuenca",
+   "fuori": "Mushuc Runa SC",
+   "gol_attesi_casa": 1.15,
+   "gol_attesi_fuori": 0.86,
+   "gol_attesi_totali": 2.01,
+   "nettezza": 12.9,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4192,
+    "X": 0.3159,
+    "2": 0.2649,
+    "1X": 0.7351,
+    "12": 0.6841,
+    "X2": 0.5808,
+    "over15": 0.604,
+    "under15": 0.396,
+    "over25": 0.3267,
+    "under25": 0.6733,
+    "over35": 0.1451,
+    "under35": 0.8549,
+    "gol_gol": 0.401,
+    "no_gol": 0.599,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-0",
+      "prob": 0.1477
+     },
+     {
+      "risultato": "0-0",
+      "prob": 0.1403
+     },
+     {
+      "risultato": "1-1",
+      "prob": 0.139
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639819,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Manta FC",
+   "fuori": "Orense SC",
+   "gol_attesi_casa": 1.55,
+   "gol_attesi_fuori": 1.41,
+   "gol_attesi_totali": 2.96,
+   "nettezza": 10.4,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4029,
+    "X": 0.2557,
+    "2": 0.3413,
+    "1X": 0.6587,
+    "12": 0.7443,
+    "X2": 0.5971,
+    "over15": 0.7999,
+    "under15": 0.2001,
+    "over25": 0.5669,
+    "under25": 0.4331,
+    "over35": 0.343,
+    "under35": 0.657,
+    "gol_gol": 0.6005,
+    "no_gol": 0.3995,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1191
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0878
+     },
+     {
+      "risultato": "1-2",
+      "prob": 0.0799
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639820,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Tecnico Universitario",
+   "fuori": "Delfin SC",
+   "gol_attesi_casa": 1.17,
+   "gol_attesi_fuori": 1.29,
+   "gol_attesi_totali": 2.46,
+   "nettezza": 8.0,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.3284,
+    "X": 0.285,
+    "2": 0.3866,
+    "1X": 0.6134,
+    "12": 0.715,
+    "X2": 0.6716,
+    "over15": 0.7104,
+    "under15": 0.2896,
+    "over25": 0.4453,
+    "under25": 0.5547,
+    "over35": 0.2335,
+    "under35": 0.7665,
+    "gol_gol": 0.5058,
+    "no_gol": 0.4942,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1354
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.104
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0936
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639848,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Emelec",
+   "fuori": "Libertad",
+   "gol_attesi_casa": 1.82,
+   "gol_attesi_fuori": 1.07,
+   "gol_attesi_totali": 2.89,
+   "nettezza": 31.4,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.543,
+    "X": 0.2402,
+    "2": 0.2168,
+    "1X": 0.7832,
+    "12": 0.7598,
+    "X2": 0.457,
+    "over15": 0.79,
+    "under15": 0.21,
+    "over25": 0.5528,
+    "under25": 0.4472,
+    "over35": 0.3291,
+    "under35": 0.6709,
+    "gol_gol": 0.5572,
+    "no_gol": 0.4428,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1136
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0985
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0953
+     }
+    ]
+   }
+  },
+  {
+   "fixture_id": 1639849,
+   "data": "2026-09-20T20:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Guayaquil City FC",
+   "fuori": "Leones del Norte",
+   "gol_attesi_casa": 1.57,
+   "gol_attesi_fuori": 1.36,
+   "gol_attesi_totali": 2.94,
+   "nettezza": 12.8,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4185,
+    "X": 0.2558,
+    "2": 0.3257,
+    "1X": 0.6743,
+    "12": 0.7442,
+    "X2": 0.5815,
+    "over15": 0.7971,
+    "under15": 0.2029,
+    "over25": 0.5628,
+    "under25": 0.4372,
+    "over35": 0.3389,
+    "under35": 0.6611,
+    "gol_gol": 0.5959,
+    "no_gol": 0.4041,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1194
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0895
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0777
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1549497,
