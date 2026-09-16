@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-16T22:40:43.413431+00:00",
+ "generato": "2026-09-16T23:10:40.697052+00:00",
  "modello": "2026-09-16T05:16:44.709747+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Colombia - Primera A",
    "casa": "Once Caldas",
    "fuori": "Deportes Tolima",
-   "gol_attesi_casa": 1.87,
-   "gol_attesi_fuori": 1.35,
-   "gol_attesi_totali": 3.22,
-   "nettezza": 23.8,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.86,
+   "gol_attesi_fuori": 1.44,
+   "gol_attesi_totali": 3.3,
+   "nettezza": 20.6,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 29,
    "partite_storia_fuori": 31,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4921,
-    "X": 0.2356,
-    "2": 0.2723,
-    "1X": 0.7277,
-    "12": 0.7644,
-    "X2": 0.5079,
-    "over15": 0.8363,
-    "under15": 0.1637,
-    "over25": 0.624,
-    "under25": 0.376,
-    "over35": 0.4016,
-    "under35": 0.5984,
-    "gol_gol": 0.6314,
-    "no_gol": 0.3686,
+    "1": 0.4708,
+    "X": 0.2352,
+    "2": 0.294,
+    "1X": 0.706,
+    "12": 0.7648,
+    "X2": 0.5292,
+    "over15": 0.8457,
+    "under15": 0.1543,
+    "over25": 0.6396,
+    "under25": 0.3604,
+    "over35": 0.4185,
+    "under35": 0.5815,
+    "gol_gol": 0.6483,
+    "no_gol": 0.3517,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1059
+      "prob": 0.1039
      },
      {
       "risultato": "2-1",
-      "prob": 0.0944
+      "prob": 0.092
      },
      {
-      "risultato": "2-0",
-      "prob": 0.0699
+      "risultato": "1-2",
+      "prob": 0.0711
      }
     ]
    },
+   "prima": {
+    "1": 0.4848,
+    "X": 0.2406,
+    "2": 0.2746,
+    "attesi": "1.81-1.32"
+   },
+   "spostamento": 0.0194,
    "mercato": {
     "1": 0.4194,
     "X": 0.2959,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0727,
-    "X": -0.0603,
-    "2": -0.0124
+    "1": 0.0514,
+    "X": -0.0607,
+    "2": 0.0093
    },
-   "divergenza_max": 0.0727
+   "divergenza_max": 0.0607
   },
   {
    "fixture_id": 1549810,
