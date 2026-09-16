@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-16T18:44:02.165316+00:00",
+ "generato": "2026-09-16T19:10:42.149802+00:00",
  "modello": "2026-09-16T05:16:44.709747+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Spain - La Liga",
    "casa": "Barcelona",
    "fuori": "Racing Santander",
-   "gol_attesi_casa": 3.49,
-   "gol_attesi_fuori": 0.97,
-   "gol_attesi_totali": 4.46,
-   "nettezza": 74.9,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 3.81,
+   "gol_attesi_fuori": 1.08,
+   "gol_attesi_totali": 4.89,
+   "nettezza": 77.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.8324,
-    "X": 0.1045,
-    "2": 0.063,
-    "1X": 0.937,
-    "12": 0.8955,
-    "X2": 0.1676,
-    "over15": 0.938,
-    "under15": 0.062,
-    "over25": 0.8196,
-    "under25": 0.1804,
-    "over35": 0.6467,
-    "under35": 0.3533,
-    "gol_gol": 0.6037,
-    "no_gol": 0.3963,
+    "1": 0.8464,
+    "X": 0.0936,
+    "2": 0.06,
+    "1X": 0.94,
+    "12": 0.9064,
+    "X2": 0.1536,
+    "over15": 0.9566,
+    "under15": 0.0434,
+    "over25": 0.8637,
+    "under25": 0.1363,
+    "over35": 0.7148,
+    "under35": 0.2852,
+    "gol_gol": 0.6465,
+    "no_gol": 0.3535,
     "punteggi_probabili": [
      {
-      "risultato": "3-0",
-      "prob": 0.0828
-     },
-     {
       "risultato": "3-1",
-      "prob": 0.0803
+      "prob": 0.0761
      },
      {
-      "risultato": "4-0",
-      "prob": 0.0721
+      "risultato": "4-1",
+      "prob": 0.0725
+     },
+     {
+      "risultato": "3-0",
+      "prob": 0.0706
      }
     ]
    },
+   "prima": {
+    "1": 0.8124,
+    "X": 0.1147,
+    "2": 0.0729,
+    "attesi": "3.35-1.00"
+   },
+   "spostamento": 0.034,
    "mercato": {
     "1": 0.8945,
     "X": 0.068,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0621,
-    "X": 0.0365,
-    "2": 0.0254
+    "1": -0.0481,
+    "X": 0.0256,
+    "2": 0.0224
    },
-   "divergenza_max": 0.0621
+   "divergenza_max": 0.0481
   },
   {
    "fixture_id": 1570389,
@@ -67,45 +74,52 @@
    "campionato": "Spain - La Liga",
    "casa": "Levante",
    "fuori": "Athletic Club",
-   "gol_attesi_casa": 1.42,
-   "gol_attesi_fuori": 1.32,
-   "gol_attesi_totali": 2.73,
-   "nettezza": 8.3,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.53,
+   "gol_attesi_fuori": 1.4,
+   "gol_attesi_totali": 2.93,
+   "nettezza": 10.2,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3888,
-    "X": 0.2682,
-    "2": 0.3429,
-    "1X": 0.6571,
-    "12": 0.7318,
-    "X2": 0.6112,
-    "over15": 0.763,
-    "under15": 0.237,
-    "over25": 0.514,
-    "under25": 0.486,
-    "over35": 0.2928,
-    "under35": 0.7072,
-    "gol_gol": 0.5601,
-    "no_gol": 0.4399,
+    "1": 0.4017,
+    "X": 0.2572,
+    "2": 0.3411,
+    "1X": 0.6589,
+    "12": 0.7428,
+    "X2": 0.5983,
+    "over15": 0.7955,
+    "under15": 0.2045,
+    "over25": 0.5604,
+    "under25": 0.4396,
+    "over35": 0.3366,
+    "under35": 0.6634,
+    "gol_gol": 0.5955,
+    "no_gol": 0.4045,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1274
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0862
+      "prob": 0.1202
      },
      {
       "risultato": "2-1",
-      "prob": 0.0859
+      "prob": 0.0877
+     },
+     {
+      "risultato": "1-2",
+      "prob": 0.0799
      }
     ]
    },
+   "prima": {
+    "1": 0.4134,
+    "X": 0.2625,
+    "2": 0.3241,
+    "attesi": "1.51-1.31"
+   },
+   "spostamento": 0.017,
    "mercato": {
     "1": 0.2845,
     "X": 0.2754,
@@ -114,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1043,
-    "X": -0.0072,
-    "2": -0.0972
+    "1": 0.1172,
+    "X": -0.0182,
+    "2": -0.099
    },
-   "divergenza_max": 0.1043
+   "divergenza_max": 0.1172
   },
   {
    "fixture_id": 1549750,
