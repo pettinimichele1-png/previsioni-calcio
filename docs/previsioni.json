@@ -1,73 +1,7 @@
 {
- "generato": "2026-09-17T16:41:21.758870+00:00",
+ "generato": "2026-09-17T17:09:52.178365+00:00",
  "modello": "2026-09-17T05:17:40.565265+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1570386,
-   "data": "2026-09-17T17:00:00+00:00",
-   "campionato": "Spain - La Liga",
-   "casa": "Real Betis",
-   "fuori": "Getafe",
-   "gol_attesi_casa": 1.65,
-   "gol_attesi_fuori": 0.96,
-   "gol_attesi_totali": 2.61,
-   "nettezza": 29.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5288,
-    "X": 0.2568,
-    "2": 0.2143,
-    "1X": 0.7857,
-    "12": 0.7432,
-    "X2": 0.4712,
-    "over15": 0.7409,
-    "under15": 0.2591,
-    "over25": 0.4847,
-    "under25": 0.5153,
-    "over35": 0.2667,
-    "under35": 0.7333,
-    "gol_gol": 0.5054,
-    "no_gol": 0.4946,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1224
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1151
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0998
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5152,
-    "X": 0.2645,
-    "2": 0.2203,
-    "attesi": "1.58-0.95"
-   },
-   "spostamento": 0.0136,
-   "mercato": {
-    "1": 0.592,
-    "X": 0.2483,
-    "2": 0.1598,
-    "margine": 0.0447,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0632,
-    "X": 0.0085,
-    "2": 0.0545
-   },
-   "divergenza_max": 0.0632
-  },
   {
    "fixture_id": 1570390,
    "data": "2026-09-17T19:30:00+00:00",
