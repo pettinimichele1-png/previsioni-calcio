@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-17T18:44:01.170844+00:00",
+ "generato": "2026-09-17T19:10:47.721047+00:00",
  "modello": "2026-09-17T05:17:40.565265+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Spain - La Liga",
    "casa": "Malaga",
    "fuori": "Villarreal",
-   "gol_attesi_casa": 1.53,
-   "gol_attesi_fuori": 1.65,
-   "gol_attesi_totali": 3.18,
-   "nettezza": 10.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.73,
+   "gol_attesi_fuori": 1.59,
+   "gol_attesi_totali": 3.32,
+   "nettezza": 11.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 14,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3534,
-    "X": 0.2453,
-    "2": 0.4013,
-    "1X": 0.5987,
-    "12": 0.7547,
-    "X2": 0.6466,
-    "over15": 0.8313,
-    "under15": 0.1687,
-    "over25": 0.6157,
-    "under25": 0.3843,
-    "over35": 0.3928,
-    "under35": 0.6072,
-    "gol_gol": 0.6382,
-    "no_gol": 0.3618,
+    "1": 0.4092,
+    "X": 0.2389,
+    "2": 0.3519,
+    "1X": 0.6481,
+    "12": 0.7611,
+    "X2": 0.5908,
+    "over15": 0.8488,
+    "under15": 0.1512,
+    "over25": 0.6446,
+    "under25": 0.3554,
+    "over35": 0.4241,
+    "under35": 0.5759,
+    "gol_gol": 0.66,
+    "no_gol": 0.34,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1103
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0864
+      "prob": 0.1044
      },
      {
       "risultato": "2-1",
-      "prob": 0.0806
+      "prob": 0.086
+     },
+     {
+      "risultato": "1-2",
+      "prob": 0.0792
      }
     ]
    },
+   "prima": {
+    "1": 0.3668,
+    "X": 0.2493,
+    "2": 0.3839,
+    "attesi": "1.53-1.57"
+   },
+   "spostamento": 0.0424,
    "mercato": {
     "1": 0.2566,
     "X": 0.2508,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0968,
-    "X": -0.0055,
-    "2": -0.0913
+    "1": 0.1526,
+    "X": -0.0119,
+    "2": -0.1407
    },
-   "divergenza_max": 0.0968
+   "divergenza_max": 0.1526
   },
   {
    "fixture_id": 1549765,
@@ -4578,18 +4585,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4608,
-    "X": 0.2616,
-    "2": 0.2777,
-    "margine": 0.1038,
+    "1": 0.4604,
+    "X": 0.262,
+    "2": 0.2776,
+    "margine": 0.1021,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1477,
-    "X": -0.0492,
-    "2": -0.0986
+    "1": 0.1481,
+    "X": -0.0496,
+    "2": -0.0985
    },
-   "divergenza_max": 0.1477
+   "divergenza_max": 0.1481
   },
   {
    "fixture_id": 1585768,
@@ -4637,18 +4644,18 @@
     ]
    },
    "mercato": {
-    "1": 0.7581,
-    "X": 0.1583,
-    "2": 0.0836,
-    "margine": 0.1044,
+    "1": 0.7578,
+    "X": 0.1585,
+    "2": 0.0837,
+    "margine": 0.1027,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1168,
-    "X": 0.0626,
-    "2": 0.0541
+    "1": -0.1165,
+    "X": 0.0624,
+    "2": 0.054
    },
-   "divergenza_max": 0.1168
+   "divergenza_max": 0.1165
   },
   {
    "fixture_id": 1569928,
