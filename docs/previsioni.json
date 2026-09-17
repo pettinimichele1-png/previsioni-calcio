@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-17T00:13:46.730924+00:00",
+ "generato": "2026-09-17T00:44:53.740806+00:00",
  "modello": "2026-09-16T05:16:44.709747+00:00",
  "previsioni": [
   {
@@ -7824,6 +7824,52 @@
    "divergenza_max": 0.0548
   },
   {
+   "fixture_id": 1639848,
+   "data": "2026-09-20T00:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Emelec",
+   "fuori": "Libertad",
+   "gol_attesi_casa": 1.82,
+   "gol_attesi_fuori": 1.07,
+   "gol_attesi_totali": 2.89,
+   "nettezza": 31.4,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.543,
+    "X": 0.2402,
+    "2": 0.2168,
+    "1X": 0.7832,
+    "12": 0.7598,
+    "X2": 0.457,
+    "over15": 0.79,
+    "under15": 0.21,
+    "over25": 0.5528,
+    "under25": 0.4472,
+    "over35": 0.3291,
+    "under35": 0.6709,
+    "gol_gol": 0.5572,
+    "no_gol": 0.4428,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1136
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0985
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0953
+     }
+    ]
+   }
+  },
+  {
    "fixture_id": 1549495,
    "data": "2026-09-20T01:15:00+00:00",
    "campionato": "Peru - Primera División",
@@ -12531,6 +12577,52 @@
    "divergenza_max": 0.0974
   },
   {
+   "fixture_id": 1639820,
+   "data": "2026-09-20T18:30:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Tecnico Universitario",
+   "fuori": "Delfin SC",
+   "gol_attesi_casa": 1.17,
+   "gol_attesi_fuori": 1.29,
+   "gol_attesi_totali": 2.46,
+   "nettezza": 8.0,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.3284,
+    "X": 0.285,
+    "2": 0.3866,
+    "1X": 0.6134,
+    "12": 0.715,
+    "X2": 0.6716,
+    "over15": 0.7104,
+    "under15": 0.2896,
+    "over25": 0.4453,
+    "under25": 0.5547,
+    "over35": 0.2335,
+    "under35": 0.7665,
+    "gol_gol": 0.5058,
+    "no_gol": 0.4942,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1354
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.104
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0936
+     }
+    ]
+   }
+  },
+  {
    "fixture_id": 1550127,
    "data": "2026-09-20T18:45:00+00:00",
    "campionato": "Italy - Serie A",
@@ -13023,98 +13115,6 @@
    }
   },
   {
-   "fixture_id": 1639790,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "LDU de Quito",
-   "fuori": "Universidad Catolica",
-   "gol_attesi_casa": 1.34,
-   "gol_attesi_fuori": 1.25,
-   "gol_attesi_totali": 2.59,
-   "nettezza": 7.4,
-   "affidabilita": 70.0,
-   "affidabilita_etichetta": "media",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "nessuna",
-   "mercati": {
-    "1": 0.3827,
-    "X": 0.277,
-    "2": 0.3403,
-    "1X": 0.6597,
-    "12": 0.723,
-    "X2": 0.6173,
-    "over15": 0.7362,
-    "under15": 0.2638,
-    "over25": 0.4781,
-    "under25": 0.5219,
-    "over35": 0.261,
-    "under35": 0.739,
-    "gol_gol": 0.5322,
-    "no_gol": 0.4678,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1321
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0945
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0877
-     }
-    ]
-   }
-  },
-  {
-   "fixture_id": 1639818,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Deportivo Cuenca",
-   "fuori": "Mushuc Runa SC",
-   "gol_attesi_casa": 1.15,
-   "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 2.01,
-   "nettezza": 12.9,
-   "affidabilita": 70.0,
-   "affidabilita_etichetta": "media",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "nessuna",
-   "mercati": {
-    "1": 0.4192,
-    "X": 0.3159,
-    "2": 0.2649,
-    "1X": 0.7351,
-    "12": 0.6841,
-    "X2": 0.5808,
-    "over15": 0.604,
-    "under15": 0.396,
-    "over25": 0.3267,
-    "under25": 0.6733,
-    "over35": 0.1451,
-    "under35": 0.8549,
-    "gol_gol": 0.401,
-    "no_gol": 0.599,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-0",
-      "prob": 0.1477
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1403
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.139
-     }
-    ]
-   }
-  },
-  {
    "fixture_id": 1639819,
    "data": "2026-09-20T20:00:00+00:00",
    "campionato": "Ecuador - Liga Pro",
@@ -13156,98 +13156,6 @@
      {
       "risultato": "1-2",
       "prob": 0.0799
-     }
-    ]
-   }
-  },
-  {
-   "fixture_id": 1639820,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Tecnico Universitario",
-   "fuori": "Delfin SC",
-   "gol_attesi_casa": 1.17,
-   "gol_attesi_fuori": 1.29,
-   "gol_attesi_totali": 2.46,
-   "nettezza": 8.0,
-   "affidabilita": 70.0,
-   "affidabilita_etichetta": "media",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "nessuna",
-   "mercati": {
-    "1": 0.3284,
-    "X": 0.285,
-    "2": 0.3866,
-    "1X": 0.6134,
-    "12": 0.715,
-    "X2": 0.6716,
-    "over15": 0.7104,
-    "under15": 0.2896,
-    "over25": 0.4453,
-    "under25": 0.5547,
-    "over35": 0.2335,
-    "under35": 0.7665,
-    "gol_gol": 0.5058,
-    "no_gol": 0.4942,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1354
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.104
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0936
-     }
-    ]
-   }
-  },
-  {
-   "fixture_id": 1639848,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Emelec",
-   "fuori": "Libertad",
-   "gol_attesi_casa": 1.82,
-   "gol_attesi_fuori": 1.07,
-   "gol_attesi_totali": 2.89,
-   "nettezza": 31.4,
-   "affidabilita": 70.0,
-   "affidabilita_etichetta": "media",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "nessuna",
-   "mercati": {
-    "1": 0.543,
-    "X": 0.2402,
-    "2": 0.2168,
-    "1X": 0.7832,
-    "12": 0.7598,
-    "X2": 0.457,
-    "over15": 0.79,
-    "under15": 0.21,
-    "over25": 0.5528,
-    "under25": 0.4472,
-    "over35": 0.3291,
-    "under35": 0.6709,
-    "gol_gol": 0.5572,
-    "no_gol": 0.4428,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1136
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0985
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0953
      }
     ]
    }
@@ -13356,6 +13264,52 @@
     "2": -0.0283
    },
    "divergenza_max": 0.0639
+  },
+  {
+   "fixture_id": 1639818,
+   "data": "2026-09-20T21:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Deportivo Cuenca",
+   "fuori": "Mushuc Runa SC",
+   "gol_attesi_casa": 1.15,
+   "gol_attesi_fuori": 0.86,
+   "gol_attesi_totali": 2.01,
+   "nettezza": 12.9,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4192,
+    "X": 0.3159,
+    "2": 0.2649,
+    "1X": 0.7351,
+    "12": 0.6841,
+    "X2": 0.5808,
+    "over15": 0.604,
+    "under15": 0.396,
+    "over25": 0.3267,
+    "under25": 0.6733,
+    "over35": 0.1451,
+    "under35": 0.8549,
+    "gol_gol": 0.401,
+    "no_gol": 0.599,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-0",
+      "prob": 0.1477
+     },
+     {
+      "risultato": "0-0",
+      "prob": 0.1403
+     },
+     {
+      "risultato": "1-1",
+      "prob": 0.139
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1549785,
@@ -13566,6 +13520,52 @@
     "2": -0.0259
    },
    "divergenza_max": 0.0689
+  },
+  {
+   "fixture_id": 1639790,
+   "data": "2026-09-20T23:30:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "LDU de Quito",
+   "fuori": "Universidad Catolica",
+   "gol_attesi_casa": 1.34,
+   "gol_attesi_fuori": 1.25,
+   "gol_attesi_totali": 2.59,
+   "nettezza": 7.4,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.3827,
+    "X": 0.277,
+    "2": 0.3403,
+    "1X": 0.6597,
+    "12": 0.723,
+    "X2": 0.6173,
+    "over15": 0.7362,
+    "under15": 0.2638,
+    "over25": 0.4781,
+    "under25": 0.5219,
+    "over35": 0.261,
+    "under35": 0.739,
+    "gol_gol": 0.5322,
+    "no_gol": 0.4678,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1321
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0945
+     },
+     {
+      "risultato": "0-1",
+      "prob": 0.0877
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1549791,
