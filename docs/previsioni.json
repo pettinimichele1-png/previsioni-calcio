@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-17T06:21:56.998121+00:00",
+ "generato": "2026-09-17T09:11:49.995396+00:00",
  "modello": "2026-09-17T05:17:40.565265+00:00",
  "previsioni": [
   {
@@ -48,18 +48,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5657,
-    "X": 0.2561,
-    "2": 0.1783,
-    "margine": 0.0538,
+    "1": 0.5729,
+    "X": 0.2571,
+    "2": 0.17,
+    "margine": 0.0502,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.033,
-    "X": 0.0054,
-    "2": 0.0275
+    "1": -0.0402,
+    "X": 0.0044,
+    "2": 0.0358
    },
-   "divergenza_max": 0.033
+   "divergenza_max": 0.0402
   },
   {
    "fixture_id": 1570390,
@@ -107,22 +107,22 @@
     ]
    },
    "mercato": {
-    "1": 0.2652,
-    "X": 0.2524,
-    "2": 0.4824,
-    "margine": 0.0536,
+    "1": 0.2653,
+    "X": 0.2527,
+    "2": 0.4819,
+    "margine": 0.051,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0882,
-    "X": -0.0071,
-    "2": -0.0811
+    "1": 0.0881,
+    "X": -0.0074,
+    "2": -0.0806
    },
-   "divergenza_max": 0.0882
+   "divergenza_max": 0.0881
   },
   {
    "fixture_id": 1549765,
-   "data": "2026-09-17T23:00:00+00:00",
+   "data": "2026-09-18T00:00:00+00:00",
    "campionato": "Colombia - Primera A",
    "casa": "Bucaramanga",
    "fuori": "Independiente Medellin",
@@ -2113,18 +2113,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5143,
-    "X": 0.2662,
-    "2": 0.2195,
-    "margine": 0.0617,
+    "1": 0.5141,
+    "X": 0.2663,
+    "2": 0.2197,
+    "margine": 0.0614,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0006,
-    "X": -0.0063,
-    "2": 0.0058
+    "1": 0.0008,
+    "X": -0.0064,
+    "2": 0.0056
    },
-   "divergenza_max": 0.0063
+   "divergenza_max": 0.0064
   },
   {
    "fixture_id": 1549491,
@@ -2420,6 +2420,52 @@
     "2": 0.0567
    },
    "divergenza_max": 0.0567
+  },
+  {
+   "fixture_id": 1639788,
+   "data": "2026-09-19T00:30:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Aucas",
+   "fuori": "Macara",
+   "gol_attesi_casa": 1.08,
+   "gol_attesi_fuori": 0.98,
+   "gol_attesi_totali": 2.06,
+   "nettezza": 5.3,
+   "affidabilita": 84.0,
+   "affidabilita_etichetta": "alta",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "probabile",
+   "mercati": {
+    "1": 0.3684,
+    "X": 0.3161,
+    "2": 0.3154,
+    "1X": 0.6846,
+    "12": 0.6839,
+    "X2": 0.6316,
+    "over15": 0.6163,
+    "under15": 0.3837,
+    "over25": 0.3391,
+    "under25": 0.6609,
+    "over35": 0.1536,
+    "under35": 0.8464,
+    "gol_gol": 0.4189,
+    "no_gol": 0.5811,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1416
+     },
+     {
+      "risultato": "0-0",
+      "prob": 0.1344
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.1312
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1549492,
@@ -3116,18 +3162,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4106,
-    "X": 0.2897,
-    "2": 0.2997,
-    "margine": 0.0628,
+    "1": 0.4096,
+    "X": 0.2892,
+    "2": 0.3013,
+    "margine": 0.063,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0372,
-    "X": -0.0202,
-    "2": -0.017
+    "1": 0.0382,
+    "X": -0.0197,
+    "2": -0.0186
    },
-   "divergenza_max": 0.0372
+   "divergenza_max": 0.0382
   },
   {
    "fixture_id": 1553175,
@@ -4755,18 +4801,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5717,
-    "X": 0.2522,
-    "2": 0.1762,
-    "margine": 0.0625,
+    "1": 0.5732,
+    "X": 0.2524,
+    "2": 0.1744,
+    "margine": 0.0633,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1376,
-    "X": 0.0335,
-    "2": 0.1041
+    "1": -0.1391,
+    "X": 0.0333,
+    "2": 0.1059
    },
-   "divergenza_max": 0.1376
+   "divergenza_max": 0.1391
   },
   {
    "fixture_id": 1551805,
@@ -5876,18 +5922,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5187,
-    "X": 0.2488,
-    "2": 0.2325,
-    "margine": 0.0641,
+    "1": 0.5186,
+    "X": 0.2483,
+    "2": 0.2331,
+    "margine": 0.063,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.003,
-    "X": 0.0132,
-    "2": -0.0102
+    "1": -0.0029,
+    "X": 0.0137,
+    "2": -0.0108
    },
-   "divergenza_max": 0.0132
+   "divergenza_max": 0.0137
   },
   {
    "fixture_id": 1575168,
@@ -7351,18 +7397,64 @@
     ]
    },
    "mercato": {
-    "1": 0.0766,
-    "X": 0.1347,
-    "2": 0.7887,
-    "margine": 0.0642,
+    "1": 0.0748,
+    "X": 0.1306,
+    "2": 0.7946,
+    "margine": 0.0623,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0744,
-    "X": 0.0681,
-    "2": -0.1425
+    "1": 0.0762,
+    "X": 0.0722,
+    "2": -0.1484
    },
-   "divergenza_max": 0.1425
+   "divergenza_max": 0.1484
+  },
+  {
+   "fixture_id": 1639819,
+   "data": "2026-09-19T19:00:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Manta FC",
+   "fuori": "Orense SC",
+   "gol_attesi_casa": 1.48,
+   "gol_attesi_fuori": 1.45,
+   "gol_attesi_totali": 2.94,
+   "nettezza": 6.8,
+   "affidabilita": 84.0,
+   "affidabilita_etichetta": "alta",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "probabile",
+   "mercati": {
+    "1": 0.3785,
+    "X": 0.2574,
+    "2": 0.3641,
+    "1X": 0.6359,
+    "12": 0.7426,
+    "X2": 0.6215,
+    "over15": 0.797,
+    "under15": 0.203,
+    "over25": 0.5625,
+    "under25": 0.4375,
+    "over35": 0.3386,
+    "under35": 0.6614,
+    "gol_gol": 0.5981,
+    "no_gol": 0.4019,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1201
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0849
+     },
+     {
+      "risultato": "1-2",
+      "prob": 0.083
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1520888,
@@ -7658,6 +7750,52 @@
     "2": 0.0357
    },
    "divergenza_max": 0.0421
+  },
+  {
+   "fixture_id": 1639849,
+   "data": "2026-09-19T21:30:00+00:00",
+   "campionato": "Ecuador - Liga Pro",
+   "casa": "Guayaquil City FC",
+   "fuori": "Leones del Norte",
+   "gol_attesi_casa": 1.53,
+   "gol_attesi_fuori": 1.34,
+   "gol_attesi_totali": 2.87,
+   "nettezza": 11.9,
+   "affidabilita": 84.0,
+   "affidabilita_etichetta": "alta",
+   "partite_storia_casa": 30,
+   "partite_storia_fuori": 30,
+   "formazioni": "probabile",
+   "mercati": {
+    "1": 0.4129,
+    "X": 0.2598,
+    "2": 0.3273,
+    "1X": 0.6727,
+    "12": 0.7402,
+    "X2": 0.5871,
+    "over15": 0.7858,
+    "under15": 0.2142,
+    "over25": 0.5462,
+    "under25": 0.4538,
+    "over35": 0.3229,
+    "under35": 0.6771,
+    "gol_gol": 0.5835,
+    "no_gol": 0.4165,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1222
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.089
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0812
+     }
+    ]
+   }
   },
   {
    "fixture_id": 1549494,
@@ -10301,18 +10439,18 @@
     ]
    },
    "mercato": {
-    "1": 0.2663,
-    "X": 0.2486,
-    "2": 0.4851,
-    "margine": 0.0658,
+    "1": 0.2666,
+    "X": 0.2485,
+    "2": 0.4849,
+    "margine": 0.0663,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0631,
-    "X": -0.0119,
-    "2": -0.0512
+    "1": 0.0628,
+    "X": -0.0118,
+    "2": -0.051
    },
-   "divergenza_max": 0.0631
+   "divergenza_max": 0.0628
   },
   {
    "fixture_id": 1494282,
@@ -11717,18 +11855,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3244,
-    "X": 0.2796,
-    "2": 0.396,
-    "margine": 0.0652,
+    "1": 0.3239,
+    "X": 0.2793,
+    "2": 0.3968,
+    "margine": 0.0651,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0885,
-    "X": -0.0258,
-    "2": -0.0627
+    "1": 0.089,
+    "X": -0.0255,
+    "2": -0.0635
    },
-   "divergenza_max": 0.0885
+   "divergenza_max": 0.089
   },
   {
    "fixture_id": 1570402,
@@ -13016,52 +13154,6 @@
    "divergenza_max": 0.054
   },
   {
-   "fixture_id": 1639788,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Aucas",
-   "fuori": "Macara",
-   "gol_attesi_casa": 1.08,
-   "gol_attesi_fuori": 0.98,
-   "gol_attesi_totali": 2.06,
-   "nettezza": 5.3,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.3684,
-    "X": 0.3161,
-    "2": 0.3154,
-    "1X": 0.6846,
-    "12": 0.6839,
-    "X2": 0.6316,
-    "over15": 0.6163,
-    "under15": 0.3837,
-    "over25": 0.3391,
-    "under25": 0.6609,
-    "over35": 0.1536,
-    "under35": 0.8464,
-    "gol_gol": 0.4189,
-    "no_gol": 0.5811,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1416
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1344
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1312
-     }
-    ]
-   }
-  },
-  {
    "fixture_id": 1639789,
    "data": "2026-09-20T20:00:00+00:00",
    "campionato": "Ecuador - Liga Pro",
@@ -13103,98 +13195,6 @@
      {
       "risultato": "2-2",
       "prob": 0.0731
-     }
-    ]
-   }
-  },
-  {
-   "fixture_id": 1639819,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Manta FC",
-   "fuori": "Orense SC",
-   "gol_attesi_casa": 1.48,
-   "gol_attesi_fuori": 1.45,
-   "gol_attesi_totali": 2.94,
-   "nettezza": 6.8,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.3785,
-    "X": 0.2574,
-    "2": 0.3641,
-    "1X": 0.6359,
-    "12": 0.7426,
-    "X2": 0.6215,
-    "over15": 0.797,
-    "under15": 0.203,
-    "over25": 0.5625,
-    "under25": 0.4375,
-    "over35": 0.3386,
-    "under35": 0.6614,
-    "gol_gol": 0.5981,
-    "no_gol": 0.4019,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1201
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0849
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.083
-     }
-    ]
-   }
-  },
-  {
-   "fixture_id": 1639849,
-   "data": "2026-09-20T20:00:00+00:00",
-   "campionato": "Ecuador - Liga Pro",
-   "casa": "Guayaquil City FC",
-   "fuori": "Leones del Norte",
-   "gol_attesi_casa": 1.53,
-   "gol_attesi_fuori": 1.34,
-   "gol_attesi_totali": 2.87,
-   "nettezza": 11.9,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 30,
-   "partite_storia_fuori": 30,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.4129,
-    "X": 0.2598,
-    "2": 0.3273,
-    "1X": 0.6727,
-    "12": 0.7402,
-    "X2": 0.5871,
-    "over15": 0.7858,
-    "under15": 0.2142,
-    "over25": 0.5462,
-    "under25": 0.4538,
-    "over35": 0.3229,
-    "under35": 0.6771,
-    "gol_gol": 0.5835,
-    "no_gol": 0.4165,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1222
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.089
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0812
      }
     ]
    }
@@ -13434,52 +13434,6 @@
     "2": -0.0744
    },
    "divergenza_max": 0.1308
-  },
-  {
-   "fixture_id": 1549493,
-   "data": "2026-09-20T23:00:00+00:00",
-   "campionato": "Peru - Primera División",
-   "casa": "Cienciano",
-   "fuori": "Club Deportivo Los Chankas",
-   "gol_attesi_casa": 2.51,
-   "gol_attesi_fuori": 0.9,
-   "gol_attesi_totali": 3.41,
-   "nettezza": 57.8,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 25,
-   "partite_storia_fuori": 26,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.7189,
-    "X": 0.17,
-    "2": 0.111,
-    "1X": 0.889,
-    "12": 0.83,
-    "X2": 0.2811,
-    "over15": 0.8581,
-    "under15": 0.1419,
-    "over25": 0.6621,
-    "under25": 0.3379,
-    "over35": 0.4436,
-    "under35": 0.5564,
-    "gol_gol": 0.5501,
-    "no_gol": 0.4499,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-0",
-      "prob": 0.1039
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0938
-     },
-     {
-      "risultato": "3-0",
-      "prob": 0.0869
-     }
-    ]
-   }
   },
   {
    "fixture_id": 1549787,
