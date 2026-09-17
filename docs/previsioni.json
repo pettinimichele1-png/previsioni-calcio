@@ -1,73 +1,7 @@
 {
- "generato": "2026-09-16T23:39:56.195436+00:00",
+ "generato": "2026-09-17T00:13:46.730924+00:00",
  "modello": "2026-09-16T05:16:44.709747+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1549750,
-   "data": "2026-09-16T23:15:00+00:00",
-   "campionato": "Colombia - Primera A",
-   "casa": "Once Caldas",
-   "fuori": "Deportes Tolima",
-   "gol_attesi_casa": 1.86,
-   "gol_attesi_fuori": 1.44,
-   "gol_attesi_totali": 3.3,
-   "nettezza": 20.6,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 29,
-   "partite_storia_fuori": 31,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4708,
-    "X": 0.2352,
-    "2": 0.294,
-    "1X": 0.706,
-    "12": 0.7648,
-    "X2": 0.5292,
-    "over15": 0.8457,
-    "under15": 0.1543,
-    "over25": 0.6396,
-    "under25": 0.3604,
-    "over35": 0.4185,
-    "under35": 0.5815,
-    "gol_gol": 0.6483,
-    "no_gol": 0.3517,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1039
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.092
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.0711
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4848,
-    "X": 0.2406,
-    "2": 0.2746,
-    "attesi": "1.81-1.32"
-   },
-   "spostamento": 0.0194,
-   "mercato": {
-    "1": 0.4194,
-    "X": 0.2959,
-    "2": 0.2847,
-    "margine": 0.0789,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0514,
-    "X": -0.0607,
-    "2": 0.0093
-   },
-   "divergenza_max": 0.0607
-  },
   {
    "fixture_id": 1549810,
    "data": "2026-09-17T01:20:00+00:00",
@@ -13632,6 +13566,111 @@
     "2": -0.0259
    },
    "divergenza_max": 0.0689
+  },
+  {
+   "fixture_id": 1549791,
+   "data": "2026-09-21T01:15:00+00:00",
+   "campionato": "Colombia - Primera A",
+   "casa": "Llaneros",
+   "fuori": "Atletico Nacional",
+   "gol_attesi_casa": 1.04,
+   "gol_attesi_fuori": 2.22,
+   "gol_attesi_totali": 3.26,
+   "nettezza": 45.3,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 28,
+   "partite_storia_fuori": 31,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.1619,
+    "X": 0.2026,
+    "2": 0.6355,
+    "1X": 0.3645,
+    "12": 0.7974,
+    "X2": 0.8381,
+    "over15": 0.8407,
+    "under15": 0.1593,
+    "over25": 0.632,
+    "under25": 0.368,
+    "over35": 0.4102,
+    "under35": 0.5898,
+    "gol_gol": 0.5809,
+    "no_gol": 0.4191,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-2",
+      "prob": 0.0984
+     },
+     {
+      "risultato": "0-2",
+      "prob": 0.0946
+     },
+     {
+      "risultato": "1-1",
+      "prob": 0.0932
+     }
+    ]
+   },
+   "mercato": {
+    "1": 0.2073,
+    "X": 0.2691,
+    "2": 0.5236,
+    "margine": 0.0811,
+    "bookmaker": 6
+   },
+   "divergenza": {
+    "1": -0.0454,
+    "X": -0.0665,
+    "2": 0.1119
+   },
+   "divergenza_max": 0.1119
+  },
+  {
+   "fixture_id": 1520882,
+   "data": "2026-09-21T22:30:00+00:00",
+   "campionato": "Brazil - Serie B",
+   "casa": "Criciuma",
+   "fuori": "Operario-PR",
+   "gol_attesi_casa": 1.44,
+   "gol_attesi_fuori": 1.12,
+   "gol_attesi_totali": 2.56,
+   "nettezza": 15.9,
+   "affidabilita": 70.0,
+   "affidabilita_etichetta": "media",
+   "partite_storia_casa": 28,
+   "partite_storia_fuori": 28,
+   "formazioni": "nessuna",
+   "mercati": {
+    "1": 0.4392,
+    "X": 0.2744,
+    "2": 0.2864,
+    "1X": 0.7136,
+    "12": 0.7256,
+    "X2": 0.5608,
+    "over15": 0.7315,
+    "under15": 0.2685,
+    "over25": 0.472,
+    "under25": 0.528,
+    "over35": 0.2558,
+    "under35": 0.7442,
+    "gol_gol": 0.5205,
+    "no_gol": 0.4795,
+    "punteggi_probabili": [
+     {
+      "risultato": "1-1",
+      "prob": 0.1308
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.1051
+     },
+     {
+      "risultato": "2-1",
+      "prob": 0.0899
+     }
+    ]
+   }
   }
  ]
 }
