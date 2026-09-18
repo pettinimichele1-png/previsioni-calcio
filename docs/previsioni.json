@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-18T14:08:36.283025+00:00",
+ "generato": "2026-09-18T14:39:42.410227+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Romania - Liga I",
    "casa": "Uta Arad",
    "fuori": "Sepsi OSK Sfantu Gheorghe",
-   "gol_attesi_casa": 1.66,
-   "gol_attesi_fuori": 0.92,
-   "gol_attesi_totali": 2.58,
-   "nettezza": 31.2,
-   "affidabilita": 78.0,
+   "gol_attesi_casa": 1.68,
+   "gol_attesi_fuori": 0.93,
+   "gol_attesi_totali": 2.61,
+   "nettezza": 31.8,
+   "affidabilita": 94.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 9,
    "partite_storia_fuori": 9,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5416,
-    "X": 0.2558,
-    "2": 0.2025,
-    "1X": 0.7975,
-    "12": 0.7442,
-    "X2": 0.4584,
-    "over15": 0.7338,
-    "under15": 0.2662,
-    "over25": 0.4756,
-    "under25": 0.5244,
-    "over35": 0.2588,
-    "under35": 0.7412,
-    "gol_gol": 0.4923,
-    "no_gol": 0.5077,
+    "1": 0.5452,
+    "X": 0.2533,
+    "2": 0.2015,
+    "1X": 0.7985,
+    "12": 0.7467,
+    "X2": 0.4548,
+    "over15": 0.7402,
+    "under15": 0.2598,
+    "over25": 0.484,
+    "under25": 0.516,
+    "over35": 0.2661,
+    "under35": 0.7339,
+    "gol_gol": 0.498,
+    "no_gol": 0.502,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1216
+      "prob": 0.1206
      },
      {
       "risultato": "1-0",
-      "prob": 0.1202
+      "prob": 0.1179
      },
      {
       "risultato": "2-0",
-      "prob": 0.1044
+      "prob": 0.104
      }
     ]
    },
+   "prima": {
+    "1": 0.5416,
+    "X": 0.2558,
+    "2": 0.2025,
+    "attesi": "1.66-0.92"
+   },
+   "spostamento": 0.0036,
    "mercato": {
     "1": 0.4445,
     "X": 0.285,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0971,
-    "X": -0.0292,
-    "2": -0.068
+    "1": 0.1007,
+    "X": -0.0317,
+    "2": -0.069
    },
-   "divergenza_max": 0.0971
+   "divergenza_max": 0.1007
   },
   {
    "fixture_id": 1638083,
@@ -67,45 +74,52 @@
    "campionato": "Finland - Veikkausliiga",
    "casa": "Lahti",
    "fuori": "FF Jaro",
-   "gol_attesi_casa": 2.05,
-   "gol_attesi_fuori": 0.71,
-   "gol_attesi_totali": 2.76,
-   "nettezza": 52.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.12,
+   "gol_attesi_fuori": 0.68,
+   "gol_attesi_totali": 2.8,
+   "nettezza": 55.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 24,
    "partite_storia_fuori": 24,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6815,
-    "X": 0.2042,
-    "2": 0.1142,
-    "1X": 0.8858,
-    "12": 0.7958,
-    "X2": 0.3185,
-    "over15": 0.7673,
-    "under15": 0.2327,
-    "over25": 0.5218,
-    "under25": 0.4782,
-    "over35": 0.2999,
-    "under35": 0.7001,
-    "gol_gol": 0.4489,
-    "no_gol": 0.5511,
+    "1": 0.7029,
+    "X": 0.1947,
+    "2": 0.1024,
+    "1X": 0.8976,
+    "12": 0.8053,
+    "X2": 0.2971,
+    "over15": 0.7725,
+    "under15": 0.2275,
+    "over25": 0.5294,
+    "under25": 0.4706,
+    "over35": 0.3069,
+    "under35": 0.6931,
+    "gol_gol": 0.4378,
+    "no_gol": 0.5622,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1326
+      "prob": 0.1369
      },
      {
       "risultato": "1-0",
-      "prob": 0.1247
+      "prob": 0.1249
      },
      {
-      "risultato": "1-1",
-      "prob": 0.0968
+      "risultato": "3-0",
+      "prob": 0.0966
      }
     ]
    },
+   "prima": {
+    "1": 0.6815,
+    "X": 0.2042,
+    "2": 0.1142,
+    "attesi": "2.05-0.71"
+   },
+   "spostamento": 0.0214,
    "mercato": {
     "1": 0.5894,
     "X": 0.2323,
@@ -114,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0921,
-    "X": -0.0281,
-    "2": -0.0641
+    "1": 0.1135,
+    "X": -0.0376,
+    "2": -0.0759
    },
-   "divergenza_max": 0.0921
+   "divergenza_max": 0.1135
   },
   {
    "fixture_id": 1638084,
@@ -126,45 +140,52 @@
    "campionato": "Finland - Veikkausliiga",
    "casa": "SJK",
    "fuori": "Mariehamn",
-   "gol_attesi_casa": 1.51,
-   "gol_attesi_fuori": 0.86,
-   "gol_attesi_totali": 2.36,
-   "nettezza": 27.8,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.55,
+   "gol_attesi_fuori": 0.85,
+   "gol_attesi_totali": 2.4,
+   "nettezza": 29.9,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 24,
    "partite_storia_fuori": 24,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5187,
-    "X": 0.2732,
-    "2": 0.2081,
-    "1X": 0.7919,
-    "12": 0.7268,
-    "X2": 0.4813,
-    "over15": 0.6894,
-    "under15": 0.3106,
-    "over25": 0.4205,
-    "under25": 0.5795,
-    "over35": 0.2135,
-    "under35": 0.7865,
-    "gol_gol": 0.454,
-    "no_gol": 0.546,
+    "1": 0.5324,
+    "X": 0.2676,
+    "2": 0.2,
+    "1X": 0.8,
+    "12": 0.7324,
+    "X2": 0.4676,
+    "over15": 0.6981,
+    "under15": 0.3019,
+    "over25": 0.431,
+    "under25": 0.569,
+    "over35": 0.2218,
+    "under35": 0.7782,
+    "gol_gol": 0.4576,
+    "no_gol": 0.5424,
     "punteggi_probabili": [
      {
       "risultato": "1-0",
-      "prob": 0.1357
+      "prob": 0.1344
      },
      {
       "risultato": "1-1",
-      "prob": 0.1276
+      "prob": 0.1254
      },
      {
       "risultato": "2-0",
-      "prob": 0.1067
+      "prob": 0.1089
      }
     ]
    },
+   "prima": {
+    "1": 0.5187,
+    "X": 0.2732,
+    "2": 0.2081,
+    "attesi": "1.51-0.86"
+   },
+   "spostamento": 0.0137,
    "mercato": {
     "1": 0.5234,
     "X": 0.252,
@@ -173,11 +194,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0047,
-    "X": 0.0212,
-    "2": -0.0166
+    "1": 0.009,
+    "X": 0.0156,
+    "2": -0.0247
    },
-   "divergenza_max": 0.0212
+   "divergenza_max": 0.0247
   },
   {
    "fixture_id": 1553179,
