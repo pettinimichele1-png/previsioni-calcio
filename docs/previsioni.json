@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-18T21:37:50.018533+00:00",
+ "generato": "2026-09-18T22:09:01.528861+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Brazil - Serie B",
    "casa": "Vila Nova",
    "fuori": "America Mineiro",
-   "gol_attesi_casa": 2.17,
-   "gol_attesi_fuori": 1.06,
-   "gol_attesi_totali": 3.23,
-   "nettezza": 43.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 2.18,
+   "gol_attesi_fuori": 1.09,
+   "gol_attesi_totali": 3.27,
+   "nettezza": 42.6,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 28,
    "partite_storia_fuori": 28,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6203,
-    "X": 0.208,
-    "2": 0.1717,
-    "1X": 0.8283,
-    "12": 0.792,
-    "X2": 0.3797,
-    "over15": 0.837,
-    "under15": 0.163,
-    "over25": 0.6258,
-    "under25": 0.3742,
-    "over35": 0.4035,
-    "under35": 0.5965,
-    "gol_gol": 0.5839,
-    "no_gol": 0.4161,
+    "1": 0.6176,
+    "X": 0.2074,
+    "2": 0.175,
+    "1X": 0.825,
+    "12": 0.7926,
+    "X2": 0.3824,
+    "over15": 0.8419,
+    "under15": 0.1581,
+    "over25": 0.6339,
+    "under25": 0.3661,
+    "over35": 0.4123,
+    "under35": 0.5877,
+    "gol_gol": 0.5925,
+    "no_gol": 0.4075,
     "punteggi_probabili": [
      {
       "risultato": "2-1",
-      "prob": 0.0988
+      "prob": 0.0985
      },
      {
       "risultato": "1-1",
-      "prob": 0.0958
+      "prob": 0.0949
      },
      {
       "risultato": "2-0",
-      "prob": 0.093
+      "prob": 0.0906
      }
     ]
    },
+   "prima": {
+    "1": 0.6203,
+    "X": 0.208,
+    "2": 0.1717,
+    "attesi": "2.17-1.06"
+   },
+   "spostamento": 0.0033,
    "mercato": {
     "1": 0.643,
     "X": 0.233,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0227,
-    "X": -0.025,
-    "2": 0.0477
+    "1": -0.0254,
+    "X": -0.0256,
+    "2": 0.051
    },
-   "divergenza_max": 0.0477
+   "divergenza_max": 0.051
   },
   {
    "fixture_id": 1520881,
@@ -3632,20 +3639,7 @@
       "prob": 0.0905
      }
     ]
-   },
-   "mercato": {
-    "1": 0.4637,
-    "X": 0.2598,
-    "2": 0.2766,
-    "margine": 0.102,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1364,
-    "X": -0.0452,
-    "2": -0.0914
-   },
-   "divergenza_max": 0.1364
+   }
   },
   {
    "fixture_id": 1585768,
@@ -6274,20 +6268,7 @@
       "prob": 0.0826
      }
     ]
-   },
-   "mercato": {
-    "1": 0.3411,
-    "X": 0.2857,
-    "2": 0.3732,
-    "margine": 0.1022,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0196,
-    "X": -0.0265,
-    "2": 0.0069
-   },
-   "divergenza_max": 0.0265
+   }
   },
   {
    "fixture_id": 1585762,
@@ -6333,20 +6314,7 @@
       "prob": 0.0894
      }
     ]
-   },
-   "mercato": {
-    "1": 0.4654,
-    "X": 0.2711,
-    "2": 0.2636,
-    "margine": 0.1028,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0034,
-    "X": -0.0157,
-    "2": 0.0122
-   },
-   "divergenza_max": 0.0157
+   }
   },
   {
    "fixture_id": 1555509,
@@ -8090,20 +8058,7 @@
       "prob": 0.082
      }
     ]
-   },
-   "mercato": {
-    "1": 0.4322,
-    "X": 0.3017,
-    "2": 0.266,
-    "margine": 0.1046,
-    "bookmaker": 8
-   },
-   "divergenza": {
-    "1": -0.0437,
-    "X": -0.0483,
-    "2": 0.0921
-   },
-   "divergenza_max": 0.0921
+   }
   },
   {
    "fixture_id": 1549494,
