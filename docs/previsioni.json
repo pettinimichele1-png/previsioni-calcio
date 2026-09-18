@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-18T15:08:50.924665+00:00",
+ "generato": "2026-09-18T15:39:50.880696+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Poland - Ekstraklasa",
    "casa": "Widzew Łódź",
    "fuori": "Wieczysta Kraków",
-   "gol_attesi_casa": 1.64,
-   "gol_attesi_fuori": 1.38,
-   "gol_attesi_totali": 3.02,
-   "nettezza": 14.9,
-   "affidabilita": 66.0,
-   "affidabilita_etichetta": "media",
+   "gol_attesi_casa": 1.65,
+   "gol_attesi_fuori": 1.35,
+   "gol_attesi_totali": 3.0,
+   "nettezza": 16.1,
+   "affidabilita": 82.0,
+   "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 7,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.433,
-    "X": 0.251,
-    "2": 0.3161,
-    "1X": 0.6839,
-    "12": 0.749,
-    "X2": 0.567,
-    "over15": 0.8089,
-    "under15": 0.1911,
-    "over25": 0.5806,
-    "under25": 0.4194,
-    "over35": 0.3566,
-    "under35": 0.6434,
-    "gol_gol": 0.6081,
-    "no_gol": 0.3919,
+    "1": 0.4407,
+    "X": 0.2511,
+    "2": 0.3083,
+    "1X": 0.6917,
+    "12": 0.7489,
+    "X2": 0.5593,
+    "over15": 0.8066,
+    "under15": 0.1934,
+    "over25": 0.5771,
+    "under25": 0.4229,
+    "over35": 0.353,
+    "under35": 0.647,
+    "gol_gol": 0.6042,
+    "no_gol": 0.3958,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.116
+      "prob": 0.1164
      },
      {
       "risultato": "2-1",
-      "prob": 0.0907
+      "prob": 0.0915
      },
      {
-      "risultato": "1-2",
-      "prob": 0.076
+      "risultato": "1-0",
+      "prob": 0.0766
      }
     ]
    },
+   "prima": {
+    "1": 0.433,
+    "X": 0.251,
+    "2": 0.3161,
+    "attesi": "1.64-1.38"
+   },
+   "spostamento": 0.0078,
    "mercato": {
     "1": 0.4962,
     "X": 0.2444,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0632,
-    "X": 0.0066,
-    "2": 0.0567
+    "1": -0.0555,
+    "X": 0.0067,
+    "2": 0.0489
    },
-   "divergenza_max": 0.0632
+   "divergenza_max": 0.0555
   },
   {
    "fixture_id": 1638098,
@@ -67,45 +74,52 @@
    "campionato": "Finland - Veikkausliiga",
    "casa": "AC Oulu",
    "fuori": "Inter Turku",
-   "gol_attesi_casa": 1.35,
-   "gol_attesi_fuori": 1.0,
-   "gol_attesi_totali": 2.36,
-   "nettezza": 16.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.38,
+   "gol_attesi_fuori": 0.99,
+   "gol_attesi_totali": 2.37,
+   "nettezza": 17.8,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 24,
    "partite_storia_fuori": 24,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4413,
-    "X": 0.2871,
-    "2": 0.2716,
-    "1X": 0.7284,
-    "12": 0.7129,
-    "X2": 0.5587,
-    "over15": 0.6884,
-    "under15": 0.3116,
-    "over25": 0.4188,
-    "under25": 0.5812,
-    "over35": 0.2122,
-    "under35": 0.7878,
-    "gol_gol": 0.4761,
-    "no_gol": 0.5239,
+    "1": 0.4519,
+    "X": 0.2848,
+    "2": 0.2632,
+    "1X": 0.7368,
+    "12": 0.7152,
+    "X2": 0.5481,
+    "over15": 0.6913,
+    "under15": 0.3087,
+    "over25": 0.4224,
+    "under25": 0.5776,
+    "over35": 0.215,
+    "under35": 0.785,
+    "gol_gol": 0.4767,
+    "no_gol": 0.5233,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1351
+      "prob": 0.1341
      },
      {
       "risultato": "1-0",
-      "prob": 0.1218
+      "prob": 0.1226
      },
      {
       "risultato": "0-0",
-      "prob": 0.1012
+      "prob": 0.0999
      }
     ]
    },
+   "prima": {
+    "1": 0.4413,
+    "X": 0.2871,
+    "2": 0.2716,
+    "attesi": "1.35-1.00"
+   },
+   "spostamento": 0.0106,
    "mercato": {
     "1": 0.2362,
     "X": 0.2773,
@@ -114,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.2051,
-    "X": 0.0098,
-    "2": -0.2149
+    "1": 0.2157,
+    "X": 0.0075,
+    "2": -0.2233
    },
-   "divergenza_max": 0.2149
+   "divergenza_max": 0.2233
   },
   {
    "fixture_id": 1638099,
@@ -126,45 +140,52 @@
    "campionato": "Finland - Veikkausliiga",
    "casa": "Gnistan",
    "fuori": "HJK Helsinki",
-   "gol_attesi_casa": 1.18,
-   "gol_attesi_fuori": 1.2,
+   "gol_attesi_casa": 1.17,
+   "gol_attesi_fuori": 1.21,
    "gol_attesi_totali": 2.38,
-   "nettezza": 4.0,
-   "affidabilita": 84.0,
+   "nettezza": 4.6,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 24,
    "partite_storia_fuori": 24,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3491,
-    "X": 0.2912,
-    "2": 0.3597,
-    "1X": 0.6403,
-    "12": 0.7088,
-    "X2": 0.6509,
-    "over15": 0.6933,
-    "under15": 0.3067,
-    "over25": 0.4245,
-    "under25": 0.5755,
-    "over35": 0.2166,
-    "under35": 0.7834,
-    "gol_gol": 0.4902,
-    "no_gol": 0.5098,
+    "1": 0.345,
+    "X": 0.2911,
+    "2": 0.3639,
+    "1X": 0.6361,
+    "12": 0.7089,
+    "X2": 0.655,
+    "over15": 0.6935,
+    "under15": 0.3065,
+    "over25": 0.4247,
+    "under25": 0.5753,
+    "over35": 0.2168,
+    "under35": 0.7832,
+    "gol_gol": 0.4903,
+    "no_gol": 0.5097,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1377
+      "prob": 0.1376
      },
      {
       "risultato": "0-1",
-      "prob": 0.1047
+      "prob": 0.1055
      },
      {
       "risultato": "1-0",
-      "prob": 0.1027
+      "prob": 0.1019
      }
     ]
    },
+   "prima": {
+    "1": 0.3491,
+    "X": 0.2912,
+    "2": 0.3597,
+    "attesi": "1.18-1.20"
+   },
+   "spostamento": 0.0042,
    "mercato": {
     "1": 0.2275,
     "X": 0.2361,
@@ -173,11 +194,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1216,
-    "X": 0.0551,
-    "2": -0.1767
+    "1": 0.1175,
+    "X": 0.055,
+    "2": -0.1725
    },
-   "divergenza_max": 0.1767
+   "divergenza_max": 0.1725
   },
   {
    "fixture_id": 1576181,
