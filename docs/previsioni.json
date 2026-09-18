@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-18T12:10:15.393500+00:00",
+ "generato": "2026-09-18T12:42:51.000339+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
   {
@@ -8,45 +8,52 @@
    "campionato": "Israel - Ligat Ha'al",
    "casa": "Hapoel Tel Aviv",
    "fuori": "Hapoel Petah Tikva",
-   "gol_attesi_casa": 1.56,
+   "gol_attesi_casa": 1.59,
    "gol_attesi_fuori": 0.84,
-   "gol_attesi_totali": 2.4,
-   "nettezza": 30.6,
-   "affidabilita": 48.0,
-   "affidabilita_etichetta": "bassa",
+   "gol_attesi_totali": 2.43,
+   "nettezza": 31.6,
+   "affidabilita": 64.0,
+   "affidabilita_etichetta": "media",
    "partite_storia_casa": 4,
    "partite_storia_fuori": 4,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5371,
-    "X": 0.2667,
-    "2": 0.1963,
-    "1X": 0.8037,
-    "12": 0.7333,
-    "X2": 0.4629,
-    "over15": 0.6975,
-    "under15": 0.3025,
-    "over25": 0.4303,
-    "under25": 0.5697,
-    "over35": 0.2212,
-    "under35": 0.7788,
-    "gol_gol": 0.4549,
-    "no_gol": 0.5451,
+    "1": 0.5443,
+    "X": 0.2631,
+    "2": 0.1926,
+    "1X": 0.8074,
+    "12": 0.7369,
+    "X2": 0.4557,
+    "over15": 0.7041,
+    "under15": 0.2959,
+    "over25": 0.4383,
+    "under25": 0.5617,
+    "over35": 0.2277,
+    "under35": 0.7723,
+    "gol_gol": 0.4588,
+    "no_gol": 0.5412,
     "punteggi_probabili": [
      {
       "risultato": "1-0",
-      "prob": 0.1355
+      "prob": 0.1339
      },
      {
       "risultato": "1-1",
-      "prob": 0.1249
+      "prob": 0.1235
      },
      {
       "risultato": "2-0",
-      "prob": 0.1103
+      "prob": 0.1111
      }
     ]
    },
+   "prima": {
+    "1": 0.5371,
+    "X": 0.2667,
+    "2": 0.1963,
+    "attesi": "1.56-0.84"
+   },
+   "spostamento": 0.0072,
    "mercato": {
     "1": 0.6985,
     "X": 0.1918,
@@ -55,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.1614,
-    "X": 0.0749,
-    "2": 0.0865
+    "1": -0.1542,
+    "X": 0.0713,
+    "2": 0.0828
    },
-   "divergenza_max": 0.1614
+   "divergenza_max": 0.1542
   },
   {
    "fixture_id": 1585760,
@@ -67,45 +74,52 @@
    "campionato": "Turkey - 1. Lig",
    "casa": "Bandırmaspor",
    "fuori": "Ümraniyespor",
-   "gol_attesi_casa": 2.13,
-   "gol_attesi_fuori": 1.03,
+   "gol_attesi_casa": 2.12,
+   "gol_attesi_fuori": 1.04,
    "gol_attesi_totali": 3.17,
-   "nettezza": 43.1,
-   "affidabilita": 84.0,
+   "nettezza": 42.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6207,
-    "X": 0.21,
-    "2": 0.1693,
-    "1X": 0.8307,
-    "12": 0.79,
-    "X2": 0.3793,
-    "over15": 0.8289,
-    "under15": 0.1711,
-    "over25": 0.6128,
-    "under25": 0.3872,
-    "over35": 0.3897,
-    "under35": 0.6103,
-    "gol_gol": 0.5723,
-    "no_gol": 0.4277,
+    "1": 0.6158,
+    "X": 0.2114,
+    "2": 0.1727,
+    "1X": 0.8273,
+    "12": 0.7886,
+    "X2": 0.3842,
+    "over15": 0.8288,
+    "under15": 0.1712,
+    "over25": 0.6127,
+    "under25": 0.3873,
+    "over35": 0.3895,
+    "under35": 0.6105,
+    "gol_gol": 0.5748,
+    "no_gol": 0.4252,
     "punteggi_probabili": [
      {
       "risultato": "2-1",
-      "prob": 0.0991
+      "prob": 0.0992
      },
      {
       "risultato": "1-1",
-      "prob": 0.0976
+      "prob": 0.0981
      },
      {
       "risultato": "2-0",
-      "prob": 0.096
+      "prob": 0.095
      }
     ]
    },
+   "prima": {
+    "1": 0.6207,
+    "X": 0.21,
+    "2": 0.1693,
+    "attesi": "2.13-1.03"
+   },
+   "spostamento": 0.0049,
    "mercato": {
     "1": 0.5321,
     "X": 0.2564,
@@ -114,11 +128,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0886,
-    "X": -0.0464,
-    "2": -0.0422
+    "1": 0.0837,
+    "X": -0.045,
+    "2": -0.0388
    },
-   "divergenza_max": 0.0886
+   "divergenza_max": 0.0837
   },
   {
    "fixture_id": 1565262,
@@ -2172,18 +2186,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4154,
-    "X": 0.2886,
-    "2": 0.2959,
-    "margine": 0.0746,
+    "1": 0.4188,
+    "X": 0.2862,
+    "2": 0.295,
+    "margine": 0.0741,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0092,
-    "X": -0.0219,
-    "2": 0.0128
+    "1": 0.0058,
+    "X": -0.0195,
+    "2": 0.0137
    },
-   "divergenza_max": 0.0219
+   "divergenza_max": 0.0195
   },
   {
    "fixture_id": 1492772,
@@ -7896,6 +7910,65 @@
    "divergenza_max": 0.0395
   },
   {
+   "fixture_id": 1555397,
+   "data": "2026-09-19T16:00:00+00:00",
+   "campionato": "Switzerland - Super League",
+   "casa": "FC Sion",
+   "fuori": "FC Zurich",
+   "gol_attesi_casa": 2.16,
+   "gol_attesi_fuori": 1.08,
+   "gol_attesi_totali": 3.24,
+   "nettezza": 42.1,
+   "affidabilita": 84.0,
+   "affidabilita_etichetta": "alta",
+   "partite_storia_casa": 12,
+   "partite_storia_fuori": 11,
+   "formazioni": "probabile",
+   "mercati": {
+    "1": 0.614,
+    "X": 0.2094,
+    "2": 0.1765,
+    "1X": 0.8235,
+    "12": 0.7906,
+    "X2": 0.386,
+    "over15": 0.8382,
+    "under15": 0.1618,
+    "over25": 0.6277,
+    "under25": 0.3723,
+    "over35": 0.4056,
+    "under35": 0.5944,
+    "gol_gol": 0.5889,
+    "no_gol": 0.4111,
+    "punteggi_probabili": [
+     {
+      "risultato": "2-1",
+      "prob": 0.0987
+     },
+     {
+      "risultato": "1-1",
+      "prob": 0.0962
+     },
+     {
+      "risultato": "2-0",
+      "prob": 0.0913
+     }
+    ]
+   },
+   "mercato": {
+    "1": 0.6335,
+    "X": 0.2045,
+    "2": 0.162,
+    "margine": 0.0868,
+    "bookmaker": 9
+   },
+   "divergenza": {
+    "1": -0.0195,
+    "X": 0.0049,
+    "2": 0.0145
+   },
+   "divergenza_max": 0.0195
+  },
+  {
    "fixture_id": 1560032,
    "data": "2026-09-19T16:00:00+00:00",
    "campionato": "Czech-Republic - Czech Liga",
@@ -9782,65 +9855,6 @@
     "2": 0.013
    },
    "divergenza_max": 0.0223
-  },
-  {
-   "fixture_id": 1555397,
-   "data": "2026-09-19T18:30:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "FC Sion",
-   "fuori": "FC Zurich",
-   "gol_attesi_casa": 2.16,
-   "gol_attesi_fuori": 1.08,
-   "gol_attesi_totali": 3.24,
-   "nettezza": 42.1,
-   "affidabilita": 84.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 11,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.614,
-    "X": 0.2094,
-    "2": 0.1765,
-    "1X": 0.8235,
-    "12": 0.7906,
-    "X2": 0.386,
-    "over15": 0.8382,
-    "under15": 0.1618,
-    "over25": 0.6277,
-    "under25": 0.3723,
-    "over35": 0.4056,
-    "under35": 0.5944,
-    "gol_gol": 0.5889,
-    "no_gol": 0.4111,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-1",
-      "prob": 0.0987
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.0962
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0913
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.6335,
-    "X": 0.2045,
-    "2": 0.162,
-    "margine": 0.0868,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0195,
-    "X": 0.0049,
-    "2": 0.0145
-   },
-   "divergenza_max": 0.0195
   },
   {
    "fixture_id": 1576186,
