@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-18T13:39:30.899193+00:00",
+ "generato": "2026-09-18T14:08:36.283025+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
   {
@@ -16744,65 +16744,6 @@
     "2": 0.0299
    },
    "divergenza_max": 0.0381
-  },
-  {
-   "fixture_id": 1551112,
-   "data": "2026-09-20T17:30:00+00:00",
-   "campionato": "Bulgaria - First League",
-   "casa": "Levski Sofia",
-   "fuori": "Ludogorets",
-   "gol_attesi_casa": 2.17,
-   "gol_attesi_fuori": 0.89,
-   "gol_attesi_totali": 3.06,
-   "nettezza": 49.2,
-   "affidabilita": 78.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 9,
-   "partite_storia_fuori": 9,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.6615,
-    "X": 0.2009,
-    "2": 0.1377,
-    "1X": 0.8623,
-    "12": 0.7991,
-    "X2": 0.3385,
-    "over15": 0.8145,
-    "under15": 0.1855,
-    "over25": 0.5905,
-    "under25": 0.4095,
-    "over35": 0.3665,
-    "under35": 0.6335,
-    "gol_gol": 0.5271,
-    "no_gol": 0.4729,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-0",
-      "prob": 0.1103
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0983
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0971
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.4332,
-    "X": 0.2872,
-    "2": 0.2795,
-    "margine": 0.0849,
-    "bookmaker": 7
-   },
-   "divergenza": {
-    "1": 0.2283,
-    "X": -0.0863,
-    "2": -0.1418
-   },
-   "divergenza_max": 0.2283
   },
   {
    "fixture_id": 1565256,
