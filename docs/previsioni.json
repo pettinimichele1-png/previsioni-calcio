@@ -1,382 +1,59 @@
 {
- "generato": "2026-09-18T16:39:13.753339+00:00",
+ "generato": "2026-09-18T17:08:43.989372+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1494768,
-   "data": "2026-09-18T17:00:00+00:00",
-   "campionato": "Norway - Eliteserien",
-   "casa": "Sarpsborg 08 FF",
-   "fuori": "KFUM Oslo",
-   "gol_attesi_casa": 1.59,
-   "gol_attesi_fuori": 0.92,
-   "gol_attesi_totali": 2.51,
-   "nettezza": 28.5,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5233,
-    "X": 0.2637,
-    "2": 0.213,
-    "1X": 0.787,
-    "12": 0.7363,
-    "X2": 0.4767,
-    "over15": 0.7202,
-    "under15": 0.2798,
-    "over25": 0.4581,
-    "under25": 0.5419,
-    "over35": 0.244,
-    "under35": 0.756,
-    "gol_gol": 0.4847,
-    "no_gol": 0.5153,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.125
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1233
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.1025
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5248,
-    "X": 0.2633,
-    "2": 0.2119,
-    "attesi": "1.59-0.92"
-   },
-   "spostamento": 0.0015,
-   "mercato": {
-    "1": 0.6065,
-    "X": 0.2221,
-    "2": 0.1714,
-    "margine": 0.0766,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0832,
-    "X": 0.0416,
-    "2": 0.0416
-   },
-   "divergenza_max": 0.0832
-  },
-  {
-   "fixture_id": 1549024,
-   "data": "2026-09-18T17:00:00+00:00",
-   "campionato": "Denmark - Superliga",
-   "casa": "Lyngby",
-   "fuori": "Silkeborg",
-   "gol_attesi_casa": 1.83,
-   "gol_attesi_fuori": 1.17,
-   "gol_attesi_totali": 2.99,
-   "nettezza": 28.4,
-   "affidabilita": 88.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 8,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5227,
-    "X": 0.2401,
-    "2": 0.2372,
-    "1X": 0.7628,
-    "12": 0.7599,
-    "X2": 0.4773,
-    "over15": 0.8049,
-    "under15": 0.1951,
-    "over25": 0.5749,
-    "under25": 0.4251,
-    "over35": 0.3508,
-    "under35": 0.6492,
-    "gol_gol": 0.5828,
-    "no_gol": 0.4172,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1122
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0976
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0863
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5045,
-    "X": 0.2437,
-    "2": 0.2519,
-    "attesi": "1.78-1.20"
-   },
-   "spostamento": 0.0182,
-   "mercato": {
-    "1": 0.5035,
-    "X": 0.2415,
-    "2": 0.255,
-    "margine": 0.0747,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0192,
-    "X": -0.0014,
-    "2": -0.0178
-   },
-   "divergenza_max": 0.0192
-  },
-  {
-   "fixture_id": 1551115,
-   "data": "2026-09-18T17:00:00+00:00",
-   "campionato": "Bulgaria - First League",
-   "casa": "Slavia Sofia",
-   "fuori": "CSKA 1948",
-   "gol_attesi_casa": 1.14,
-   "gol_attesi_fuori": 1.17,
-   "gol_attesi_totali": 2.31,
-   "nettezza": 3.9,
-   "affidabilita": 94.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 9,
-   "partite_storia_fuori": 9,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3445,
-    "X": 0.2961,
-    "2": 0.3595,
-    "1X": 0.6405,
-    "12": 0.7039,
-    "X2": 0.6555,
-    "over15": 0.6784,
-    "under15": 0.3216,
-    "over25": 0.407,
-    "under25": 0.593,
-    "over35": 0.203,
-    "under35": 0.797,
-    "gol_gol": 0.476,
-    "no_gol": 0.524,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.139
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.1094
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1064
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3462,
-    "X": 0.2976,
-    "2": 0.3562,
-    "attesi": "1.14-1.16"
-   },
-   "spostamento": 0.0033,
-   "mercato": {
-    "1": 0.2107,
-    "X": 0.2789,
-    "2": 0.5104,
-    "margine": 0.0869,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1338,
-    "X": 0.0172,
-    "2": -0.1509
-   },
-   "divergenza_max": 0.1509
-  },
-  {
-   "fixture_id": 1584418,
-   "data": "2026-09-18T17:00:00+00:00",
-   "campionato": "Turkey - Süper Lig",
-   "casa": "Kasımpaşa",
-   "fuori": "Konyaspor",
-   "gol_attesi_casa": 1.46,
-   "gol_attesi_fuori": 0.9,
-   "gol_attesi_totali": 2.36,
-   "nettezza": 24.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4951,
-    "X": 0.2784,
-    "2": 0.2265,
-    "1X": 0.7735,
-    "12": 0.7216,
-    "X2": 0.5049,
-    "over15": 0.6885,
-    "under15": 0.3115,
-    "over25": 0.4193,
-    "under25": 0.5807,
-    "over35": 0.2125,
-    "under35": 0.7875,
-    "gol_gol": 0.4616,
-    "no_gol": 0.5384,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-0",
-      "prob": 0.1317
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1304
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.1008
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4906,
-    "X": 0.2794,
-    "2": 0.2299,
-    "attesi": "1.45-0.91"
-   },
-   "spostamento": 0.0045,
-   "mercato": {
-    "1": 0.3902,
-    "X": 0.299,
-    "2": 0.3108,
-    "margine": 0.0711,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1049,
-    "X": -0.0206,
-    "2": -0.0843
-   },
-   "divergenza_max": 0.1049
-  },
-  {
-   "fixture_id": 1585766,
-   "data": "2026-09-18T17:00:00+00:00",
-   "campionato": "Turkey - 1. Lig",
-   "casa": "Muğlaspor",
-   "fuori": "Iğdır FK",
-   "gol_attesi_casa": 1.57,
-   "gol_attesi_fuori": 1.12,
-   "gol_attesi_totali": 2.69,
-   "nettezza": 20.9,
-   "affidabilita": 82.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 7,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4728,
-    "X": 0.2628,
-    "2": 0.2644,
-    "1X": 0.7356,
-    "12": 0.7372,
-    "X2": 0.5272,
-    "over15": 0.7559,
-    "under15": 0.2441,
-    "over25": 0.5045,
-    "under25": 0.4955,
-    "over35": 0.2843,
-    "under35": 0.7157,
-    "gol_gol": 0.5397,
-    "no_gol": 0.4603,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1252
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1006
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0938
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4544,
-    "X": 0.2693,
-    "2": 0.2763,
-    "attesi": "1.50-1.12"
-   },
-   "spostamento": 0.0184,
-   "mercato": {
-    "1": 0.2654,
-    "X": 0.2967,
-    "2": 0.4379,
-    "margine": 0.1002,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.2074,
-    "X": -0.0339,
-    "2": -0.1735
-   },
-   "divergenza_max": 0.2074
-  },
   {
    "fixture_id": 1561935,
    "data": "2026-09-18T17:30:00+00:00",
    "campionato": "Austria - Bundesliga",
    "casa": "Rapid Vienna",
    "fuori": "WSG Wattens",
-   "gol_attesi_casa": 1.92,
-   "gol_attesi_fuori": 0.99,
-   "gol_attesi_totali": 2.91,
-   "nettezza": 38.2,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.94,
+   "gol_attesi_fuori": 0.98,
+   "gol_attesi_totali": 2.92,
+   "nettezza": 39.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 13,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5877,
-    "X": 0.2288,
-    "2": 0.1835,
-    "1X": 0.8165,
-    "12": 0.7712,
-    "X2": 0.4123,
-    "over15": 0.7921,
-    "under15": 0.2079,
-    "over25": 0.5563,
-    "under25": 0.4437,
-    "over35": 0.3325,
-    "under35": 0.6675,
-    "gol_gol": 0.5404,
-    "no_gol": 0.4596,
+    "1": 0.5935,
+    "X": 0.227,
+    "2": 0.1795,
+    "1X": 0.8205,
+    "12": 0.773,
+    "X2": 0.4065,
+    "over15": 0.7931,
+    "under15": 0.2069,
+    "over25": 0.5578,
+    "under25": 0.4422,
+    "over35": 0.334,
+    "under35": 0.666,
+    "gol_gol": 0.5388,
+    "no_gol": 0.4612,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1085
+      "prob": 0.1077
      },
      {
       "risultato": "2-0",
-      "prob": 0.1009
+      "prob": 0.1019
      },
      {
       "risultato": "1-0",
-      "prob": 0.0997
+      "prob": 0.0999
      }
     ]
    },
+   "prima": {
+    "1": 0.5877,
+    "X": 0.2288,
+    "2": 0.1835,
+    "attesi": "1.92-0.99"
+   },
+   "spostamento": 0.0058,
    "mercato": {
     "1": 0.6859,
     "X": 0.182,
@@ -385,11 +62,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0982,
-    "X": 0.0468,
-    "2": 0.0513
+    "1": -0.0924,
+    "X": 0.045,
+    "2": 0.0473
    },
-   "divergenza_max": 0.0982
+   "divergenza_max": 0.0924
   },
   {
    "fixture_id": 1548535,
