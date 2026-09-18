@@ -1,73 +1,7 @@
 {
- "generato": "2026-09-18T19:35:52.950913+00:00",
+ "generato": "2026-09-18T20:09:04.167877+00:00",
  "modello": "2026-09-18T05:17:37.069578+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1549491,
-   "data": "2026-09-18T20:00:00+00:00",
-   "campionato": "Peru - Primera División",
-   "casa": "Alianza Atletico",
-   "fuori": "Comerciantes Unidos",
-   "gol_attesi_casa": 1.97,
-   "gol_attesi_fuori": 1.24,
-   "gol_attesi_totali": 3.22,
-   "nettezza": 30.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 26,
-   "partite_storia_fuori": 26,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5381,
-    "X": 0.228,
-    "2": 0.2339,
-    "1X": 0.7661,
-    "12": 0.772,
-    "X2": 0.4619,
-    "over15": 0.8358,
-    "under15": 0.1642,
-    "over25": 0.6233,
-    "under25": 0.3767,
-    "over35": 0.4009,
-    "under35": 0.5991,
-    "gol_gol": 0.6176,
-    "no_gol": 0.3824,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1033
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0971
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.078
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5184,
-    "X": 0.2358,
-    "2": 0.2458,
-    "attesi": "1.88-1.24"
-   },
-   "spostamento": 0.0197,
-   "mercato": {
-    "1": 0.5347,
-    "X": 0.2603,
-    "2": 0.205,
-    "margine": 0.0897,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0034,
-    "X": -0.0323,
-    "2": 0.0289
-   },
-   "divergenza_max": 0.0323
-  },
   {
    "fixture_id": 1549783,
    "data": "2026-09-18T21:00:00+00:00",
@@ -15474,18 +15408,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3906,
-    "X": 0.2943,
-    "2": 0.3151,
-    "margine": 0.0976,
+    "1": 0.3899,
+    "X": 0.2944,
+    "2": 0.3157,
+    "margine": 0.0955,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0581,
-    "X": -0.0116,
-    "2": -0.0465
+    "1": 0.0588,
+    "X": -0.0117,
+    "2": -0.0471
    },
-   "divergenza_max": 0.0581
+   "divergenza_max": 0.0588
   },
   {
    "fixture_id": 1565260,
@@ -15533,18 +15467,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5443,
-    "X": 0.2603,
-    "2": 0.1954,
+    "1": 0.545,
+    "X": 0.26,
+    "2": 0.195,
     "margine": 0.0959,
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0373,
-    "X": -0.0189,
-    "2": -0.0184
+    "1": 0.0366,
+    "X": -0.0186,
+    "2": -0.018
    },
-   "divergenza_max": 0.0373
+   "divergenza_max": 0.0366
   },
   {
    "fixture_id": 1520882,
