@@ -1,711 +1,7 @@
 {
- "generato": "2026-09-19T15:37:55.843474+00:00",
+ "generato": "2026-09-19T16:08:57.562644+00:00",
  "modello": "2026-09-19T05:17:35.521763+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1494766,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Norway - Eliteserien",
-   "casa": "Molde",
-   "fuori": "Aalesund",
-   "gol_attesi_casa": 2.69,
-   "gol_attesi_fuori": 0.98,
-   "gol_attesi_totali": 3.67,
-   "nettezza": 59.8,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.7323,
-    "X": 0.1588,
-    "2": 0.1089,
-    "1X": 0.8911,
-    "12": 0.8412,
-    "X2": 0.2677,
-    "over15": 0.8845,
-    "under15": 0.1155,
-    "over25": 0.7095,
-    "under25": 0.2905,
-    "over35": 0.4994,
-    "under35": 0.5006,
-    "gol_gol": 0.5854,
-    "no_gol": 0.4146,
-    "1+over25": 0.5747,
-    "1+under25": 0.1575,
-    "2+over25": 0.0752,
-    "2+under25": 0.0337,
-    "1X+over25": 0.6343,
-    "1X+under25": 0.2568,
-    "X2+over25": 0.1348,
-    "X2+under25": 0.133,
-    "12+over25": 0.6499,
-    "1+gol": 0.3853,
-    "1+nogol": 0.3469,
-    "2+gol": 0.07,
-    "1X+nogol": 0.3757,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-0",
-      "prob": 0.0923
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0904
-     },
-     {
-      "risultato": "3-0",
-      "prob": 0.0829
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.6976,
-    "X": 0.176,
-    "2": 0.1264,
-    "attesi": "2.49-0.99"
-   },
-   "spostamento": 0.0347,
-   "mercato": {
-    "1": 0.6973,
-    "X": 0.1687,
-    "2": 0.134,
-    "margine": 0.0707,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.035,
-    "X": -0.0099,
-    "2": -0.0251
-   },
-   "divergenza_max": 0.035
-  },
-  {
-   "fixture_id": 1549025,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Denmark - Superliga",
-   "casa": "Odense",
-   "fuori": "FC Midtjylland",
-   "gol_attesi_casa": 1.36,
-   "gol_attesi_fuori": 1.55,
-   "gol_attesi_totali": 2.91,
-   "nettezza": 12.1,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3285,
-    "X": 0.2576,
-    "2": 0.4139,
-    "1X": 0.5861,
-    "12": 0.7424,
-    "X2": 0.6715,
-    "over15": 0.7924,
-    "under15": 0.2076,
-    "over25": 0.5559,
-    "under25": 0.4441,
-    "over35": 0.3321,
-    "under35": 0.6679,
-    "gol_gol": 0.5909,
-    "no_gol": 0.4091,
-    "1+over25": 0.2098,
-    "1+under25": 0.1187,
-    "2+over25": 0.2694,
-    "2+under25": 0.1444,
-    "1X+over25": 0.2864,
-    "1X+under25": 0.2997,
-    "X2+over25": 0.3461,
-    "X2+under25": 0.3254,
-    "12+over25": 0.4792,
-    "1+gol": 0.1766,
-    "1+nogol": 0.152,
-    "2+gol": 0.2171,
-    "1X+nogol": 0.2123,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1206
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.089
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0789
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3459,
-    "X": 0.2625,
-    "2": 0.3916,
-    "attesi": "1.37-1.47"
-   },
-   "spostamento": 0.0223,
-   "mercato": {
-    "1": 0.2316,
-    "X": 0.2313,
-    "2": 0.5371,
-    "margine": 0.0704,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.0969,
-    "X": 0.0263,
-    "2": -0.1232
-   },
-   "divergenza_max": 0.1232
-  },
-  {
-   "fixture_id": 1550128,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Italy - Serie A",
-   "casa": "AS Roma",
-   "fuori": "Inter",
-   "gol_attesi_casa": 2.1,
-   "gol_attesi_fuori": 1.47,
-   "gol_attesi_totali": 3.57,
-   "nettezza": 27.5,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5168,
-    "X": 0.2191,
-    "2": 0.2641,
-    "1X": 0.7359,
-    "12": 0.7809,
-    "X2": 0.4832,
-    "over15": 0.8752,
-    "under15": 0.1248,
-    "over25": 0.691,
-    "under25": 0.309,
-    "over35": 0.4773,
-    "under35": 0.5227,
-    "gol_gol": 0.6794,
-    "no_gol": 0.3206,
-    "1+over25": 0.3995,
-    "1+under25": 0.1172,
-    "2+over25": 0.1965,
-    "2+under25": 0.0676,
-    "1X+over25": 0.4945,
-    "1X+under25": 0.2413,
-    "X2+over25": 0.2915,
-    "X2+under25": 0.1917,
-    "12+over25": 0.596,
-    "1+gol": 0.3189,
-    "1+nogol": 0.1978,
-    "2+gol": 0.174,
-    "1X+nogol": 0.2305,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.0915
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0914
-     },
-     {
-      "risultato": "2-2",
-      "prob": 0.0671
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.5218,
-    "X": 0.218,
-    "2": 0.2601,
-    "attesi": "2.11-1.46"
-   },
-   "spostamento": 0.005,
-   "mercato": {
-    "1": 0.3511,
-    "X": 0.2757,
-    "2": 0.3732,
-    "margine": 0.0471,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.1657,
-    "X": -0.0566,
-    "2": -0.1091
-   },
-   "divergenza_max": 0.1657
-  },
-  {
-   "fixture_id": 1551110,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Bulgaria - First League",
-   "casa": "Arda Kardzhali",
-   "fuori": "Cherno More Varna",
-   "gol_attesi_casa": 1.95,
-   "gol_attesi_fuori": 1.31,
-   "gol_attesi_totali": 3.26,
-   "nettezza": 27.7,
-   "affidabilita": 94.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 9,
-   "partite_storia_fuori": 9,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5178,
-    "X": 0.2299,
-    "2": 0.2523,
-    "1X": 0.7477,
-    "12": 0.7701,
-    "X2": 0.4822,
-    "over15": 0.8416,
-    "under15": 0.1584,
-    "over25": 0.6329,
-    "under25": 0.3671,
-    "over35": 0.4112,
-    "under35": 0.5888,
-    "gol_gol": 0.6318,
-    "no_gol": 0.3682,
-    "1+over25": 0.3753,
-    "1+under25": 0.1426,
-    "2+over25": 0.1739,
-    "2+under25": 0.0784,
-    "1X+over25": 0.459,
-    "1X+under25": 0.2887,
-    "X2+over25": 0.2576,
-    "X2+under25": 0.2245,
-    "12+over25": 0.5491,
-    "1+gol": 0.292,
-    "1+nogol": 0.2258,
-    "2+gol": 0.1531,
-    "1X+nogol": 0.2691,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1029
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0956
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0728
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.499,
-    "X": 0.236,
-    "2": 0.2649,
-    "attesi": "1.87-1.31"
-   },
-   "spostamento": 0.0188,
-   "mercato": {
-    "1": 0.5284,
-    "X": 0.2704,
-    "2": 0.2012,
-    "margine": 0.0749,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.0106,
-    "X": -0.0405,
-    "2": 0.0511
-   },
-   "divergenza_max": 0.0511
-  },
-  {
-   "fixture_id": 1555395,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "FC Luzern",
-   "fuori": "Grasshoppers",
-   "gol_attesi_casa": 1.6,
-   "gol_attesi_fuori": 1.32,
-   "gol_attesi_totali": 2.92,
-   "nettezza": 15.0,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 11,
-   "partite_storia_fuori": 13,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4334,
-    "X": 0.2556,
-    "2": 0.311,
-    "1X": 0.689,
-    "12": 0.7444,
-    "X2": 0.5666,
-    "over15": 0.7944,
-    "under15": 0.2056,
-    "over25": 0.5589,
-    "under25": 0.4411,
-    "over35": 0.3351,
-    "under35": 0.6649,
-    "gol_gol": 0.5909,
-    "no_gol": 0.4091,
-    "1+over25": 0.2842,
-    "1+under25": 0.1493,
-    "2+over25": 0.1983,
-    "2+under25": 0.1127,
-    "1X+over25": 0.3606,
-    "1X+under25": 0.3284,
-    "X2+over25": 0.2747,
-    "X2+under25": 0.2919,
-    "12+over25": 0.4825,
-    "1+gol": 0.2266,
-    "1+nogol": 0.2069,
-    "2+gol": 0.1684,
-    "1X+nogol": 0.2665,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1196
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.091
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0804
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4253,
-    "X": 0.2599,
-    "2": 0.3148,
-    "attesi": "1.55-1.30"
-   },
-   "spostamento": 0.0081,
-   "mercato": {
-    "1": 0.5585,
-    "X": 0.2155,
-    "2": 0.226,
-    "margine": 0.0704,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.1251,
-    "X": 0.0401,
-    "2": 0.085
-   },
-   "divergenza_max": 0.1251
-  },
-  {
-   "fixture_id": 1555396,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "BSC Young Boys",
-   "fuori": "Servette FC",
-   "gol_attesi_casa": 1.82,
-   "gol_attesi_fuori": 1.33,
-   "gol_attesi_totali": 3.15,
-   "nettezza": 22.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 12,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4848,
-    "X": 0.2393,
-    "2": 0.2759,
-    "1X": 0.7241,
-    "12": 0.7607,
-    "X2": 0.5152,
-    "over15": 0.8279,
-    "under15": 0.1721,
-    "over25": 0.6104,
-    "under25": 0.3896,
-    "over35": 0.3872,
-    "under35": 0.6128,
-    "gol_gol": 0.6222,
-    "no_gol": 0.3778,
-    "1+over25": 0.3414,
-    "1+under25": 0.1435,
-    "2+over25": 0.1864,
-    "2+under25": 0.0895,
-    "1X+over25": 0.424,
-    "1X+under25": 0.3001,
-    "X2+over25": 0.269,
-    "X2+under25": 0.2461,
-    "12+over25": 0.5277,
-    "1+gol": 0.2687,
-    "1+nogol": 0.2161,
-    "2+gol": 0.1621,
-    "1X+nogol": 0.264,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1088
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0944
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0726
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4856,
-    "X": 0.2411,
-    "2": 0.2733,
-    "attesi": "1.80-1.31"
-   },
-   "spostamento": 0.0026,
-   "mercato": {
-    "1": 0.5966,
-    "X": 0.2116,
-    "2": 0.1918,
-    "margine": 0.074,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.1118,
-    "X": 0.0277,
-    "2": 0.0841
-   },
-   "divergenza_max": 0.1118
-  },
-  {
-   "fixture_id": 1555397,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Switzerland - Super League",
-   "casa": "FC Sion",
-   "fuori": "FC Zurich",
-   "gol_attesi_casa": 2.36,
-   "gol_attesi_fuori": 1.11,
-   "gol_attesi_totali": 3.47,
-   "nettezza": 46.9,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 12,
-   "partite_storia_fuori": 11,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.6461,
-    "X": 0.193,
-    "2": 0.1609,
-    "1X": 0.8391,
-    "12": 0.807,
-    "X2": 0.3539,
-    "over15": 0.8648,
-    "under15": 0.1352,
-    "over25": 0.6732,
-    "under25": 0.3268,
-    "over35": 0.4563,
-    "under35": 0.5437,
-    "gol_gol": 0.6117,
-    "no_gol": 0.3883,
-    "1+over25": 0.4901,
-    "1+under25": 0.1559,
-    "2+over25": 0.1111,
-    "2+under25": 0.0499,
-    "1X+over25": 0.5621,
-    "1X+under25": 0.277,
-    "X2+over25": 0.183,
-    "X2+under25": 0.1709,
-    "12+over25": 0.6012,
-    "1+gol": 0.3525,
-    "1+nogol": 0.2936,
-    "2+gol": 0.1014,
-    "1X+nogol": 0.3288,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-1",
-      "prob": 0.0963
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.0866
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.0858
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.614,
-    "X": 0.2094,
-    "2": 0.1765,
-    "attesi": "2.16-1.08"
-   },
-   "spostamento": 0.0321,
-   "mercato": {
-    "1": 0.6472,
-    "X": 0.1974,
-    "2": 0.1554,
-    "margine": 0.0734,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": -0.0011,
-    "X": -0.0044,
-    "2": 0.0055
-   },
-   "divergenza_max": 0.0055
-  },
-  {
-   "fixture_id": 1560032,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Czech-Republic - Czech Liga",
-   "casa": "Slovácko",
-   "fuori": "Baník Ostrava",
-   "gol_attesi_casa": 1.37,
-   "gol_attesi_fuori": 1.22,
-   "gol_attesi_totali": 2.59,
-   "nettezza": 9.5,
-   "affidabilita": 72.0,
-   "affidabilita_etichetta": "media",
-   "partite_storia_casa": 8,
-   "partite_storia_fuori": 8,
-   "formazioni": "probabile",
-   "mercati": {
-    "1": 0.3967,
-    "X": 0.2761,
-    "2": 0.3272,
-    "1X": 0.6728,
-    "12": 0.7239,
-    "X2": 0.6033,
-    "over15": 0.7373,
-    "under15": 0.2627,
-    "over25": 0.4796,
-    "under25": 0.5204,
-    "over35": 0.2623,
-    "under35": 0.7377,
-    "gol_gol": 0.5324,
-    "no_gol": 0.4676,
-    "1+over25": 0.2301,
-    "1+under25": 0.1666,
-    "2+over25": 0.1861,
-    "2+under25": 0.1411,
-    "1X+over25": 0.2934,
-    "1X+under25": 0.3793,
-    "X2+over25": 0.2495,
-    "X2+under25": 0.3538,
-    "12+over25": 0.4163,
-    "1+gol": 0.1832,
-    "1+nogol": 0.2135,
-    "2+gol": 0.1543,
-    "1X+nogol": 0.2947,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1316
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0963
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0859
-     }
-    ]
-   },
-   "mercato": {
-    "1": 0.3776,
-    "X": 0.2863,
-    "2": 0.3361,
-    "margine": 0.0797,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.0191,
-    "X": -0.0102,
-    "2": -0.0089
-   },
-   "divergenza_max": 0.0191
-  },
-  {
-   "fixture_id": 1593318,
-   "data": "2026-09-19T16:00:00+00:00",
-   "campionato": "Greece - Super League 1",
-   "casa": "Atromitos",
-   "fuori": "Kifisia",
-   "gol_attesi_casa": 1.42,
-   "gol_attesi_fuori": 1.0,
-   "gol_attesi_totali": 2.42,
-   "nettezza": 18.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 13,
-   "partite_storia_fuori": 13,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4583,
-    "X": 0.2807,
-    "2": 0.2609,
-    "1X": 0.7391,
-    "12": 0.7193,
-    "X2": 0.5417,
-    "over15": 0.7021,
-    "under15": 0.2979,
-    "over25": 0.4353,
-    "under25": 0.5647,
-    "over35": 0.2253,
-    "under35": 0.7747,
-    "gol_gol": 0.486,
-    "no_gol": 0.514,
-    "1+over25": 0.2496,
-    "1+under25": 0.2088,
-    "2+over25": 0.1331,
-    "2+under25": 0.1279,
-    "1X+over25": 0.3023,
-    "1X+under25": 0.4368,
-    "X2+over25": 0.1857,
-    "X2+under25": 0.3559,
-    "12+over25": 0.3827,
-    "1+gol": 0.1872,
-    "1+nogol": 0.2711,
-    "2+gol": 0.1134,
-    "1X+nogol": 0.3664,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1328
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1196
-     },
-     {
-      "risultato": "0-0",
-      "prob": 0.0953
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4772,
-    "X": 0.2792,
-    "2": 0.2435,
-    "attesi": "1.44-0.95"
-   },
-   "spostamento": 0.0189,
-   "mercato": {
-    "1": 0.4247,
-    "X": 0.2967,
-    "2": 0.2786,
-    "margine": 0.0735,
-    "bookmaker": 6
-   },
-   "divergenza": {
-    "1": 0.0336,
-    "X": -0.016,
-    "2": -0.0177
-   },
-   "divergenza_max": 0.0336
-  },
   {
    "fixture_id": 1558637,
    "data": "2026-09-19T16:15:00+00:00",
@@ -713,57 +9,64 @@
    "casa": "Charleroi",
    "fuori": "Cercle Brugge",
    "gol_attesi_casa": 1.93,
-   "gol_attesi_fuori": 0.9,
-   "gol_attesi_totali": 2.83,
-   "nettezza": 41.3,
-   "affidabilita": 60.0,
-   "affidabilita_etichetta": "media",
+   "gol_attesi_fuori": 0.94,
+   "gol_attesi_totali": 2.87,
+   "nettezza": 40.1,
+   "affidabilita": 76.0,
+   "affidabilita_etichetta": "alta",
    "partite_storia_casa": 6,
    "partite_storia_fuori": 6,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6085,
-    "X": 0.2261,
-    "2": 0.1654,
-    "1X": 0.8346,
-    "12": 0.7739,
-    "X2": 0.3915,
-    "over15": 0.7798,
-    "under15": 0.2202,
-    "over25": 0.5386,
-    "under25": 0.4614,
-    "over35": 0.3155,
-    "under35": 0.6845,
-    "gol_gol": 0.514,
-    "no_gol": 0.486,
-    "1+over25": 0.3908,
-    "1+under25": 0.2177,
-    "2+over25": 0.0933,
-    "2+under25": 0.0721,
-    "1X+over25": 0.4453,
-    "1X+under25": 0.3893,
-    "X2+over25": 0.1477,
-    "X2+under25": 0.2437,
-    "12+over25": 0.4841,
-    "1+gol": 0.2677,
-    "1+nogol": 0.3408,
-    "2+gol": 0.084,
-    "1X+nogol": 0.4047,
+    "1": 0.601,
+    "X": 0.227,
+    "2": 0.1721,
+    "1X": 0.8279,
+    "12": 0.773,
+    "X2": 0.399,
+    "over15": 0.785,
+    "under15": 0.215,
+    "over25": 0.546,
+    "under25": 0.454,
+    "over35": 0.3226,
+    "under35": 0.6774,
+    "gol_gol": 0.5247,
+    "no_gol": 0.4753,
+    "1+over25": 0.3901,
+    "1+under25": 0.2108,
+    "2+over25": 0.099,
+    "2+under25": 0.0731,
+    "1X+over25": 0.447,
+    "1X+under25": 0.3809,
+    "X2+over25": 0.1559,
+    "X2+under25": 0.2432,
+    "12+over25": 0.4891,
+    "1+gol": 0.2708,
+    "1+nogol": 0.3302,
+    "2+gol": 0.089,
+    "1X+nogol": 0.3922,
     "punteggi_probabili": [
      {
+      "risultato": "1-1",
+      "prob": 0.108
+     },
+     {
       "risultato": "2-0",
-      "prob": 0.1094
+      "prob": 0.1061
      },
      {
       "risultato": "1-0",
-      "prob": 0.1083
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1077
+      "prob": 0.1048
      }
     ]
    },
+   "prima": {
+    "1": 0.6055,
+    "X": 0.2271,
+    "2": 0.1674,
+    "attesi": "1.92-0.91"
+   },
+   "spostamento": 0.0047,
    "mercato": {
     "1": 0.5696,
     "X": 0.2331,
@@ -772,11 +75,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0389,
-    "X": -0.007,
-    "2": -0.0319
+    "1": 0.0314,
+    "X": -0.0061,
+    "2": -0.0252
    },
-   "divergenza_max": 0.0389
+   "divergenza_max": 0.0314
   },
   {
    "fixture_id": 1555511,
@@ -784,58 +87,65 @@
    "campionato": "Israel - Ligat Ha'al",
    "casa": "Maccabi Petah Tikva",
    "fuori": "Hapoel Katamon",
-   "gol_attesi_casa": 1.74,
-   "gol_attesi_fuori": 1.33,
-   "gol_attesi_totali": 3.07,
-   "nettezza": 19.7,
-   "affidabilita": 48.0,
-   "affidabilita_etichetta": "bassa",
+   "gol_attesi_casa": 1.81,
+   "gol_attesi_fuori": 1.46,
+   "gol_attesi_totali": 3.28,
+   "nettezza": 18.1,
+   "affidabilita": 64.0,
+   "affidabilita_etichetta": "media",
    "partite_storia_casa": 4,
    "partite_storia_fuori": 4,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4644,
-    "X": 0.2456,
-    "2": 0.29,
-    "1X": 0.71,
-    "12": 0.7544,
-    "X2": 0.5356,
-    "over15": 0.8161,
-    "under15": 0.1839,
-    "over25": 0.5917,
-    "under25": 0.4083,
-    "over35": 0.3678,
-    "under35": 0.6322,
-    "gol_gol": 0.6116,
-    "no_gol": 0.3884,
-    "1+over25": 0.319,
-    "1+under25": 0.1455,
-    "2+over25": 0.1921,
-    "2+under25": 0.0979,
-    "1X+over25": 0.3996,
-    "1X+under25": 0.3104,
-    "X2+over25": 0.2727,
-    "X2+under25": 0.2628,
-    "12+over25": 0.511,
-    "1+gol": 0.2524,
-    "1+nogol": 0.212,
-    "2+gol": 0.1655,
-    "1X+nogol": 0.2639,
+    "1": 0.4542,
+    "X": 0.2377,
+    "2": 0.3081,
+    "1X": 0.6919,
+    "12": 0.7623,
+    "X2": 0.5458,
+    "over15": 0.8435,
+    "under15": 0.1565,
+    "over25": 0.6358,
+    "under25": 0.3642,
+    "over35": 0.4144,
+    "under35": 0.5856,
+    "gol_gol": 0.6482,
+    "no_gol": 0.3518,
+    "1+over25": 0.3288,
+    "1+under25": 0.1254,
+    "2+over25": 0.2173,
+    "2+under25": 0.0908,
+    "1X+over25": 0.4185,
+    "1X+under25": 0.2734,
+    "X2+over25": 0.307,
+    "X2+under25": 0.2388,
+    "12+over25": 0.5461,
+    "1+gol": 0.2658,
+    "1+nogol": 0.1884,
+    "2+gol": 0.1875,
+    "1X+nogol": 0.2312,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.113
+      "prob": 0.1052
      },
      {
       "risultato": "2-1",
-      "prob": 0.0934
+      "prob": 0.0908
      },
      {
-      "risultato": "1-0",
-      "prob": 0.0754
+      "risultato": "1-2",
+      "prob": 0.0734
      }
     ]
    },
+   "prima": {
+    "1": 0.4575,
+    "X": 0.2479,
+    "2": 0.2946,
+    "attesi": "1.70-1.33"
+   },
+   "spostamento": 0.0135,
    "mercato": {
     "1": 0.3909,
     "X": 0.2976,
@@ -844,11 +154,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.0735,
-    "X": -0.052,
-    "2": -0.0215
+    "1": 0.0633,
+    "X": -0.0599,
+    "2": -0.0034
    },
-   "divergenza_max": 0.0735
+   "divergenza_max": 0.0633
   },
   {
    "fixture_id": 1555513,
@@ -856,58 +166,65 @@
    "campionato": "Israel - Ligat Ha'al",
    "casa": "Bnei Sakhnin",
    "fuori": "Hapoel Ramat Gan",
-   "gol_attesi_casa": 1.82,
-   "gol_attesi_fuori": 0.96,
-   "gol_attesi_totali": 2.78,
-   "nettezza": 35.5,
-   "affidabilita": 48.0,
-   "affidabilita_etichetta": "bassa",
+   "gol_attesi_casa": 1.8,
+   "gol_attesi_fuori": 1.01,
+   "gol_attesi_totali": 2.81,
+   "nettezza": 33.2,
+   "affidabilita": 64.0,
+   "affidabilita_etichetta": "media",
    "partite_storia_casa": 5,
    "partite_storia_fuori": 4,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5697,
-    "X": 0.2393,
-    "2": 0.191,
-    "1X": 0.809,
-    "12": 0.7607,
-    "X2": 0.4303,
-    "over15": 0.7701,
-    "under15": 0.2299,
-    "over25": 0.5246,
-    "under25": 0.4754,
-    "over35": 0.3025,
-    "under35": 0.6975,
-    "gol_gol": 0.5219,
-    "no_gol": 0.4781,
-    "1+over25": 0.3591,
-    "1+under25": 0.2106,
-    "2+over25": 0.108,
-    "2+under25": 0.083,
-    "1X+over25": 0.4166,
-    "1X+under25": 0.3924,
-    "X2+over25": 0.1655,
-    "X2+under25": 0.2648,
-    "12+over25": 0.4671,
-    "1+gol": 0.2542,
-    "1+nogol": 0.3155,
-    "2+gol": 0.0961,
-    "1X+nogol": 0.3833,
+    "1": 0.5546,
+    "X": 0.2413,
+    "2": 0.204,
+    "1X": 0.796,
+    "12": 0.7587,
+    "X2": 0.4454,
+    "over15": 0.7763,
+    "under15": 0.2237,
+    "over25": 0.5332,
+    "under25": 0.4668,
+    "over35": 0.3105,
+    "under35": 0.6895,
+    "gol_gol": 0.536,
+    "no_gol": 0.464,
+    "1+over25": 0.354,
+    "1+under25": 0.2007,
+    "2+over25": 0.1183,
+    "2+under25": 0.0857,
+    "1X+over25": 0.4149,
+    "1X+under25": 0.381,
+    "X2+over25": 0.1793,
+    "X2+under25": 0.2661,
+    "12+over25": 0.4723,
+    "1+gol": 0.2554,
+    "1+nogol": 0.2992,
+    "2+gol": 0.1048,
+    "1X+nogol": 0.3648,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.114
+      "prob": 0.1148
      },
      {
       "risultato": "1-0",
-      "prob": 0.1078
+      "prob": 0.1029
      },
      {
-      "risultato": "2-0",
-      "prob": 0.1028
+      "risultato": "2-1",
+      "prob": 0.0986
      }
     ]
    },
+   "prima": {
+    "1": 0.5625,
+    "X": 0.2428,
+    "2": 0.1947,
+    "attesi": "1.78-0.96"
+   },
+   "spostamento": 0.0093,
    "mercato": {
     "1": 0.3818,
     "X": 0.2769,
@@ -916,11 +233,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.1879,
-    "X": -0.0376,
-    "2": -0.1502
+    "1": 0.1728,
+    "X": -0.0356,
+    "2": -0.1372
    },
-   "divergenza_max": 0.1879
+   "divergenza_max": 0.1728
   },
   {
    "fixture_id": 1557415,
@@ -928,58 +245,65 @@
    "campionato": "England - Premier League",
    "casa": "Nottingham Forest",
    "fuori": "Coventry",
-   "gol_attesi_casa": 1.8,
-   "gol_attesi_fuori": 0.98,
-   "gol_attesi_totali": 2.78,
-   "nettezza": 34.1,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.77,
+   "gol_attesi_fuori": 1.03,
+   "gol_attesi_totali": 2.8,
+   "nettezza": 31.4,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.561,
-    "X": 0.2414,
-    "2": 0.1976,
-    "1X": 0.8024,
-    "12": 0.7586,
-    "X2": 0.439,
-    "over15": 0.7704,
-    "under15": 0.2296,
-    "over25": 0.5249,
-    "under25": 0.4751,
-    "over35": 0.3028,
-    "under35": 0.6972,
-    "gol_gol": 0.5262,
-    "no_gol": 0.4738,
-    "1+over25": 0.3538,
-    "1+under25": 0.2072,
-    "2+over25": 0.1124,
-    "2+under25": 0.0852,
-    "1X+over25": 0.4125,
-    "1X+under25": 0.3899,
-    "X2+over25": 0.1711,
-    "X2+under25": 0.2679,
-    "12+over25": 0.4662,
-    "1+gol": 0.2527,
-    "1+nogol": 0.3083,
-    "2+gol": 0.0998,
-    "1X+nogol": 0.376,
+    "1": 0.543,
+    "X": 0.2444,
+    "2": 0.2127,
+    "1X": 0.7873,
+    "12": 0.7556,
+    "X2": 0.457,
+    "over15": 0.775,
+    "under15": 0.225,
+    "over25": 0.5313,
+    "under25": 0.4687,
+    "over35": 0.3087,
+    "under35": 0.6913,
+    "gol_gol": 0.5391,
+    "no_gol": 0.4609,
+    "1+over25": 0.3455,
+    "1+under25": 0.1975,
+    "2+over25": 0.1237,
+    "2+under25": 0.0889,
+    "1X+over25": 0.4075,
+    "1X+under25": 0.3798,
+    "X2+over25": 0.1857,
+    "X2+under25": 0.2713,
+    "12+over25": 0.4692,
+    "1+gol": 0.2517,
+    "1+nogol": 0.2912,
+    "2+gol": 0.1092,
+    "1X+nogol": 0.3574,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.115
+      "prob": 0.1162
      },
      {
       "risultato": "1-0",
-      "prob": 0.1065
+      "prob": 0.102
      },
      {
-      "risultato": "2-0",
-      "prob": 0.1007
+      "risultato": "2-1",
+      "prob": 0.0982
      }
     ]
    },
+   "prima": {
+    "1": 0.5631,
+    "X": 0.2408,
+    "2": 0.1961,
+    "attesi": "1.80-0.97"
+   },
+   "spostamento": 0.0201,
    "mercato": {
     "1": 0.5817,
     "X": 0.2392,
@@ -988,11 +312,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0207,
-    "X": 0.0022,
-    "2": 0.0185
+    "1": -0.0387,
+    "X": 0.0052,
+    "2": 0.0336
    },
-   "divergenza_max": 0.0207
+   "divergenza_max": 0.0387
   },
   {
    "fixture_id": 1569930,
@@ -1000,58 +324,65 @@
    "campionato": "Spain - Segunda División",
    "casa": "Castellón",
    "fuori": "Tenerife",
-   "gol_attesi_casa": 1.77,
-   "gol_attesi_fuori": 0.92,
-   "gol_attesi_totali": 2.69,
-   "nettezza": 35.4,
-   "affidabilita": 54.0,
+   "gol_attesi_casa": 1.89,
+   "gol_attesi_fuori": 0.9,
+   "gol_attesi_totali": 2.78,
+   "nettezza": 40.2,
+   "affidabilita": 70.0,
    "affidabilita_etichetta": "media",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 5,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5696,
-    "X": 0.2433,
-    "2": 0.187,
-    "1X": 0.813,
-    "12": 0.7567,
-    "X2": 0.4304,
-    "over15": 0.7547,
-    "under15": 0.2453,
-    "over25": 0.5035,
-    "under25": 0.4965,
-    "over35": 0.2833,
-    "under35": 0.7167,
-    "gol_gol": 0.5037,
-    "no_gol": 0.4963,
-    "1+over25": 0.3481,
-    "1+under25": 0.2216,
-    "2+over25": 0.1016,
-    "2+under25": 0.0854,
-    "1X+over25": 0.4019,
-    "1X+under25": 0.4111,
-    "X2+over25": 0.1554,
-    "X2+under25": 0.2749,
-    "12+over25": 0.4497,
-    "1+gol": 0.2435,
-    "1+nogol": 0.3262,
-    "2+gol": 0.0904,
-    "1X+nogol": 0.3997,
+    "1": 0.6012,
+    "X": 0.2304,
+    "2": 0.1684,
+    "1X": 0.8316,
+    "12": 0.7696,
+    "X2": 0.3988,
+    "over15": 0.7713,
+    "under15": 0.2287,
+    "over25": 0.5266,
+    "under25": 0.4734,
+    "over35": 0.3043,
+    "under35": 0.6957,
+    "gol_gol": 0.5075,
+    "no_gol": 0.4925,
+    "1+over25": 0.3797,
+    "1+under25": 0.2215,
+    "2+over25": 0.0934,
+    "2+under25": 0.075,
+    "1X+over25": 0.4332,
+    "1X+under25": 0.3984,
+    "X2+over25": 0.1469,
+    "X2+under25": 0.2519,
+    "12+over25": 0.4731,
+    "1+gol": 0.2603,
+    "1+nogol": 0.341,
+    "2+gol": 0.0839,
+    "1X+nogol": 0.408,
     "punteggi_probabili": [
      {
-      "risultato": "1-1",
-      "prob": 0.116
-     },
-     {
       "risultato": "1-0",
-      "prob": 0.1149
+      "prob": 0.1114
      },
      {
       "risultato": "2-0",
-      "prob": 0.1067
+      "prob": 0.1101
+     },
+     {
+      "risultato": "1-1",
+      "prob": 0.1098
      }
     ]
    },
+   "prima": {
+    "1": 0.5666,
+    "X": 0.245,
+    "2": 0.1885,
+    "attesi": "1.76-0.91"
+   },
+   "spostamento": 0.0346,
    "mercato": {
     "1": 0.6387,
     "X": 0.2207,
@@ -1060,11 +391,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0691,
-    "X": 0.0226,
-    "2": 0.0464
+    "1": -0.0375,
+    "X": 0.0097,
+    "2": 0.0278
    },
-   "divergenza_max": 0.0691
+   "divergenza_max": 0.0375
   },
   {
    "fixture_id": 1569932,
@@ -1072,58 +403,65 @@
    "campionato": "Spain - Segunda División",
    "casa": "Eldense",
    "fuori": "Eibar",
-   "gol_attesi_casa": 1.05,
-   "gol_attesi_fuori": 1.33,
-   "gol_attesi_totali": 2.38,
-   "nettezza": 13.4,
-   "affidabilita": 54.0,
+   "gol_attesi_casa": 1.04,
+   "gol_attesi_fuori": 1.4,
+   "gol_attesi_totali": 2.43,
+   "nettezza": 16.9,
+   "affidabilita": 70.0,
    "affidabilita_etichetta": "media",
    "partite_storia_casa": 5,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2898,
-    "X": 0.2874,
-    "2": 0.4228,
-    "1X": 0.5772,
-    "12": 0.7126,
-    "X2": 0.7102,
-    "over15": 0.6945,
-    "under15": 0.3055,
-    "over25": 0.4261,
-    "under25": 0.5739,
-    "over35": 0.2179,
-    "under35": 0.7821,
-    "gol_gol": 0.4857,
-    "no_gol": 0.5143,
-    "1+over25": 0.1477,
-    "1+under25": 0.1421,
-    "2+over25": 0.2253,
-    "2+under25": 0.1975,
-    "1X+over25": 0.2007,
-    "1X+under25": 0.3764,
-    "X2+over25": 0.2783,
-    "X2+under25": 0.4319,
-    "12+over25": 0.3731,
-    "1+gol": 0.1237,
-    "1+nogol": 0.166,
-    "2+gol": 0.1732,
-    "1X+nogol": 0.2647,
+    "1": 0.2726,
+    "X": 0.2816,
+    "2": 0.4458,
+    "1X": 0.5542,
+    "12": 0.7184,
+    "X2": 0.7274,
+    "over15": 0.7048,
+    "under15": 0.2952,
+    "over25": 0.4386,
+    "under25": 0.5614,
+    "over35": 0.228,
+    "under35": 0.772,
+    "gol_gol": 0.4917,
+    "no_gol": 0.5083,
+    "1+over25": 0.1409,
+    "1+under25": 0.1317,
+    "2+over25": 0.2437,
+    "2+under25": 0.202,
+    "1X+over25": 0.1949,
+    "1X+under25": 0.3593,
+    "X2+over25": 0.2978,
+    "X2+under25": 0.4296,
+    "12+over25": 0.3846,
+    "1+gol": 0.1194,
+    "1+nogol": 0.1532,
+    "2+gol": 0.1849,
+    "1X+nogol": 0.2474,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1357
+      "prob": 0.1334
      },
      {
       "risultato": "0-1",
-      "prob": 0.1161
+      "prob": 0.1163
      },
      {
       "risultato": "0-0",
-      "prob": 0.0987
+      "prob": 0.0942
      }
     ]
    },
+   "prima": {
+    "1": 0.2906,
+    "X": 0.288,
+    "2": 0.4215,
+    "attesi": "1.05-1.32"
+   },
+   "spostamento": 0.0243,
    "mercato": {
     "1": 0.3173,
     "X": 0.3041,
@@ -1132,11 +470,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0275,
-    "X": -0.0167,
-    "2": 0.0441
+    "1": -0.0447,
+    "X": -0.0225,
+    "2": 0.0671
    },
-   "divergenza_max": 0.0441
+   "divergenza_max": 0.0671
   },
   {
    "fixture_id": 1570395,
@@ -1144,58 +482,65 @@
    "campionato": "Spain - La Liga",
    "casa": "Celta Vigo",
    "fuori": "Racing Santander",
-   "gol_attesi_casa": 1.54,
-   "gol_attesi_fuori": 0.96,
-   "gol_attesi_totali": 2.5,
-   "nettezza": 25.3,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.61,
+   "gol_attesi_fuori": 1.0,
+   "gol_attesi_totali": 2.61,
+   "nettezza": 26.2,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 12,
    "partite_storia_fuori": 12,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5021,
-    "X": 0.2685,
-    "2": 0.2294,
-    "1X": 0.7706,
-    "12": 0.7315,
-    "X2": 0.4979,
-    "over15": 0.7187,
-    "under15": 0.2813,
-    "over25": 0.4561,
-    "under25": 0.5439,
-    "over35": 0.2424,
-    "under35": 0.7576,
-    "gol_gol": 0.4908,
-    "no_gol": 0.5092,
-    "1+over25": 0.2843,
-    "1+under25": 0.2178,
-    "2+over25": 0.1189,
-    "2+under25": 0.1105,
-    "1X+over25": 0.3372,
-    "1X+under25": 0.4334,
-    "X2+over25": 0.1718,
-    "X2+under25": 0.3261,
-    "12+over25": 0.4032,
-    "1+gol": 0.2072,
-    "1+nogol": 0.2949,
-    "2+gol": 0.1032,
-    "1X+nogol": 0.383,
+    "1": 0.5079,
+    "X": 0.2612,
+    "2": 0.2309,
+    "1X": 0.7691,
+    "12": 0.7388,
+    "X2": 0.4921,
+    "over15": 0.7407,
+    "under15": 0.2593,
+    "over25": 0.4844,
+    "under25": 0.5156,
+    "over35": 0.2664,
+    "under35": 0.7336,
+    "gol_gol": 0.5127,
+    "no_gol": 0.4873,
+    "1+over25": 0.301,
+    "1+under25": 0.2068,
+    "2+over25": 0.126,
+    "2+under25": 0.105,
+    "1X+over25": 0.3584,
+    "1X+under25": 0.4107,
+    "X2+over25": 0.1833,
+    "X2+under25": 0.3088,
+    "12+over25": 0.427,
+    "1+gol": 0.2212,
+    "1+nogol": 0.2867,
+    "2+gol": 0.1097,
+    "1X+nogol": 0.3661,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1274
+      "prob": 0.1245
      },
      {
       "risultato": "1-0",
-      "prob": 0.1204
+      "prob": 0.1121
      },
      {
-      "risultato": "2-0",
-      "prob": 0.0974
+      "risultato": "2-1",
+      "prob": 0.0952
      }
     ]
    },
+   "prima": {
+    "1": 0.504,
+    "X": 0.2678,
+    "2": 0.2282,
+    "attesi": "1.55-0.96"
+   },
+   "spostamento": 0.0066,
    "mercato": {
     "1": 0.5366,
     "X": 0.2482,
@@ -1204,11 +549,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0345,
-    "X": 0.0203,
-    "2": 0.0142
+    "1": -0.0287,
+    "X": 0.013,
+    "2": 0.0157
    },
-   "divergenza_max": 0.0345
+   "divergenza_max": 0.0287
   },
   {
    "fixture_id": 1575168,
@@ -1216,71 +561,78 @@
    "campionato": "Germany - Bundesliga",
    "casa": "VfB Stuttgart",
    "fuori": "Borussia Dortmund",
-   "gol_attesi_casa": 1.33,
-   "gol_attesi_fuori": 1.58,
-   "gol_attesi_totali": 2.9,
-   "nettezza": 14.0,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.36,
+   "gol_attesi_fuori": 1.6,
+   "gol_attesi_totali": 2.96,
+   "nettezza": 13.9,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 11,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.3165,
-    "X": 0.2569,
-    "2": 0.4266,
-    "1X": 0.5734,
-    "12": 0.7431,
-    "X2": 0.6835,
-    "over15": 0.7919,
-    "under15": 0.2081,
-    "over25": 0.5551,
-    "under25": 0.4449,
-    "over35": 0.3314,
-    "under35": 0.6686,
-    "gol_gol": 0.5889,
-    "no_gol": 0.4111,
-    "1+over25": 0.2011,
-    "1+under25": 0.1154,
-    "2+over25": 0.278,
-    "2+under25": 0.1486,
-    "1X+over25": 0.2771,
-    "1X+under25": 0.2963,
-    "X2+over25": 0.354,
-    "X2+under25": 0.3295,
-    "12+over25": 0.4791,
-    "1+gol": 0.1702,
-    "1+nogol": 0.1463,
-    "2+gol": 0.2223,
-    "1X+nogol": 0.2068,
+    "1": 0.3197,
+    "X": 0.2543,
+    "2": 0.426,
+    "1X": 0.574,
+    "12": 0.7457,
+    "X2": 0.6803,
+    "over15": 0.8001,
+    "under15": 0.1999,
+    "over25": 0.5673,
+    "under25": 0.4327,
+    "over35": 0.3433,
+    "under35": 0.6567,
+    "gol_gol": 0.5985,
+    "no_gol": 0.4015,
+    "1+over25": 0.2068,
+    "1+under25": 0.1128,
+    "2+over25": 0.2822,
+    "2+under25": 0.1438,
+    "1X+over25": 0.2851,
+    "1X+under25": 0.2889,
+    "X2+over25": 0.3605,
+    "X2+under25": 0.3199,
+    "12+over25": 0.489,
+    "1+gol": 0.1752,
+    "1+nogol": 0.1444,
+    "2+gol": 0.2265,
+    "1X+nogol": 0.202,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1204
+      "prob": 0.1185
      },
      {
       "risultato": "1-2",
-      "prob": 0.0904
+      "prob": 0.0902
      },
      {
       "risultato": "0-1",
-      "prob": 0.0806
+      "prob": 0.0774
      }
     ]
    },
+   "prima": {
+    "1": 0.3095,
+    "X": 0.2562,
+    "2": 0.4342,
+    "attesi": "1.31-1.59"
+   },
+   "spostamento": 0.0102,
    "mercato": {
-    "1": 0.3897,
-    "X": 0.2485,
-    "2": 0.3618,
-    "margine": 0.0465,
+    "1": 0.398,
+    "X": 0.247,
+    "2": 0.3551,
+    "margine": 0.0457,
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0732,
-    "X": 0.0084,
-    "2": 0.0648
+    "1": -0.0783,
+    "X": 0.0073,
+    "2": 0.0709
    },
-   "divergenza_max": 0.0732
+   "divergenza_max": 0.0783
   },
   {
    "fixture_id": 1593317,
@@ -1288,58 +640,65 @@
    "campionato": "Greece - Super League 1",
    "casa": "Aris Thessalonikis",
    "fuori": "Iraklis 1908",
-   "gol_attesi_casa": 1.62,
+   "gol_attesi_casa": 1.6,
    "gol_attesi_fuori": 0.96,
-   "gol_attesi_totali": 2.58,
-   "nettezza": 28.3,
-   "affidabilita": 48.0,
-   "affidabilita_etichetta": "bassa",
+   "gol_attesi_totali": 2.55,
+   "nettezza": 27.6,
+   "affidabilita": 64.0,
+   "affidabilita_etichetta": "media",
    "partite_storia_casa": 11,
    "partite_storia_fuori": 4,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5219,
-    "X": 0.2603,
-    "2": 0.2178,
-    "1X": 0.7822,
-    "12": 0.7397,
-    "X2": 0.4781,
-    "over15": 0.7337,
-    "under15": 0.2663,
-    "over25": 0.4753,
-    "under25": 0.5247,
-    "over35": 0.2586,
-    "under35": 0.7414,
-    "gol_gol": 0.5,
-    "no_gol": 0.5,
-    "1+over25": 0.3052,
-    "1+under25": 0.2167,
-    "2+over25": 0.1157,
-    "2+under25": 0.102,
-    "1X+over25": 0.3596,
-    "1X+under25": 0.4226,
-    "X2+over25": 0.1701,
-    "X2+under25": 0.3079,
-    "12+over25": 0.421,
-    "1+gol": 0.2205,
-    "1+nogol": 0.3015,
-    "2+gol": 0.1013,
-    "1X+nogol": 0.3835,
+    "1": 0.5173,
+    "X": 0.2626,
+    "2": 0.2201,
+    "1X": 0.7799,
+    "12": 0.7374,
+    "X2": 0.4827,
+    "over15": 0.7289,
+    "under15": 0.2711,
+    "over25": 0.4691,
+    "under25": 0.5309,
+    "over35": 0.2533,
+    "under35": 0.7467,
+    "gol_gol": 0.4964,
+    "no_gol": 0.5036,
+    "1+over25": 0.2994,
+    "1+under25": 0.2179,
+    "2+over25": 0.1159,
+    "2+under25": 0.1042,
+    "1X+over25": 0.3532,
+    "1X+under25": 0.4267,
+    "X2+over25": 0.1696,
+    "X2+under25": 0.313,
+    "12+over25": 0.4153,
+    "1+gol": 0.2165,
+    "1+nogol": 0.3008,
+    "2+gol": 0.1012,
+    "1X+nogol": 0.3848,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1239
+      "prob": 0.1249
      },
      {
       "risultato": "1-0",
-      "prob": 0.1172
+      "prob": 0.1186
      },
      {
       "risultato": "2-0",
-      "prob": 0.0995
+      "prob": 0.0993
      }
     ]
    },
+   "prima": {
+    "1": 0.5208,
+    "X": 0.261,
+    "2": 0.2182,
+    "attesi": "1.61-0.96"
+   },
+   "spostamento": 0.0035,
    "mercato": {
     "1": 0.567,
     "X": 0.2497,
@@ -1348,11 +707,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0451,
-    "X": 0.0106,
-    "2": 0.0345
+    "1": -0.0497,
+    "X": 0.0129,
+    "2": 0.0368
    },
-   "divergenza_max": 0.0451
+   "divergenza_max": 0.0497
   },
   {
    "fixture_id": 1552171,
@@ -1845,18 +1204,18 @@
     ]
    },
    "mercato": {
-    "1": 0.4837,
-    "X": 0.2712,
-    "2": 0.2451,
-    "margine": 0.0635,
+    "1": 0.5115,
+    "X": 0.2648,
+    "2": 0.2238,
+    "margine": 0.064,
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0345,
-    "X": 0.0039,
-    "2": 0.0307
+    "1": -0.0623,
+    "X": 0.0103,
+    "2": 0.052
    },
-   "divergenza_max": 0.0345
+   "divergenza_max": 0.0623
   },
   {
    "fixture_id": 1584413,
@@ -2925,18 +2284,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3667,
-    "X": 0.245,
-    "2": 0.3883,
-    "margine": 0.0711,
+    "1": 0.3665,
+    "X": 0.2454,
+    "2": 0.3881,
+    "margine": 0.071,
     "bookmaker": 6
    },
    "divergenza": {
-    "1": 0.1085,
-    "X": 0.0176,
-    "2": -0.1262
+    "1": 0.1087,
+    "X": 0.0172,
+    "2": -0.126
    },
-   "divergenza_max": 0.1262
+   "divergenza_max": 0.126
   },
   {
    "fixture_id": 1492775,
@@ -4005,18 +3364,18 @@
     ]
    },
    "mercato": {
-    "1": 0.8103,
-    "X": 0.1223,
+    "1": 0.8111,
+    "X": 0.1215,
     "2": 0.0674,
-    "margine": 0.0627,
+    "margine": 0.0632,
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.1093,
-    "X": 0.0594,
+    "1": -0.1101,
+    "X": 0.0602,
     "2": 0.05
    },
-   "divergenza_max": 0.1093
+   "divergenza_max": 0.1101
   },
   {
    "fixture_id": 1549499,
