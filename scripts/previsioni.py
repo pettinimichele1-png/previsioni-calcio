@@ -97,6 +97,31 @@ def mercati(M):
         return sum(M[x][y] for x in range(n) for y in range(n) if x + y > soglia)
 
     gg = sum(M[x][y] for x in range(1, n) for y in range(1, n))
+
+    def congiunta(esito, soglia_gol=None, entrambe=None):
+        """
+        Probabilita' che DUE condizioni si verifichino insieme nella
+        stessa partita. Si calcola sommando le celle della matrice che
+        soddisfano entrambe: moltiplicare le due probabilita' separate
+        sarebbe sbagliato, perche' gli eventi non sono indipendenti.
+        """
+        tot = 0.0
+        for x in range(n):
+            for y in range(n):
+                if esito == "1" and not x > y: continue
+                if esito == "X" and not x == y: continue
+                if esito == "2" and not x < y: continue
+                if esito == "1X" and x < y: continue
+                if esito == "X2" and x > y: continue
+                if esito == "12" and x == y: continue
+                if soglia_gol is not None:
+                    sopra = (x + y) > abs(soglia_gol)
+                    if (soglia_gol > 0) != sopra: continue
+                if entrambe is not None:
+                    segnano = x > 0 and y > 0
+                    if entrambe != segnano: continue
+                tot += M[x][y]
+        return tot
     punteggi = sorted(((M[x][y], f"{x}-{y}") for x in range(6) for y in range(6)),
                       reverse=True)[:3]
 
@@ -111,6 +136,15 @@ def mercati(M):
         "over35": over(3.5), "under35": 1 - over(3.5),
         # entrambe le squadre a segno
         "gol_gol": gg, "no_gol": 1 - gg,
+        # combinazioni nella stessa partita, calcolate correttamente
+        "1+over25": congiunta("1", 2.5), "1+under25": congiunta("1", -2.5),
+        "2+over25": congiunta("2", 2.5), "2+under25": congiunta("2", -2.5),
+        "1X+over25": congiunta("1X", 2.5), "1X+under25": congiunta("1X", -2.5),
+        "X2+over25": congiunta("X2", 2.5), "X2+under25": congiunta("X2", -2.5),
+        "12+over25": congiunta("12", 2.5),
+        "1+gol": congiunta("1", None, True), "1+nogol": congiunta("1", None, False),
+        "2+gol": congiunta("2", None, True),
+        "1X+nogol": congiunta("1X", None, False),
         "punteggi_probabili": [{"risultato": r, "prob": round(p, 4)}
                                for p, r in punteggi],
     }
@@ -614,6 +648,643 @@ vale qualcosa, e servira' qualche mese di dati.<br><br>
     return len(scelte)
 
 
+
+
+# ============================================================
+#  PAGINA DELLE GIOCATE
+# ============================================================
+
+USCITA_GIOCATE = "giocate.html"
+MIN_AFFIDABILITA_GIOCATE = 55
+
+NOMI = {
+    "1": "1", "X": "X", "2": "2",
+    "1X": "1X", "12": "12", "X2": "X2",
+    "over15": "Over 1.5", "under15": "Under 1.5",
+    "over25": "Over 2.5", "under25": "Under 2.5",
+    "over35": "Over 3.5", "under35": "Under 3.5",
+    "gol_gol": "Gol", "no_gol": "NoGol",
+    "1+over25": "1 + Over 2.5", "1+under25": "1 + Under 2.5",
+    "2+over25": "2 + Over 2.5", "2+under25": "2 + Under 2.5",
+    "1X+over25": "1X + Over 2.5", "1X+under25": "1X + Under 2.5",
+    "X2+over25": "X2 + Over 2.5", "X2+under25": "X2 + Under 2.5",
+    "12+over25": "12 + Over 2.5",
+    "1+gol": "1 + Gol", "1+nogol": "1 + NoGol",
+    "2+gol": "2 + Gol", "1X+nogol": "1X + NoGol",
+}
+
+SEMPLICI = ["1", "X", "2", "over25", "under25", "gol_gol", "no_gol"]
+COMBO = ["1+over25", "1+under25", "2+over25", "2+under25",
+         "1X+over25", "1X+under25", "X2+over25", "X2+under25",
+         "12+over25", "1+gol", "1+nogol", "2+gol", "1X+nogol"]
+SICURI = ["1X", "12", "X2", "over15", "under35"]
+
+
+def _quota_equa(p):
+    return 1.0 / max(p, 0.001)
+
+
+def _voce(p, esito, prob, quota=None, mercato=None):
+    return {"fixture_id": p["fixture_id"], "data": p["data"],
+            "casa": p["casa"], "fuori": p["fuori"],
+            "campionato": p["campionato"], "esito": esito,
+            "nome": NOMI.get(esito, esito), "prob": prob,
+            "quota": quota, "mercato": mercato,
+            "formazioni": p.get("formazioni", "nessuna")}
+
+
+def _raccogli(previsioni, chiavi, prob_min=0.0):
+    """Tutti gli esiti disponibili di un certo tipo, ordinabili."""
+    fuori = []
+    for p in previsioni:
+        if p.get("affidabilita", 0) < MIN_AFFIDABILITA_GIOCATE:
+            continue
+        m = p["mercati"]
+        mk = p.get("mercato") or {}
+        for k in chiavi:
+            if k not in m or m[k] < prob_min:
+                continue
+            fuori.append(_voce(p, k, m[k],
+                               mk.get(f"quota_{k}"), mk.get(k)))
+    return fuori
+
+
+def _schedina(voci, titolo, nota):
+    """
+    Probabilita' complessiva: gli esiti di partite DIVERSE si
+    moltiplicano. Il calcolo e' valido solo perche' non mettiamo mai
+    due esiti della stessa partita separati.
+    """
+    prob = 1.0
+    quota = 1.0
+    for v in voci:
+        prob *= v["prob"]
+        quota *= v["quota"] if v["quota"] else _quota_equa(v["prob"])
+    return {"titolo": titolo, "nota": nota, "voci": voci,
+            "prob": prob, "quota": quota}
+
+
+def _sistema(gruppi, titolo, nota):
+    """
+    Su una partita si possono mettere piu' esiti: se si escludono fra
+    loro le probabilita' si SOMMANO. Qui invece usiamo combo, che sono
+    gia' un singolo esito congiunto.
+    """
+    prob = 1.0
+    quota = 1.0
+    voci = []
+    for gruppo in gruppi:
+        p_gruppo = sum(v["prob"] for v in gruppo)
+        prob *= min(1.0, p_gruppo)
+        quota *= _quota_equa(min(1.0, p_gruppo))
+        voci.extend(gruppo)
+    return {"titolo": titolo, "nota": nota, "voci": voci,
+            "prob": prob, "quota": quota, "sistema": True}
+
+
+def costruisci_giocate(previsioni):
+    """Le proposte, divise per logica."""
+    proposte = {"singole": [], "alta": [], "valore": [],
+                "sistemi": [], "miste": []}
+
+    # --- singole: le migliori per vantaggio stimato ----------------
+    con_quota = [v for v in _raccogli(previsioni, SEMPLICI + SICURI)
+                 if v["quota"] and v["mercato"]]
+    for v in con_quota:
+        v["vantaggio"] = v["prob"] * v["quota"] - 1
+    con_quota.sort(key=lambda v: -v["vantaggio"])
+    proposte["singole"] = con_quota[:3]
+
+    # --- alta probabilita': una partita per schedina ---------------
+    sicuri = _raccogli(previsioni, SICURI, prob_min=0.70)
+    sicuri.sort(key=lambda v: -v["prob"])
+    # un solo esito per partita: metterne due della stessa partita
+    # renderebbe sbagliato il calcolo della probabilita'
+    usate = set()
+    sicuri_unici = []
+    for v in sicuri:
+        if v["fixture_id"] in usate:
+            continue
+        usate.add(v["fixture_id"])
+        sicuri_unici.append(v)
+    scelti = sicuri_unici
+    for n, etichetta in ((2, "doppia"), (3, "tripla"), (4, "quadrupla")):
+        if len(scelti) >= n:
+            proposte["alta"].append(_schedina(
+                scelti[:n], f"Alta probabilita' - {etichetta}",
+                "Gli esiti piu' sicuri del palinsesto, uno per partita."))
+
+    # --- valore atteso ---------------------------------------------
+    valore = [v for v in con_quota if v["vantaggio"] > 0][:8]
+    usate = set()
+    scelti = []
+    for v in valore:
+        if v["fixture_id"] in usate:
+            continue
+        usate.add(v["fixture_id"])
+        scelti.append(v)
+    for n, etichetta in ((2, "doppia"), (3, "tripla")):
+        if len(scelti) >= n:
+            proposte["valore"].append(_schedina(
+                scelti[:n], f"Valore atteso - {etichetta}",
+                "Solo esiti dove stimiamo piu' probabilita' di quanta "
+                "ne implichi la quota."))
+
+    # --- sistemi con combo -----------------------------------------
+    combo = _raccogli(previsioni, COMBO, prob_min=0.45)
+    combo.sort(key=lambda v: -v["prob"])
+    per_partita = {}
+    for v in combo:
+        per_partita.setdefault(v["fixture_id"], []).append(v)
+    gruppi = []
+    for fid, lista in per_partita.items():
+        # due combo che NON si escludono sulla stessa partita
+        gruppi.append(lista[:1])
+    gruppi.sort(key=lambda g: -g[0]["prob"])
+    for n, etichetta in ((2, "due partite"), (3, "tre partite")):
+        if len(gruppi) >= n:
+            proposte["sistemi"].append(_sistema(
+                gruppi[:n], f"Sistema con combo - {etichetta}",
+                "Combinazioni dentro la stessa partita: la probabilita' "
+                "e' calcolata dalla matrice dei punteggi, non moltiplicando."))
+
+    # --- miste: sicuri piu' un rischioso ---------------------------
+    rischiosi = _raccogli(previsioni, SEMPLICI, prob_min=0.25)
+    rischiosi = [v for v in rischiosi if v["prob"] < 0.45]
+    rischiosi.sort(key=lambda v: -(v["prob"] * (v["quota"] or _quota_equa(v["prob"]))))
+    if len(sicuri_unici) >= 2 and rischiosi:
+        base = [v for v in sicuri_unici
+                if v["fixture_id"] != rischiosi[0]["fixture_id"]][:2]
+        if len(base) == 2:
+            proposte["miste"].append(_schedina(
+                base + [rischiosi[0]], "Mista - due sicuri e un rischio",
+                "Due esiti probabili piu' uno che alza la quota."))
+    if len(sicuri_unici) >= 3 and len(rischiosi) >= 2:
+        base = [v for v in sicuri_unici
+                if v["fixture_id"] != rischiosi[1]["fixture_id"]][:3]
+        if len(base) == 3:
+            proposte["miste"].append(_schedina(
+                base + [rischiosi[1]], "Mista - tre sicuri e un rischio",
+                "Piu' eventi sicuri per compensare quello rischioso."))
+
+    return proposte
+
+
+
+
+
+# ============================================================
+#  VERIFICA DELLE SCHEDINE PROPOSTE
+# ============================================================
+
+def esito_avvenuto(esito, gc, ga):
+    """
+    Se un esito si e' verificato, dato il risultato finale.
+    Gestisce esiti semplici, combo (a+b) e risultati esatti (2-1).
+    Restituisce None se l'esito non e' riconosciuto.
+    """
+    if "+" in esito:
+        parti = esito.split("+")
+        valori = [esito_avvenuto(p, gc, ga) for p in parti]
+        if any(v is None for v in valori):
+            return None
+        return all(valori)
+
+    if "-" in esito and esito[0].isdigit():
+        try:
+            x, y = esito.split("-")
+            return gc == int(x) and ga == int(y)
+        except ValueError:
+            return None
+
+    totale = gc + ga
+    tabella = {
+        "1": gc > ga, "X": gc == ga, "2": gc < ga,
+        "1X": gc >= ga, "12": gc != ga, "X2": gc <= ga,
+        "over15": totale >= 2, "under15": totale < 2,
+        "over25": totale >= 3, "under25": totale < 3,
+        "over35": totale >= 4, "under35": totale < 4,
+        "gol_gol": gc > 0 and ga > 0, "gol": gc > 0 and ga > 0,
+        "no_gol": not (gc > 0 and ga > 0), "nogol": not (gc > 0 and ga > 0),
+    }
+    return tabella.get(esito)
+
+
+def salva_schedine(proposte, conn):
+    """Registra le proposte, per poterle verificare quando si gioca."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS schedine (
+            codice TEXT PRIMARY KEY, categoria TEXT, titolo TEXT,
+            quota REAL, prob REAL, n_eventi INTEGER, proposta_il TEXT)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS schedine_eventi (
+            codice TEXT, fixture_id INTEGER, esito TEXT,
+            casa TEXT, fuori TEXT, prob REAL,
+            PRIMARY KEY (codice, fixture_id, esito))
+    """)
+    adesso = datetime.now(timezone.utc).isoformat()
+    for categoria, elenco in proposte.items():
+        if categoria == "singole":
+            continue
+        for s in elenco:
+            # il codice identifica la schedina dai suoi eventi: la stessa
+            # proposta rigenerata piu' volte non viene contata due volte
+            parti = sorted(f"{v['fixture_id']}:{v['esito']}" for v in s["voci"])
+            codice = categoria + "|" + "|".join(parti)
+            conn.execute("""INSERT OR IGNORE INTO schedine
+                            VALUES (?,?,?,?,?,?,?)""",
+                         (codice, categoria, s["titolo"], s["quota"],
+                          s["prob"], len(s["voci"]), adesso))
+            for v in s["voci"]:
+                conn.execute("""INSERT OR IGNORE INTO schedine_eventi
+                                VALUES (?,?,?,?,?,?)""",
+                             (codice, v["fixture_id"], v["esito"],
+                              v["casa"], v["fuori"], v["prob"]))
+    conn.commit()
+
+
+def rendimento_schedine():
+    """
+    Come sono andate le schedine gia' concluse. Una schedina conta solo
+    se TUTTE le sue partite sono state giocate.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT s.codice, s.categoria, s.quota, s.prob, s.n_eventi
+            FROM schedine s
+        """)
+        schedine = cur.fetchall()
+        if not schedine:
+            conn.close()
+            return None
+
+        cur.execute("""
+            SELECT e.codice, e.esito, f.goals_home, f.goals_away
+            FROM schedine_eventi e
+            JOIN fixtures f ON f.id = e.fixture_id
+            WHERE f.goals_home IS NOT NULL AND f.status IN ('FT','AET','PEN')
+        """)
+        esiti = {}
+        for codice, esito, gc, ga in cur.fetchall():
+            esiti.setdefault(codice, []).append(esito_avvenuto(esito, gc, ga))
+        conn.close()
+    except sqlite3.OperationalError:
+        return None
+
+    per_categoria = {}
+    for codice, categoria, quota, prob, n_eventi in schedine:
+        avvenuti = esiti.get(codice, [])
+        if len(avvenuti) < n_eventi or any(a is None for a in avvenuti):
+            continue        # non tutte le partite sono state giocate
+        vinta = all(avvenuti)
+        d = per_categoria.setdefault(categoria, {"n": 0, "vinte": 0,
+                                                 "ritorno": 0.0,
+                                                 "attesa": 0.0})
+        d["n"] += 1
+        d["attesa"] += prob
+        if vinta:
+            d["vinte"] += 1
+            d["ritorno"] += quota - 1
+        else:
+            d["ritorno"] -= 1
+    return per_categoria or None
+
+
+def scrivi_giocate(previsioni, generato):
+    """Pagina con le proposte, divise per logica."""
+    proposte = costruisci_giocate(previsioni)
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        salva_schedine(proposte, conn)
+        conn.close()
+    except sqlite3.OperationalError:
+        pass
+
+    def riga_voce(v):
+        marchio = ('<span class="uff">uff</span>'
+                   if v["formazioni"] == "ufficiale" else '')
+        quota = (f'{v["quota"]:.2f}' if v["quota"]
+                 else f'{_quota_equa(v["prob"]):.2f}<span class="eq">eq</span>')
+        return (f'<div class="ev">'
+                f'<div class="ev-sx"><div class="ev-p">{v["casa"]} - {v["fuori"]}'
+                f'{marchio}</div>'
+                f'<div class="ev-l">{v["campionato"]} &middot; '
+                f'{v["data"][8:10]}/{v["data"][5:7]} {v["data"][11:16]}</div></div>'
+                f'<div class="ev-dx"><div class="ev-e">{v["nome"]}</div>'
+                f'<div class="ev-q">{quota}</div></div></div>')
+
+    def scheda(s):
+        colore = ("alta" if s["prob"] >= 0.50 else
+                  ("media" if s["prob"] >= 0.25 else "bassa"))
+        return (f'<div class="giocata">'
+                f'<div class="g-top"><span class="g-tit">{s["titolo"]}</span>'
+                f'<span class="g-q">{s["quota"]:.2f}</span></div>'
+                f'<div class="g-nota">{s["nota"]}</div>'
+                f'{"".join(riga_voce(v) for v in s["voci"])}'
+                f'<div class="g-prob {colore}">probabilita\' che esca tutto: '
+                f'<b>{s["prob"]*100:.1f}%</b></div></div>')
+
+    # --- riepilogo di come sono andate -----------------------------
+    rend = rendimento_schedine()
+    if rend:
+        totale = {"n": 0, "vinte": 0, "ritorno": 0.0, "attesa": 0.0}
+        righe_r = []
+        for categoria in ("alta", "valore", "sistemi", "miste"):
+            d = rend.get(categoria)
+            if not d or d["n"] < 1:
+                continue
+            for k in totale:
+                totale[k] += d[k]
+            resa = d["ritorno"] / d["n"] * 100
+            righe_r.append(
+                f'<tr><td>{categoria}</td><td>{d["n"]}</td>'
+                f'<td>{d["vinte"]}</td>'
+                f'<td>{d["vinte"]/d["n"]*100:.0f}%</td>'
+                f'<td>{d["attesa"]/d["n"]*100:.0f}%</td>'
+                f'<td class="{"pos" if resa > 0 else "neg"}">{resa:+.0f}%</td></tr>')
+        if totale["n"] >= 5:
+            resa_tot = totale["ritorno"] / totale["n"] * 100
+            riepilogo = f"""
+<div class="riquadro">
+ <div class="tit">Come sono andate le proposte</div>
+ <div class="grande {"pos" if resa_tot > 0 else "neg"}">{resa_tot:+.0f}%</div>
+ <div class="spiega">
+  {totale["vinte"]} vinte su {totale["n"]} concluse &middot;
+  ci aspettavamo di vincerne il {totale["attesa"]/totale["n"]*100:.0f}%,
+  ne sono uscite il {totale["vinte"]/totale["n"]*100:.0f}%
+ </div>
+ <table class="riep">
+  <tr><th>categoria</th><th>gioc.</th><th>vinte</th><th>%</th>
+      <th>attesa</th><th>resa</th></tr>
+  {"".join(righe_r)}
+ </table>
+ <div class="spiega">La colonna "attesa" e\' quanto il modello diceva di
+  vincere, "%" quanto e\' uscito davvero: se i due numeri sono vicini le
+  probabilita\' sono oneste. La "resa" e\' il guadagno a puntata costante.
+  Con poche giocate oscilla moltissimo.</div>
+</div>"""
+        else:
+            riepilogo = (f'<div class="riquadro"><div class="tit">Come sono '
+                         f'andate le proposte</div><div class="grande">'
+                         f'{totale["n"]} concluse</div><div class="spiega">'
+                         f'Troppo poche per dire qualcosa. Il conto cresce '
+                         f'ogni giorno.</div></div>')
+    else:
+        riepilogo = ('<div class="riquadro"><div class="tit">Come sono andate '
+                     'le proposte</div><div class="grande">in attesa</div>'
+                     '<div class="spiega">Nessuna proposta ancora conclusa. '
+                     'Il riepilogo comparira\' qui appena le prime partite '
+                     'saranno giocate.</div></div>')
+
+    sezioni = []
+
+    if proposte["singole"]:
+        voci = []
+        for v in proposte["singole"]:
+            voci.append(
+                f'<div class="giocata"><div class="g-top">'
+                f'<span class="g-tit">{v["nome"]}</span>'
+                f'<span class="g-q">{v["quota"]:.2f}</span></div>'
+                f'{riga_voce(v)}'
+                f'<div class="g-prob {"alta" if v["prob"]>=0.5 else "media"}">'
+                f'noi <b>{v["prob"]*100:.0f}%</b> &middot; '
+                f'mercato {v["mercato"]*100:.0f}% &middot; '
+                f'vantaggio stimato <b>{v["vantaggio"]*100:+.0f}%</b></div></div>')
+        sezioni.append(('Singole consigliate',
+                        'Le tre giocate con il miglior rapporto fra la nostra '
+                        'probabilita\' e la quota offerta.', voci))
+
+    for chiave, titolo, spiegazione in (
+            ("alta", "Alta probabilita\'",
+             "Esiti molto probabili, uno per partita. Quote basse ma buone "
+             "possibilita\' che escano tutti."),
+            ("valore", "Valore atteso",
+             "Solo esiti dove il modello stima piu\' probabilita\' di quanta "
+             "ne implichi la quota."),
+            ("sistemi", "Sistemi con combo",
+             "Combinazioni dentro la stessa partita, come 1 + Over. La "
+             "probabilita\' e\' calcolata dalla matrice dei punteggi."),
+            ("miste", "Miste",
+             "Eventi sicuri piu\' uno rischioso, per alzare la quota senza "
+             "affidarsi solo a quello.")):
+        if proposte[chiave]:
+            sezioni.append((titolo, spiegazione,
+                            [scheda(s) for s in proposte[chiave]]))
+
+    if not sezioni:
+        corpo = ('<div class="vuoto">Nessuna proposta in questo momento: '
+                 'servono partite in programma con dati sufficienti.</div>')
+    else:
+        corpo = "".join(
+            f'<div class="sezione"><h2>{t}</h2>'
+            f'<div class="spiegazione">{s}</div>{"".join(v)}</div>'
+            for t, s, v in sezioni)
+
+    html = f"""<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giocate</title>
+<style>
+ body {{ font-family:-apple-system,system-ui,sans-serif; margin:0; padding:12px;
+        background:#f4f5f7; color:#1c2733; }}
+ h1 {{ font-size:18px; margin:0 0 4px; }}
+ h2 {{ font-size:14px; margin:0 0 3px; }}
+ .sottotitolo {{ font-size:11px; color:#5b6b7b; margin-bottom:14px; }}
+ .sezione {{ margin-bottom:22px; }}
+ .spiegazione {{ font-size:11px; color:#5b6b7b; margin-bottom:8px;
+                 line-height:1.5; }}
+ .giocata {{ background:#fff; border-radius:6px; padding:10px 11px;
+             margin-bottom:8px; }}
+ .g-top {{ display:flex; justify-content:space-between; align-items:baseline;
+           border-bottom:1px solid #eef1f4; padding-bottom:6px; }}
+ .g-tit {{ font-size:12px; font-weight:600; }}
+ .g-q {{ font-size:19px; font-weight:600; color:#1e7d3c; }}
+ .g-nota {{ font-size:10px; color:#8b98a5; margin:5px 0 2px; line-height:1.5; }}
+ .ev {{ display:flex; justify-content:space-between; align-items:center;
+        padding:6px 0; border-bottom:1px solid #f6f8f9; }}
+ .ev-p {{ font-size:12px; font-weight:500; }}
+ .ev-l {{ font-size:9px; color:#97a3ae; margin-top:1px; }}
+ .ev-dx {{ text-align:right; white-space:nowrap; padding-left:8px; }}
+ .ev-e {{ font-size:12px; color:#1e7d3c; font-weight:600; }}
+ .ev-q {{ font-size:10px; color:#7b8794; }}
+ .eq {{ font-size:8px; color:#aeb8c2; margin-left:2px; }}
+ .g-prob {{ font-size:11px; margin-top:7px; padding:5px 7px;
+            border-radius:4px; }}
+ .g-prob.alta {{ background:#e8f2e8; color:#2b6b3f; }}
+ .g-prob.media {{ background:#fdf6e3; color:#8a6d1f; }}
+ .g-prob.bassa {{ background:#fbebeb; color:#8f2626; }}
+ .uff {{ background:#2c3e50; color:#fff; font-size:8px; padding:1px 4px;
+         border-radius:2px; margin-left:5px; }}
+ .vuoto {{ background:#fff; border-radius:6px; padding:18px; font-size:12px;
+           color:#5b6b7b; }}
+ .nota {{ margin-top:18px; font-size:10px; color:#7b8794; line-height:1.7; }}
+ .riquadro {{ background:#fff; border-radius:6px; padding:12px;
+              margin-bottom:18px; }}
+ .tit {{ font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+         color:#7b8794; margin-bottom:6px; }}
+ .grande {{ font-size:24px; font-weight:600; }}
+ .grande.pos {{ color:#1e7d3c; }}
+ .grande.neg {{ color:#b03030; }}
+ .spiega {{ font-size:11px; color:#5b6b7b; margin-top:6px; line-height:1.6; }}
+ .riep {{ width:100%; border-collapse:collapse; font-size:11px;
+          margin-top:10px; }}
+ .riep th {{ text-align:left; color:#8b98a5; font-weight:500;
+             border-bottom:1px solid #eef1f4; padding:3px 2px; font-size:9px;
+             text-transform:uppercase; }}
+ .riep td {{ padding:4px 2px; border-bottom:1px solid #f6f8f9; }}
+ .riep .pos {{ color:#1e7d3c; font-weight:600; }}
+ .riep .neg {{ color:#b03030; font-weight:600; }}
+ a {{ color:#2c3e50; }}
+</style></head><body>
+<h1>Giocate</h1>
+<div class="sottotitolo">
+Proposte costruite dal modello &middot;
+aggiornate il {generato[:16].replace('T', ' alle ')} UTC
+</div>
+
+{riepilogo}
+
+{corpo}
+
+<div class="nota">
+<b>Il margine si moltiplica.</b> Su una singola il bookmaker trattiene
+circa il 7%. Su una doppia diventa il 14%, su una tripla il 22%, su una
+quadrupla oltre il 28%. Ogni evento aggiunto peggiora la posizione di
+chi gioca: le multiple sono il prodotto piu\' redditizio per i
+bookmaker, non per chi le gioca.<br><br>
+<b>Le quote segnate "eq"</b> sono quelle eque, cioe\' 1 diviso la nostra
+probabilita\'. Il bookmaker ne offrira\' meno: quelle senza marchio sono
+invece quote di mercato vere.<br><br>
+<b>La probabilita\' mostrata e\' onesta.</b> Una tripla al 30% esce tre
+volte su dieci: sette volte su dieci si perde tutto. Non e\' un difetto
+delle proposte, e\' come funzionano le multiple.<br><br>
+<b>Ricorda che il confronto col mercato dice ancora "non
+distinguibile"</b>: non abbiamo dimostrato di essere migliori delle
+quote.<br><br>
+<a href="index.html">Tutte le partite</a> &middot;
+<a href="selezione.html">Selezione</a> &middot;
+<a href="verifica.html">Verifica</a>
+</div>
+</body></html>"""
+    with open(USCITA_GIOCATE, "w", encoding="utf-8") as f:
+        f.write(html)
+    return sum(len(v) for v in proposte.values())
+
+
+
+USCITA_ESATTI = "esatti.html"
+
+
+def scrivi_esatti(previsioni, generato):
+    """
+    Pagina dei risultati esatti. E' la parte meno affidabile del modello:
+    i coefficienti sono stimati sull'1X2, non sui singoli punteggi, e un
+    punteggio dipende dalla forma esatta della distribuzione dei gol.
+    Per questo la pagina mostra anche quanto vale il punteggio piu'
+    probabile: quando resta sotto il 12-13% non c'e' nulla di netto.
+    """
+    voci = []
+    con_dati = 0
+    for p in sorted(previsioni, key=lambda x: x["data"]):
+        punteggi = p["mercati"].get("punteggi_probabili") or []
+        if not punteggi:
+            continue
+        con_dati += 1
+        migliore = punteggi[0]["prob"]
+        classe = ("netto" if migliore >= 0.15 else
+                  ("medio" if migliore >= 0.11 else "debole"))
+        celle = "".join(
+            f'<div class="ris {"primo" if i == 0 else ""}">'
+            f'<span class="rr">{s["risultato"]}</span>'
+            f'<span class="rp">{s["prob"]*100:.1f}%</span></div>'
+            for i, s in enumerate(punteggi))
+        marchio = ('<span class="uff">uff</span>'
+                   if p.get("formazioni") == "ufficiale" else '')
+        voci.append(
+            f'<div class="partita">'
+            f'<div class="p-top">'
+            f'<span class="p-ora">{p["data"][8:10]}/{p["data"][5:7]} '
+            f'{p["data"][11:16]}</span>'
+            f'<span class="p-att">{p.get("gol_attesi_casa", 0):.2f} - '
+            f'{p.get("gol_attesi_fuori", 0):.2f}</span></div>'
+            f'<div class="p-nome">{p["casa"]} - {p["fuori"]}{marchio}</div>'
+            f'<div class="p-lega">{p["campionato"]}</div>'
+            f'<div class="risultati {classe}">{celle}</div>'
+            f'</div>')
+
+    if not voci:
+        voci = ['<div class="vuoto">Nessuna partita in programma.</div>']
+
+    html = f"""<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risultati esatti</title>
+<style>
+ body {{ font-family:-apple-system,system-ui,sans-serif; margin:0; padding:12px;
+        background:#f4f5f7; color:#1c2733; }}
+ h1 {{ font-size:18px; margin:0 0 4px; }}
+ .sottotitolo {{ font-size:11px; color:#5b6b7b; margin-bottom:12px; }}
+ .avviso {{ background:#fdf6e3; color:#8a6d1f; font-size:11px; padding:10px;
+            border-radius:6px; margin-bottom:14px; line-height:1.6; }}
+ .partita {{ background:#fff; border-radius:6px; padding:10px 11px;
+             margin-bottom:8px; }}
+ .p-top {{ display:flex; justify-content:space-between; font-size:10px;
+           color:#7b8794; }}
+ .p-nome {{ font-size:13px; font-weight:500; margin-top:2px; }}
+ .p-lega {{ font-size:9px; color:#97a3ae; }}
+ .risultati {{ display:flex; gap:6px; margin-top:8px; }}
+ .ris {{ flex:1; text-align:center; padding:6px 2px; border-radius:4px;
+         background:#f4f6f8; }}
+ .ris.primo {{ font-weight:600; }}
+ .rr {{ display:block; font-size:14px; }}
+ .rp {{ display:block; font-size:10px; color:#5b6b7b; margin-top:1px; }}
+ .risultati.netto .ris.primo {{ background:#e3f2e3; color:#15642f; }}
+ .risultati.medio .ris.primo {{ background:#fdf6e3; color:#8a6d1f; }}
+ .risultati.debole .ris.primo {{ background:#f0f2f4; color:#5b6b7b; }}
+ .uff {{ background:#2c3e50; color:#fff; font-size:8px; padding:1px 4px;
+         border-radius:2px; margin-left:5px; }}
+ .vuoto {{ background:#fff; border-radius:6px; padding:18px; font-size:12px;
+           color:#5b6b7b; }}
+ .nota {{ margin-top:16px; font-size:10px; color:#7b8794; line-height:1.7; }}
+ a {{ color:#2c3e50; }}
+</style></head><body>
+<h1>Risultati esatti</h1>
+<div class="sottotitolo">
+I tre punteggi piu' probabili per ogni partita &middot;
+{con_dati} partite &middot;
+aggiornati il {generato[:16].replace('T', ' alle ')} UTC
+</div>
+
+<div class="avviso">
+<b>Questa e\\' la parte meno affidabile del modello.</b> I suoi parametri
+sono stimati sull\\'esito 1X2, non sui singoli punteggi, e non abbiamo
+mai verificato se i risultati esatti siano calibrati. Trattali come
+un\\'indicazione, non come gli altri numeri del sistema.
+</div>
+
+{''.join(voci)}
+
+<div class="nota">
+<b>Il verde</b> segnala i casi in cui il punteggio piu\\' probabile supera
+il 15%: e\\' raro, e significa che la partita ha una forma prevedibile.
+Il giallo sta fra l\\'11 e il 15%, il grigio sotto: li\\' nessun punteggio
+emerge davvero e i tre proposti valgono quasi lo stesso.<br><br>
+Anche un risultato esatto al 15% sbaglia quasi nove volte su dieci: e\\'
+il mercato con la quota piu\\' alta proprio per questo.<br><br>
+<a href="index.html">Tutte le partite</a> &middot;
+<a href="giocate.html">Giocate</a> &middot;
+<a href="selezione.html">Selezione</a> &middot;
+<a href="verifica.html">Verifica</a>
+</div>
+</body></html>"""
+    with open(USCITA_ESATTI, "w", encoding="utf-8") as f:
+        f.write(html)
+    return con_dati
+
+
 def main():
     if not os.path.exists(DB_PATH):
         print(f"Database {DB_PATH} non trovato.")
@@ -788,11 +1459,15 @@ def main():
                    "previsioni": previsioni}, f, ensure_ascii=False, indent=1)
     scrivi_html(previsioni, generato, mod)
     n_scelte = scrivi_selezione(previsioni, generato)
+    n_giocate = scrivi_giocate(previsioni, generato)
+    n_esatti = scrivi_esatti(previsioni, generato)
 
     print(f"\nPrevisioni prodotte: {len(previsioni)}")
     print(f"  di cui con formazioni (probabili o ufficiali): {con_formazioni}")
     print(f"  {USCITA_JSON}\n  {USCITA_HTML}"
-          f"\n  {USCITA_SELEZIONE} ({n_scelte} esiti selezionati)")
+          f"\n  {USCITA_SELEZIONE} ({n_scelte} esiti selezionati)"
+          f"\n  {USCITA_GIOCATE} ({n_giocate} proposte)"
+          f"\n  {USCITA_ESATTI} ({n_esatti} partite)")
 
 
 def scrivi_html(previsioni, generato, mod):
@@ -978,7 +1653,9 @@ Aggiornate il {generato[:16].replace('T', ' alle ')} UTC &middot;
 <span class="uff">UFF</span> formazioni ufficiali &middot;
 <span class="prob">prob</span> formazioni probabili &middot;
 tocca una partita per il dettaglio<br>
-<a href="selezione.html" class="collegamento">Vedi solo gli esiti piu' probabili</a>
+<a href="selezione.html" class="collegamento">Selezione</a>
+<a href="giocate.html" class="collegamento">Giocate</a>
+<a href="esatti.html" class="collegamento">Risultati esatti</a>
 </div>
 {''.join(blocchi)}
 <div class="nota">
