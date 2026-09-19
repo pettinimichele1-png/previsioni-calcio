@@ -123,7 +123,7 @@ def mercati(M):
                 tot += M[x][y]
         return tot
     punteggi = sorted(((M[x][y], f"{x}-{y}") for x in range(6) for y in range(6)),
-                      reverse=True)[:3]
+                      reverse=True)[:5]
 
     return {
         # esito finale
@@ -656,6 +656,18 @@ vale qualcosa, e servira' qualche mese di dati.<br><br>
 
 USCITA_GIOCATE = "giocate.html"
 MIN_AFFIDABILITA_GIOCATE = 55
+QUOTA_MINIMA_ALTA = 1.45     # sotto non vale la pena giocare
+PROB_MINIMA_MISTA = 0.30     # sotto e' un esito campato per aria
+QUOTE_MISTE = (5.0, 10.0, 17.0)
+# Limiti sul calcolo del vantaggio. Su un esito al 5% il vantaggio
+# stimato e' quasi tutto rumore: basta un errore di due punti nella
+# nostra probabilita' per farlo schizzare. E un vantaggio oltre il 50%
+# non e' un'occasione: e' il segnale che stiamo dicendo qualcosa di
+# molto diverso dal mercato, e nei nostri test in quei casi sbagliavamo
+# noi piu' spesso che il mercato.
+PROB_MINIMA_VALORE = 0.20
+VANTAGGIO_MASSIMO = 0.50
+RHO_SISTEMI = -0.05          # sostituito dal valore del modello a runtime
 
 NOMI = {
     "1": "1", "X": "X", "2": "2",
@@ -678,6 +690,28 @@ COMBO = ["1+over25", "1+under25", "2+over25", "2+under25",
          "1X+over25", "1X+under25", "X2+over25", "X2+under25",
          "12+over25", "1+gol", "1+nogol", "2+gol", "1X+nogol"]
 SICURI = ["1X", "12", "X2", "over15", "under35"]
+
+
+def prob_unione(M, esiti):
+    """
+    Probabilita' che ALMENO UNO degli esiti si verifichi nella stessa
+    partita. In un sistema integrale e' questo che conta: basta che una
+    delle scelte fatte su quella partita risulti giusta.
+
+    Si calcola sommando le celle della matrice dove almeno un esito e'
+    soddisfatto. Sommare le probabilita' separate sarebbe sbagliato,
+    perche' gli esiti si sovrappongono: se finisce 2-0 si avverano
+    insieme il risultato esatto, l'1 e l'1X+Over.
+    """
+    n = len(M)
+    totale = 0.0
+    for x in range(n):
+        for y in range(n):
+            for e in esiti:
+                if esito_avvenuto(e, x, y):
+                    totale += M[x][y]
+                    break
+    return totale
 
 
 def _quota_equa(p):
@@ -749,35 +783,56 @@ def costruisci_giocate(previsioni):
 
     # --- singole: le migliori per vantaggio stimato ----------------
     con_quota = [v for v in _raccogli(previsioni, SEMPLICI + SICURI)
-                 if v["quota"] and v["mercato"]]
+                 if v["quota"] and v["mercato"]
+                 and v["prob"] >= PROB_MINIMA_VALORE]
     for v in con_quota:
         v["vantaggio"] = v["prob"] * v["quota"] - 1
+    con_quota = [v for v in con_quota if v["vantaggio"] <= VANTAGGIO_MASSIMO]
     con_quota.sort(key=lambda v: -v["vantaggio"])
     proposte["singole"] = con_quota[:3]
 
-    # --- alta probabilita': una partita per schedina ---------------
-    sicuri = _raccogli(previsioni, SICURI, prob_min=0.70)
+    # --- alta probabilita': quota utile ----------------------------
+    # Una doppia chance al 93% da' quota 1.07: vincerla non cambia
+    # niente. Si usano anche esiti un po' meno scontati, cosi' bastano
+    # due o tre eventi per superare la soglia invece di otto.
+    # si scartano gli esiti oltre il 90%: danno quote intorno a 1.05 e
+    # servirebbero otto eventi per arrivare alla soglia
+    sicuri = [v for v in _raccogli(previsioni, SEMPLICI + SICURI,
+                                   prob_min=0.60)
+              if v["prob"] <= 0.90]
     sicuri.sort(key=lambda v: -v["prob"])
-    # un solo esito per partita: metterne due della stessa partita
-    # renderebbe sbagliato il calcolo della probabilita'
-    usate = set()
-    sicuri_unici = []
+    usate, sicuri_unici = set(), []
     for v in sicuri:
         if v["fixture_id"] in usate:
             continue
         usate.add(v["fixture_id"])
         sicuri_unici.append(v)
-    scelti = sicuri_unici
-    for n, etichetta in ((2, "doppia"), (3, "tripla"), (4, "quadrupla")):
-        if len(scelti) >= n:
-            proposte["alta"].append(_schedina(
-                scelti[:n], f"Alta probabilita' - {etichetta}",
-                "Gli esiti piu' sicuri del palinsesto, uno per partita."))
+
+    for partenza in range(min(4, len(sicuri_unici))):
+        voci, quota = [], 1.0
+        for v in sicuri_unici[partenza:]:
+            voci.append(v)
+            quota *= v["quota"] or _quota_equa(v["prob"])
+            if quota >= QUOTA_MINIMA_ALTA and len(voci) >= 2:
+                break
+            if len(voci) >= 5:
+                break
+        if quota >= QUOTA_MINIMA_ALTA and 2 <= len(voci) <= 5:
+            gia = {tuple(sorted(x["fixture_id"] for x in s["voci"]))
+                   for s in proposte["alta"]}
+            chiave = tuple(sorted(x["fixture_id"] for x in voci))
+            if chiave not in gia:
+                proposte["alta"].append(_schedina(
+                    voci, f"Alta probabilita' - {len(voci)} eventi",
+                    "Esiti molto probabili combinati fino a superare "
+                    f"quota {QUOTA_MINIMA_ALTA:.2f}, la soglia sotto la "
+                    "quale vincere non cambierebbe nulla."))
+        if len(proposte["alta"]) >= 3:
+            break
 
     # --- valore atteso ---------------------------------------------
-    valore = [v for v in con_quota if v["vantaggio"] > 0][:8]
-    usate = set()
-    scelti = []
+    valore = [v for v in con_quota if v["vantaggio"] > 0]
+    usate, scelti = set(), []
     for v in valore:
         if v["fixture_id"] in usate:
             continue
@@ -790,47 +845,138 @@ def costruisci_giocate(previsioni):
                 "Solo esiti dove stimiamo piu' probabilita' di quanta "
                 "ne implichi la quota."))
 
-    # --- sistemi con combo -----------------------------------------
-    combo = _raccogli(previsioni, COMBO, prob_min=0.45)
-    combo.sort(key=lambda v: -v["prob"])
-    per_partita = {}
-    for v in combo:
-        per_partita.setdefault(v["fixture_id"], []).append(v)
-    gruppi = []
-    for fid, lista in per_partita.items():
-        # due combo che NON si escludono sulla stessa partita
-        gruppi.append(lista[:1])
-    gruppi.sort(key=lambda g: -g[0]["prob"])
-    for n, etichetta in ((2, "due partite"), (3, "tre partite")):
-        if len(gruppi) >= n:
-            proposte["sistemi"].append(_sistema(
-                gruppi[:n], f"Sistema con combo - {etichetta}",
-                "Combinazioni dentro la stessa partita: la probabilita' "
-                "e' calcolata dalla matrice dei punteggi, non moltiplicando."))
+    # --- sistemi integrali ------------------------------------------
+    proposte["sistemi"] = _costruisci_sistemi(previsioni)
 
-    # --- miste: sicuri piu' un rischioso ---------------------------
-    rischiosi = _raccogli(previsioni, SEMPLICI, prob_min=0.25)
-    rischiosi = [v for v in rischiosi if v["prob"] < 0.45]
-    rischiosi.sort(key=lambda v: -(v["prob"] * (v["quota"] or _quota_equa(v["prob"]))))
-    if len(sicuri_unici) >= 2 and rischiosi:
-        base = [v for v in sicuri_unici
-                if v["fixture_id"] != rischiosi[0]["fixture_id"]][:2]
-        if len(base) == 2:
+    # --- miste a quota mirata ---------------------------------------
+    # Tre proposte con quote crescenti. Per ognuna si aggiungono eventi
+    # finche' la quota non si avvicina al bersaglio, partendo da punti
+    # diversi della lista per non produrre tre schedine identiche.
+    candidati = _raccogli(previsioni, SEMPLICI + SICURI + COMBO,
+                          prob_min=PROB_MINIMA_MISTA)
+    migliori = {}
+    for v in candidati:
+        q = v["quota"] or _quota_equa(v["prob"])
+        attuale = migliori.get(v["fixture_id"])
+        if attuale is None or q > (attuale["quota"] or
+                                   _quota_equa(attuale["prob"])):
+            migliori[v["fixture_id"]] = v
+    pool = sorted(migliori.values(),
+                  key=lambda v: (v["quota"] or _quota_equa(v["prob"])))
+
+    usate_miste = set()
+    for bersaglio in QUOTE_MISTE:
+        migliore = None
+        for partenza in range(len(pool)):
+            voci, quota = [], 1.0
+            for v in pool[partenza:]:
+                q = v["quota"] or _quota_equa(v["prob"])
+                if quota * q > bersaglio * 1.35 and len(voci) >= 2:
+                    break
+                voci.append(v)
+                quota *= q
+                if quota >= bersaglio * 0.9:
+                    break
+            if len(voci) < 2 or quota < bersaglio * 0.6:
+                continue
+            chiave = tuple(sorted(x["fixture_id"] for x in voci))
+            if chiave in usate_miste:
+                continue
+            scarto = abs(quota - bersaglio)
+            if migliore is None or scarto < migliore[0]:
+                migliore = (scarto, voci, quota, chiave)
+        if migliore:
+            _, voci, quota, chiave = migliore
+            usate_miste.add(chiave)
             proposte["miste"].append(_schedina(
-                base + [rischiosi[0]], "Mista - due sicuri e un rischio",
-                "Due esiti probabili piu' uno che alza la quota."))
-    if len(sicuri_unici) >= 3 and len(rischiosi) >= 2:
-        base = [v for v in sicuri_unici
-                if v["fixture_id"] != rischiosi[1]["fixture_id"]][:3]
-        if len(base) == 3:
-            proposte["miste"].append(_schedina(
-                base + [rischiosi[1]], "Mista - tre sicuri e un rischio",
-                "Piu' eventi sicuri per compensare quello rischioso."))
+                voci, f"Mista - quota {quota:.2f}",
+                f"Costruita attorno a quota {bersaglio:.0f}, usando solo "
+                f"esiti sopra il {PROB_MINIMA_MISTA:.0%}."))
 
     return proposte
 
 
+def _costruisci_sistemi(previsioni):
+    """
+    Sistemi integrali: piu' esiti sulla stessa partita, anche diversi
+    fra loro (risultato esatto, combo, esito finale). Il sistema genera
+    tutte le combinazioni prendendone uno per partita, e per vincere
+    qualcosa basta che in OGNI partita almeno uno si avveri.
 
+    La probabilita' si calcola con l'unione sulla matrice: gli esiti
+    scelti si sovrappongono, e sommarli darebbe numeri senza senso.
+    """
+    adatte = [p for p in previsioni
+              if p.get("affidabilita", 0) >= MIN_AFFIDABILITA_GIOCATE
+              and p.get("gol_attesi_casa") and p.get("gol_attesi_fuori")]
+    if len(adatte) < 2:
+        return []
+
+    preparate = []
+    for p in adatte:
+        M = matrice(p["gol_attesi_casa"], p["gol_attesi_fuori"], RHO_SISTEMI)
+        m = p["mercati"]
+
+        # per ogni partita scelgo tre esiti di natura diversa:
+        # uno prudente, uno intermedio, uno ardito
+        prudente = max(("1X", "X2", "12", "over15", "under35"),
+                       key=lambda k: m.get(k, 0))
+        intermedi = [k for k in ("1", "2", "over25", "under25",
+                                 "gol_gol", "no_gol")
+                     if m.get(k, 0) >= 0.35]
+        intermedio = max(intermedi, key=lambda k: m[k]) if intermedi else None
+        combo = [k for k in COMBO if m.get(k, 0) >= 0.30]
+        combo_scelta = max(combo, key=lambda k: m[k]) if combo else None
+        esatto = (m.get("punteggi_probabili") or [{}])[0].get("risultato")
+
+        scelta = [e for e in (prudente, intermedio or combo_scelta, esatto)
+                  if e]
+        if len(scelta) < 2:
+            continue
+        unione = prob_unione(M, scelta)
+        preparate.append({"p": p, "esiti": scelta, "unione": unione,
+                          "quote": [m.get(e) for e in scelta]})
+
+    preparate.sort(key=lambda d: -d["unione"])
+    fuori = []
+    for n, etichetta in ((2, "due partite"), (3, "tre partite")):
+        if len(preparate) < n:
+            continue
+        gruppo = preparate[:n]
+        prob = 1.0
+        combinazioni = 1
+        voci = []
+        for d in gruppo:
+            prob *= d["unione"]
+            combinazioni *= len(d["esiti"])
+            for e in d["esiti"]:
+                voci.append(_voce(d["p"], e,
+                                  d["p"]["mercati"].get(e) or
+                                  next((s["prob"] for s in
+                                        d["p"]["mercati"]["punteggi_probabili"]
+                                        if s["risultato"] == e), 0.0)))
+        # quota: la piu' bassa e la piu' alta fra tutte le combinazioni
+        minima = massima = 1.0
+        for d in gruppo:
+            valori = []
+            for e in d["esiti"]:
+                pe = d["p"]["mercati"].get(e)
+                if pe is None:
+                    pe = next((s["prob"] for s in
+                               d["p"]["mercati"]["punteggi_probabili"]
+                               if s["risultato"] == e), 0.1)
+                valori.append(_quota_equa(pe))
+            minima *= min(valori)
+            massima *= max(valori)
+        fuori.append({
+            "titolo": f"Sistema integrale - {etichetta}",
+            "nota": (f"{combinazioni} combinazioni. Per vincere qualcosa "
+                     f"basta che in ogni partita si avveri almeno uno degli "
+                     f"esiti scelti."),
+            "voci": voci, "prob": prob, "quota": minima,
+            "quota_max": massima, "combinazioni": combinazioni,
+            "sistema": True})
+    return fuori
 
 
 # ============================================================
@@ -953,8 +1099,9 @@ def rendimento_schedine():
     return per_categoria or None
 
 
-def scrivi_giocate(previsioni, generato):
-    """Pagina con le proposte, divise per logica."""
+def scrivi_giocate(previsioni, generato, rho=-0.05):
+    global RHO_SISTEMI
+    RHO_SISTEMI = rho
     proposte = costruisci_giocate(previsioni)
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -979,13 +1126,21 @@ def scrivi_giocate(previsioni, generato):
     def scheda(s):
         colore = ("alta" if s["prob"] >= 0.50 else
                   ("media" if s["prob"] >= 0.25 else "bassa"))
+        if s.get("sistema"):
+            quota = (f'{s["quota"]:.2f}<span class="q-max">'
+                     f'&ndash;{s["quota_max"]:.0f}</span>')
+        else:
+            quota = f'{s["quota"]:.2f}'
         return (f'<div class="giocata">'
                 f'<div class="g-top"><span class="g-tit">{s["titolo"]}</span>'
-                f'<span class="g-q">{s["quota"]:.2f}</span></div>'
+                f'<span class="g-q">{quota}</span></div>'
                 f'<div class="g-nota">{s["nota"]}</div>'
                 f'{"".join(riga_voce(v) for v in s["voci"])}'
-                f'<div class="g-prob {colore}">probabilita\' che esca tutto: '
-                f'<b>{s["prob"]*100:.1f}%</b></div></div>')
+                + (f'<div class="g-prob {colore}">probabilita\' di vincere '
+                   f'almeno una combinazione: <b>{s["prob"]*100:.1f}%</b>'
+                   f'</div></div>' if s.get("sistema") else
+                   f'<div class="g-prob {colore}">probabilita\' che esca '
+                   f'tutto: <b>{s["prob"]*100:.1f}%</b></div></div>'))
 
     # --- riepilogo di come sono andate -----------------------------
     rend = rendimento_schedine()
@@ -1064,9 +1219,10 @@ def scrivi_giocate(previsioni, generato):
             ("valore", "Valore atteso",
              "Solo esiti dove il modello stima piu\' probabilita\' di quanta "
              "ne implichi la quota."),
-            ("sistemi", "Sistemi con combo",
-             "Combinazioni dentro la stessa partita, come 1 + Over. La "
-             "probabilita\' e\' calcolata dalla matrice dei punteggi."),
+            ("sistemi", "Sistemi integrali",
+             "Piu\' esiti sulla stessa partita. Il sistema genera tutte le "
+             "combinazioni prendendone uno per partita: per vincere "
+             "qualcosa basta che in ogni partita almeno uno si avveri."),
             ("miste", "Miste",
              "Eventi sicuri piu\' uno rischioso, per alzare la quota senza "
              "affidarsi solo a quello.")):
@@ -1102,6 +1258,7 @@ def scrivi_giocate(previsioni, generato):
            border-bottom:1px solid #eef1f4; padding-bottom:6px; }}
  .g-tit {{ font-size:12px; font-weight:600; }}
  .g-q {{ font-size:19px; font-weight:600; color:#1e7d3c; }}
+ .q-max {{ font-size:12px; color:#7b8794; font-weight:400; }}
  .g-nota {{ font-size:10px; color:#8b98a5; margin:5px 0 2px; line-height:1.5; }}
  .ev {{ display:flex; justify-content:space-between; align-items:center;
         padding:6px 0; border-bottom:1px solid #f6f8f9; }}
@@ -1459,7 +1616,7 @@ def main():
                    "previsioni": previsioni}, f, ensure_ascii=False, indent=1)
     scrivi_html(previsioni, generato, mod)
     n_scelte = scrivi_selezione(previsioni, generato)
-    n_giocate = scrivi_giocate(previsioni, generato)
+    n_giocate = scrivi_giocate(previsioni, generato, mod["rho"])
     n_esatti = scrivi_esatti(previsioni, generato)
 
     print(f"\nPrevisioni prodotte: {len(previsioni)}")
