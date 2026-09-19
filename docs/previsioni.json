@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-19T19:36:04.681434+00:00",
+ "generato": "2026-09-19T20:08:41.159220+00:00",
  "modello": "2026-09-19T05:17:35.521763+00:00",
  "previsioni": [
   {
@@ -88,66 +88,73 @@
    "campionato": "Peru - Primera División",
    "casa": "Sporting Cristal",
    "fuori": "Atletico Grau",
-   "gol_attesi_casa": 1.92,
-   "gol_attesi_fuori": 0.98,
-   "gol_attesi_totali": 2.9,
-   "nettezza": 38.0,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.91,
+   "gol_attesi_fuori": 1.05,
+   "gol_attesi_totali": 2.96,
+   "nettezza": 35.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 26,
    "partite_storia_fuori": 26,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5869,
-    "X": 0.2296,
-    "2": 0.1835,
-    "1X": 0.8165,
-    "12": 0.7704,
-    "X2": 0.4131,
-    "over15": 0.7898,
-    "under15": 0.2102,
-    "over25": 0.5529,
-    "under25": 0.4471,
-    "over35": 0.3292,
-    "under35": 0.6708,
-    "gol_gol": 0.5379,
-    "no_gol": 0.4621,
-    "1+over25": 0.3848,
-    "1+under25": 0.2021,
-    "2+over25": 0.1079,
-    "2+under25": 0.0756,
-    "1X+over25": 0.445,
-    "1X+under25": 0.3716,
-    "X2+over25": 0.168,
-    "X2+under25": 0.245,
-    "12+over25": 0.4927,
-    "1+gol": 0.2722,
-    "1+nogol": 0.3148,
-    "2+gol": 0.0966,
-    "1X+nogol": 0.3753,
+    "1": 0.5688,
+    "X": 0.2316,
+    "2": 0.1996,
+    "1X": 0.8004,
+    "12": 0.7684,
+    "X2": 0.4312,
+    "over15": 0.7998,
+    "under15": 0.2002,
+    "over25": 0.5674,
+    "under25": 0.4326,
+    "over35": 0.3434,
+    "under35": 0.6566,
+    "gol_gol": 0.5589,
+    "no_gol": 0.4411,
+    "1+over25": 0.3804,
+    "1+under25": 0.1884,
+    "2+over25": 0.1217,
+    "2+under25": 0.0779,
+    "1X+over25": 0.4457,
+    "1X+under25": 0.3547,
+    "X2+over25": 0.187,
+    "X2+under25": 0.2442,
+    "12+over25": 0.5022,
+    "1+gol": 0.2759,
+    "1+nogol": 0.2929,
+    "2+gol": 0.1084,
+    "1X+nogol": 0.35,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.109
-     },
-     {
-      "risultato": "2-0",
-      "prob": 0.1014
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1007
+      "prob": 0.1092
      },
      {
       "risultato": "2-1",
-      "prob": 0.0994
+      "prob": 0.0993
      },
      {
-      "risultato": "3-0",
-      "prob": 0.0647
+      "risultato": "2-0",
+      "prob": 0.0945
+     },
+     {
+      "risultato": "1-0",
+      "prob": 0.0939
+     },
+     {
+      "risultato": "3-1",
+      "prob": 0.0632
      }
     ]
    },
+   "prima": {
+    "1": 0.587,
+    "X": 0.2295,
+    "2": 0.1834,
+    "attesi": "1.92-0.98"
+   },
+   "spostamento": 0.0182,
    "mercato": {
     "1": 0.6728,
     "X": 0.2021,
@@ -156,11 +163,11 @@
     "bookmaker": 6
    },
    "divergenza": {
-    "1": -0.0859,
-    "X": 0.0275,
-    "2": 0.0583
+    "1": -0.104,
+    "X": 0.0295,
+    "2": 0.0744
    },
-   "divergenza_max": 0.0859
+   "divergenza_max": 0.104
   },
   {
    "fixture_id": 1549784,
@@ -10203,18 +10210,18 @@
     ]
    },
    "mercato": {
-    "1": 0.3894,
-    "X": 0.2963,
-    "2": 0.3143,
-    "margine": 0.0896,
-    "bookmaker": 6
+    "1": 0.3891,
+    "X": 0.2949,
+    "2": 0.316,
+    "margine": 0.0954,
+    "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0635,
-    "X": -0.0142,
-    "2": -0.0493
+    "1": 0.0638,
+    "X": -0.0128,
+    "2": -0.051
    },
-   "divergenza_max": 0.0635
+   "divergenza_max": 0.0638
   },
   {
    "fixture_id": 1565260,
@@ -10283,18 +10290,18 @@
     ]
    },
    "mercato": {
-    "1": 0.5149,
-    "X": 0.2704,
-    "2": 0.2147,
-    "margine": 0.0928,
-    "bookmaker": 6
+    "1": 0.512,
+    "X": 0.2714,
+    "2": 0.2165,
+    "margine": 0.0975,
+    "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0724,
-    "X": -0.0306,
-    "2": -0.0418
+    "1": 0.0753,
+    "X": -0.0316,
+    "2": -0.0436
    },
-   "divergenza_max": 0.0724
+   "divergenza_max": 0.0753
   },
   {
    "fixture_id": 1520882,
