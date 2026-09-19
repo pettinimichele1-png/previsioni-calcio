@@ -1,302 +1,72 @@
 {
- "generato": "2026-09-19T09:55:25.029110+00:00",
+ "generato": "2026-09-19T10:08:33.636269+00:00",
  "modello": "2026-09-19T05:17:35.521763+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1507071,
-   "data": "2026-09-19T10:00:00+00:00",
-   "campionato": "South-Korea - K League 1",
-   "casa": "FC Anyang",
-   "fuori": "Ulsan Hyundai FC",
-   "gol_attesi_casa": 1.24,
-   "gol_attesi_fuori": 1.47,
-   "gol_attesi_totali": 2.71,
-   "nettezza": 12.6,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 29,
-   "partite_storia_fuori": 29,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.3144,
-    "X": 0.268,
-    "2": 0.4176,
-    "1X": 0.5824,
-    "12": 0.732,
-    "X2": 0.6856,
-    "over15": 0.759,
-    "under15": 0.241,
-    "over25": 0.5085,
-    "under25": 0.4915,
-    "over35": 0.2878,
-    "under35": 0.7122,
-    "gol_gol": 0.5532,
-    "no_gol": 0.4468,
-    "1+over25": 0.1863,
-    "1+under25": 0.1281,
-    "2+over25": 0.2543,
-    "2+under25": 0.1633,
-    "1X+over25": 0.2542,
-    "1X+under25": 0.3282,
-    "X2+over25": 0.3221,
-    "X2+under25": 0.3635,
-    "12+over25": 0.4406,
-    "1+gol": 0.1564,
-    "1+nogol": 0.158,
-    "2+gol": 0.2015,
-    "1X+nogol": 0.2307,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1274
-     },
-     {
-      "risultato": "0-1",
-      "prob": 0.0917
-     },
-     {
-      "risultato": "1-2",
-      "prob": 0.089
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.3277,
-    "X": 0.2731,
-    "2": 0.3992,
-    "attesi": "1.24-1.40"
-   },
-   "spostamento": 0.0184,
-   "mercato": {
-    "1": 0.2726,
-    "X": 0.2616,
-    "2": 0.4658,
-    "margine": 0.0822,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.0418,
-    "X": 0.0064,
-    "2": -0.0482
-   },
-   "divergenza_max": 0.0482
-  },
-  {
-   "fixture_id": 1556072,
-   "data": "2026-09-19T10:00:00+00:00",
-   "campionato": "Japan - J1 League",
-   "casa": "FC Tokyo",
-   "fuori": "Nagoya Grampus",
-   "gol_attesi_casa": 1.86,
-   "gol_attesi_fuori": 1.3,
-   "gol_attesi_totali": 3.16,
-   "nettezza": 25.1,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 20,
-   "partite_storia_fuori": 20,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.5007,
-    "X": 0.2366,
-    "2": 0.2627,
-    "1X": 0.7373,
-    "12": 0.7634,
-    "X2": 0.4993,
-    "over15": 0.8289,
-    "under15": 0.1711,
-    "over25": 0.612,
-    "under25": 0.388,
-    "over35": 0.3889,
-    "under35": 0.6111,
-    "gol_gol": 0.6196,
-    "no_gol": 0.3804,
-    "1+over25": 0.3536,
-    "1+under25": 0.1471,
-    "2+over25": 0.1769,
-    "2+under25": 0.0858,
-    "1X+over25": 0.4351,
-    "1X+under25": 0.3022,
-    "X2+over25": 0.2584,
-    "X2+under25": 0.2409,
-    "12+over25": 0.5305,
-    "1+gol": 0.2758,
-    "1+nogol": 0.2249,
-    "2+gol": 0.1547,
-    "1X+nogol": 0.2724,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1077
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0954
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.0737
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.51,
-    "X": 0.2358,
-    "2": 0.2541,
-    "attesi": "1.87-1.27"
-   },
-   "spostamento": 0.0093,
-   "mercato": {
-    "1": 0.5894,
-    "X": 0.2283,
-    "2": 0.1823,
-    "margine": 0.0726,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0887,
-    "X": 0.0083,
-    "2": 0.0804
-   },
-   "divergenza_max": 0.0887
-  },
-  {
-   "fixture_id": 1556076,
-   "data": "2026-09-19T10:00:00+00:00",
-   "campionato": "Japan - J1 League",
-   "casa": "Fagiano Okayama",
-   "fuori": "Kyoto Sanga",
-   "gol_attesi_casa": 1.41,
-   "gol_attesi_fuori": 1.14,
-   "gol_attesi_totali": 2.55,
-   "nettezza": 13.7,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 20,
-   "partite_storia_fuori": 20,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.4247,
-    "X": 0.2765,
-    "2": 0.2988,
-    "1X": 0.7012,
-    "12": 0.7235,
-    "X2": 0.5753,
-    "over15": 0.7295,
-    "under15": 0.2705,
-    "over25": 0.4695,
-    "under25": 0.5305,
-    "over35": 0.2536,
-    "under35": 0.7464,
-    "gol_gol": 0.5209,
-    "no_gol": 0.4791,
-    "1+over25": 0.2437,
-    "1+under25": 0.181,
-    "2+over25": 0.1652,
-    "2+under25": 0.1336,
-    "1X+over25": 0.3042,
-    "1X+under25": 0.3969,
-    "X2+over25": 0.2258,
-    "X2+under25": 0.3495,
-    "12+over25": 0.4089,
-    "1+gol": 0.1898,
-    "1+nogol": 0.2349,
-    "2+gol": 0.1388,
-    "1X+nogol": 0.3191,
-    "punteggi_probabili": [
-     {
-      "risultato": "1-1",
-      "prob": 0.1318
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1036
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0884
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.4119,
-    "X": 0.2818,
-    "2": 0.3063,
-    "attesi": "1.35-1.13"
-   },
-   "spostamento": 0.0128,
-   "mercato": {
-    "1": 0.5132,
-    "X": 0.2656,
-    "2": 0.2212,
-    "margine": 0.0716,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": -0.0885,
-    "X": 0.0109,
-    "2": 0.0776
-   },
-   "divergenza_max": 0.0885
-  },
   {
    "fixture_id": 1556080,
    "data": "2026-09-19T10:30:00+00:00",
    "campionato": "Japan - J1 League",
    "casa": "Yokohama F. Marinos",
    "fuori": "Mito Hollyhock",
-   "gol_attesi_casa": 1.62,
-   "gol_attesi_fuori": 0.95,
-   "gol_attesi_totali": 2.57,
-   "nettezza": 28.8,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.7,
+   "gol_attesi_fuori": 1.08,
+   "gol_attesi_totali": 2.78,
+   "nettezza": 27.1,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 20,
    "partite_storia_fuori": 20,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.5253,
-    "X": 0.2597,
-    "2": 0.2149,
-    "1X": 0.7851,
-    "12": 0.7403,
-    "X2": 0.4747,
-    "over15": 0.7331,
-    "under15": 0.2669,
-    "over25": 0.4746,
-    "under25": 0.5254,
-    "over35": 0.2579,
-    "under35": 0.7421,
-    "gol_gol": 0.498,
-    "no_gol": 0.502,
-    "1+over25": 0.3068,
-    "1+under25": 0.2185,
-    "2+over25": 0.1138,
-    "2+under25": 0.1011,
-    "1X+over25": 0.3607,
-    "1X+under25": 0.4243,
-    "X2+over25": 0.1677,
-    "X2+under25": 0.307,
-    "12+over25": 0.4206,
-    "1+gol": 0.2208,
-    "1+nogol": 0.3045,
-    "2+gol": 0.0997,
-    "1X+nogol": 0.3867,
+    "1": 0.5142,
+    "X": 0.2512,
+    "2": 0.2346,
+    "1X": 0.7654,
+    "12": 0.7488,
+    "X2": 0.4858,
+    "over15": 0.7717,
+    "under15": 0.2283,
+    "over25": 0.5265,
+    "under25": 0.4735,
+    "over35": 0.3043,
+    "under35": 0.6957,
+    "gol_gol": 0.5457,
+    "no_gol": 0.4543,
+    "1+over25": 0.3247,
+    "1+under25": 0.1895,
+    "2+over25": 0.1375,
+    "2+under25": 0.0971,
+    "1X+over25": 0.389,
+    "1X+under25": 0.3764,
+    "X2+over25": 0.2018,
+    "X2+under25": 0.284,
+    "12+over25": 0.4622,
+    "1+gol": 0.2418,
+    "1+nogol": 0.2723,
+    "2+gol": 0.1201,
+    "1X+nogol": 0.3399,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1236
+      "prob": 0.1194
      },
      {
       "risultato": "1-0",
-      "prob": 0.118
+      "prob": 0.0997
      },
      {
-      "risultato": "2-0",
-      "prob": 0.1005
+      "risultato": "2-1",
+      "prob": 0.0969
      }
     ]
    },
+   "prima": {
+    "1": 0.5295,
+    "X": 0.2588,
+    "2": 0.2117,
+    "attesi": "1.63-0.94"
+   },
+   "spostamento": 0.0229,
    "mercato": {
     "1": 0.4611,
     "X": 0.2664,
@@ -305,11 +75,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.0642,
-    "X": -0.0067,
-    "2": -0.0576
+    "1": 0.0531,
+    "X": -0.0152,
+    "2": -0.0379
    },
-   "divergenza_max": 0.0642
+   "divergenza_max": 0.0531
   },
   {
    "fixture_id": 1551111,
