@@ -1337,39 +1337,57 @@ USCITA_ESATTI = "esatti.html"
 
 def scrivi_esatti(previsioni, generato):
     """
-    Pagina dei risultati esatti. E' la parte meno affidabile del modello:
-    i coefficienti sono stimati sull'1X2, non sui singoli punteggi, e un
-    punteggio dipende dalla forma esatta della distribuzione dei gol.
-    Per questo la pagina mostra anche quanto vale il punteggio piu'
-    probabile: quando resta sotto il 12-13% non c'e' nulla di netto.
+    I cinque risultati esatti piu' probabili di TUTTO il palinsesto.
+
+    E' la parte meno affidabile del modello: i parametri sono stimati
+    sull'esito 1X2, non sui singoli punteggi, e non abbiamo mai
+    verificato se i risultati esatti siano calibrati.
+
+    L'ordinamento e' per probabilita' pura. Non e' il criterio piu'
+    spettacolare - tende a pescare le partite chiuse, dove la
+    probabilita' si concentra su pochi punteggi - ma e' l'unico
+    verificabile: se diciamo 14% e succede il 14% delle volte, il
+    numero e' onesto.
     """
-    voci = []
-    con_dati = 0
-    for p in sorted(previsioni, key=lambda x: x["data"]):
+    tutti = []
+    for p in previsioni:
         punteggi = p["mercati"].get("punteggi_probabili") or []
         if not punteggi:
             continue
-        con_dati += 1
-        migliore = punteggi[0]["prob"]
-        classe = ("netto" if migliore >= 0.15 else
-                  ("medio" if migliore >= 0.11 else "debole"))
-        celle = "".join(
-            f'<div class="ris {"primo" if i == 0 else ""}">'
-            f'<span class="rr">{s["risultato"]}</span>'
-            f'<span class="rp">{s["prob"]*100:.1f}%</span></div>'
-            for i, s in enumerate(punteggi))
+        migliore = punteggi[0]
+        secondo = punteggi[1]["prob"] if len(punteggi) > 1 else 0.0
+        tutti.append({
+            "p": p, "risultato": migliore["risultato"],
+            "prob": migliore["prob"],
+            "distacco": migliore["prob"] - secondo,
+            "alternativi": punteggi[1:3],
+        })
+    tutti.sort(key=lambda d: -d["prob"])
+    scelti = tutti[:5]
+
+    voci = []
+    for i, d in enumerate(scelti, 1):
+        p = d["p"]
+        classe = ("netto" if d["prob"] >= 0.15 else
+                  ("medio" if d["prob"] >= 0.11 else "debole"))
         marchio = ('<span class="uff">uff</span>'
                    if p.get("formazioni") == "ufficiale" else '')
+        alternativi = " &middot; ".join(
+            f'{s["risultato"]} {s["prob"]*100:.1f}%' for s in d["alternativi"])
         voci.append(
-            f'<div class="partita">'
-            f'<div class="p-top">'
-            f'<span class="p-ora">{p["data"][8:10]}/{p["data"][5:7]} '
-            f'{p["data"][11:16]}</span>'
-            f'<span class="p-att">{p.get("gol_attesi_casa", 0):.2f} - '
-            f'{p.get("gol_attesi_fuori", 0):.2f}</span></div>'
-            f'<div class="p-nome">{p["casa"]} - {p["fuori"]}{marchio}</div>'
-            f'<div class="p-lega">{p["campionato"]}</div>'
-            f'<div class="risultati {classe}">{celle}</div>'
+            f'<div class="scelta">'
+            f'<div class="s-top">'
+            f'<span class="s-pos">{i}</span>'
+            f'<span class="s-ris {classe}">{d["risultato"]}</span>'
+            f'<span class="s-prob">{d["prob"]*100:.1f}%</span></div>'
+            f'<div class="s-nome">{p["casa"]} - {p["fuori"]}{marchio}</div>'
+            f'<div class="s-lega">{p["campionato"]} &middot; '
+            f'{p["data"][8:10]}/{p["data"][5:7]} {p["data"][11:16]} &middot; '
+            f'gol attesi {p.get("gol_attesi_casa", 0):.2f} - '
+            f'{p.get("gol_attesi_fuori", 0):.2f}</div>'
+            f'<div class="s-alt">stacca il secondo di '
+            f'<b>{d["distacco"]*100:.1f}</b> punti &middot; '
+            f'poi {alternativi}</div>'
             f'</div>')
 
     if not voci:
@@ -1386,21 +1404,22 @@ def scrivi_esatti(previsioni, generato):
  .sottotitolo {{ font-size:11px; color:#5b6b7b; margin-bottom:12px; }}
  .avviso {{ background:#fdf6e3; color:#8a6d1f; font-size:11px; padding:10px;
             border-radius:6px; margin-bottom:14px; line-height:1.6; }}
- .partita {{ background:#fff; border-radius:6px; padding:10px 11px;
-             margin-bottom:8px; }}
- .p-top {{ display:flex; justify-content:space-between; font-size:10px;
-           color:#7b8794; }}
- .p-nome {{ font-size:13px; font-weight:500; margin-top:2px; }}
- .p-lega {{ font-size:9px; color:#97a3ae; }}
- .risultati {{ display:flex; gap:6px; margin-top:8px; }}
- .ris {{ flex:1; text-align:center; padding:6px 2px; border-radius:4px;
-         background:#f4f6f8; }}
- .ris.primo {{ font-weight:600; }}
- .rr {{ display:block; font-size:14px; }}
- .rp {{ display:block; font-size:10px; color:#5b6b7b; margin-top:1px; }}
- .risultati.netto .ris.primo {{ background:#e3f2e3; color:#15642f; }}
- .risultati.medio .ris.primo {{ background:#fdf6e3; color:#8a6d1f; }}
- .risultati.debole .ris.primo {{ background:#f0f2f4; color:#5b6b7b; }}
+ .scelta {{ background:#fff; border-radius:6px; padding:11px 12px;
+            margin-bottom:9px; }}
+ .s-top {{ display:flex; align-items:center; gap:10px; }}
+ .s-pos {{ width:20px; height:20px; border-radius:50%; background:#eef1f4;
+           color:#7b8794; font-size:11px; text-align:center;
+           line-height:20px; flex-shrink:0; }}
+ .s-ris {{ font-size:22px; font-weight:600; padding:1px 10px;
+           border-radius:5px; }}
+ .s-ris.netto {{ background:#e3f2e3; color:#15642f; }}
+ .s-ris.medio {{ background:#fdf6e3; color:#8a6d1f; }}
+ .s-ris.debole {{ background:#f0f2f4; color:#5b6b7b; }}
+ .s-prob {{ margin-left:auto; font-size:17px; font-weight:600; }}
+ .s-nome {{ font-size:13px; font-weight:500; margin-top:7px; }}
+ .s-lega {{ font-size:10px; color:#97a3ae; margin-top:1px; }}
+ .s-alt {{ font-size:10px; color:#7b8794; margin-top:6px;
+           padding-top:6px; border-top:1px solid #f2f4f6; }}
  .uff {{ background:#2c3e50; color:#fff; font-size:8px; padding:1px 4px;
          border-radius:2px; margin-left:5px; }}
  .vuoto {{ background:#fff; border-radius:6px; padding:18px; font-size:12px;
@@ -1410,27 +1429,32 @@ def scrivi_esatti(previsioni, generato):
 </style></head><body>
 <h1>Risultati esatti</h1>
 <div class="sottotitolo">
-I tre punteggi piu' probabili per ogni partita &middot;
-{con_dati} partite &middot;
+I cinque punteggi piu' probabili di tutto il palinsesto &middot;
+scelti fra {len(tutti)} partite &middot;
 aggiornati il {generato[:16].replace('T', ' alle ')} UTC
 </div>
 
 <div class="avviso">
-<b>Questa e\\' la parte meno affidabile del modello.</b> I suoi parametri
-sono stimati sull\\'esito 1X2, non sui singoli punteggi, e non abbiamo
+<b>E\' la parte meno affidabile del sistema.</b> I parametri del modello
+sono stimati sull\'esito 1X2, non sui singoli punteggi, e non abbiamo
 mai verificato se i risultati esatti siano calibrati. Trattali come
-un\\'indicazione, non come gli altri numeri del sistema.
+un\'indicazione, non come gli altri numeri.
 </div>
 
 {''.join(voci)}
 
 <div class="nota">
-<b>Il verde</b> segnala i casi in cui il punteggio piu\\' probabile supera
-il 15%: e\\' raro, e significa che la partita ha una forma prevedibile.
-Il giallo sta fra l\\'11 e il 15%, il grigio sotto: li\\' nessun punteggio
-emerge davvero e i tre proposti valgono quasi lo stesso.<br><br>
-Anche un risultato esatto al 15% sbaglia quasi nove volte su dieci: e\\'
-il mercato con la quota piu\\' alta proprio per questo.<br><br>
+<b>Perche\' le percentuali sono cosi\' basse.</b> Anche in una partita
+molto squilibrata il punteggio piu\' probabile supera raramente il 15%:
+i modi in cui puo\' finire una partita sono troppi. Un risultato esatto
+al 14% sbaglia quasi nove volte su dieci, ed e\' per questo che ha la
+quota piu\' alta di tutti i mercati.<br><br>
+<b>Il verde</b> segnala i casi oltre il 15%, rari. Il giallo sta fra
+l\'11 e il 15%, il grigio sotto: li\' nessun punteggio emerge davvero.<br><br>
+<b>L\'ordinamento e\' per probabilita\' pura</b>, quindi tende a pescare
+le partite chiuse, dove pochi punteggi concentrano la probabilita\'. Il
+distacco dal secondo dice quanto quel punteggio spicca davvero nella
+sua partita.<br><br>
 <a href="index.html">Tutte le partite</a> &middot;
 <a href="giocate.html">Giocate</a> &middot;
 <a href="selezione.html">Selezione</a> &middot;
@@ -1439,7 +1463,7 @@ il mercato con la quota piu\\' alta proprio per questo.<br><br>
 </body></html>"""
     with open(USCITA_ESATTI, "w", encoding="utf-8") as f:
         f.write(html)
-    return con_dati
+    return len(scelti)
 
 
 def main():
@@ -1624,7 +1648,7 @@ def main():
     print(f"  {USCITA_JSON}\n  {USCITA_HTML}"
           f"\n  {USCITA_SELEZIONE} ({n_scelte} esiti selezionati)"
           f"\n  {USCITA_GIOCATE} ({n_giocate} proposte)"
-          f"\n  {USCITA_ESATTI} ({n_esatti} partite)")
+          f"\n  {USCITA_ESATTI} ({n_esatti} risultati)")
 
 
 def scrivi_html(previsioni, generato, mod):
