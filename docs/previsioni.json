@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-20T09:14:29.474107+00:00",
+ "generato": "2026-09-20T09:41:36.581115+00:00",
  "modello": "2026-09-20T05:20:31.037165+00:00",
  "previsioni": [
   {
@@ -8,66 +8,73 @@
    "campionato": "South-Korea - K League 1",
    "casa": "Incheon United",
    "fuori": "Daejeon Citizen",
-   "gol_attesi_casa": 1.31,
-   "gol_attesi_fuori": 1.77,
-   "gol_attesi_totali": 3.08,
-   "nettezza": 21.4,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.32,
+   "gol_attesi_fuori": 1.79,
+   "gol_attesi_totali": 3.1,
+   "nettezza": 22.0,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 28,
    "partite_storia_fuori": 29,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.2803,
-    "X": 0.2435,
-    "2": 0.4762,
-    "1X": 0.5238,
-    "12": 0.7565,
-    "X2": 0.7197,
-    "over15": 0.818,
-    "under15": 0.182,
-    "over25": 0.5948,
-    "under25": 0.4052,
-    "over35": 0.371,
-    "under35": 0.629,
-    "gol_gol": 0.6117,
-    "no_gol": 0.3883,
-    "1+over25": 0.1857,
-    "1+under25": 0.0945,
-    "2+over25": 0.3287,
-    "2+under25": 0.1475,
-    "1X+over25": 0.2661,
-    "1X+under25": 0.2577,
-    "X2+over25": 0.4091,
-    "X2+under25": 0.3107,
-    "12+over25": 0.5144,
-    "1+gol": 0.1608,
-    "1+nogol": 0.1195,
-    "2+gol": 0.2585,
-    "1X+nogol": 0.1707,
+    "1": 0.2783,
+    "X": 0.2421,
+    "2": 0.4797,
+    "1X": 0.5203,
+    "12": 0.7579,
+    "X2": 0.7217,
+    "over15": 0.8212,
+    "under15": 0.1788,
+    "over25": 0.5998,
+    "under25": 0.4002,
+    "over35": 0.3762,
+    "under35": 0.6238,
+    "gol_gol": 0.6149,
+    "no_gol": 0.3851,
+    "1+over25": 0.1855,
+    "1+under25": 0.0927,
+    "2+over25": 0.3333,
+    "2+under25": 0.1464,
+    "1X+over25": 0.2666,
+    "1X+under25": 0.2537,
+    "X2+over25": 0.4143,
+    "X2+under25": 0.3074,
+    "12+over25": 0.5188,
+    "1+gol": 0.1609,
+    "1+nogol": 0.1174,
+    "2+gol": 0.2621,
+    "1X+nogol": 0.1675,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1119
+      "prob": 0.1109
      },
      {
       "risultato": "1-2",
-      "prob": 0.0942
+      "prob": 0.0943
      },
      {
       "risultato": "0-1",
-      "prob": 0.0758
+      "prob": 0.0748
      },
      {
       "risultato": "0-2",
-      "prob": 0.0717
+      "prob": 0.0716
      },
      {
       "risultato": "2-1",
-      "prob": 0.07
+      "prob": 0.0696
      }
     ]
    },
+   "prima": {
+    "1": 0.2943,
+    "X": 0.2475,
+    "2": 0.4583,
+    "attesi": "1.33-1.71"
+   },
+   "spostamento": 0.0214,
    "mercato": {
     "1": 0.3315,
     "X": 0.2881,
@@ -76,11 +83,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0512,
-    "X": -0.0446,
-    "2": 0.0959
+    "1": -0.0532,
+    "X": -0.046,
+    "2": 0.0994
    },
-   "divergenza_max": 0.0959
+   "divergenza_max": 0.0994
   },
   {
    "fixture_id": 1507075,
@@ -88,66 +95,73 @@
    "campionato": "South-Korea - K League 1",
    "casa": "Pohang Steelers",
    "fuori": "FC Seoul",
-   "gol_attesi_casa": 1.11,
-   "gol_attesi_fuori": 2.24,
-   "gol_attesi_totali": 3.35,
-   "nettezza": 43.6,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.14,
+   "gol_attesi_fuori": 2.23,
+   "gol_attesi_totali": 3.36,
+   "nettezza": 42.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 29,
    "partite_storia_fuori": 29,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.1727,
-    "X": 0.203,
-    "2": 0.6242,
-    "1X": 0.3758,
-    "12": 0.797,
-    "X2": 0.8273,
-    "over15": 0.8512,
-    "under15": 0.1488,
-    "over25": 0.6496,
-    "under25": 0.3504,
-    "over35": 0.4296,
-    "under35": 0.5704,
-    "gol_gol": 0.6027,
-    "no_gol": 0.3973,
-    "1+over25": 0.1164,
-    "1+under25": 0.0563,
-    "2+over25": 0.4615,
-    "2+under25": 0.1627,
-    "1X+over25": 0.1881,
-    "1X+under25": 0.1877,
-    "X2+over25": 0.5332,
-    "X2+under25": 0.2941,
-    "12+over25": 0.5779,
-    "1+gol": 0.1056,
-    "1+nogol": 0.0671,
-    "2+gol": 0.3337,
-    "1X+nogol": 0.1067,
+    "1": 0.1799,
+    "X": 0.205,
+    "2": 0.615,
+    "1X": 0.385,
+    "12": 0.795,
+    "X2": 0.8201,
+    "over15": 0.8532,
+    "under15": 0.1468,
+    "over25": 0.6529,
+    "under25": 0.3471,
+    "over35": 0.4332,
+    "under35": 0.5668,
+    "gol_gol": 0.6104,
+    "no_gol": 0.3896,
+    "1+over25": 0.1225,
+    "1+under25": 0.0575,
+    "2+over25": 0.4565,
+    "2+under25": 0.1585,
+    "1X+over25": 0.1964,
+    "1X+under25": 0.1886,
+    "X2+over25": 0.5304,
+    "X2+under25": 0.2897,
+    "12+over25": 0.579,
+    "1+gol": 0.1109,
+    "1+nogol": 0.0691,
+    "2+gol": 0.3335,
+    "1X+nogol": 0.1081,
     "punteggi_probabili": [
      {
       "risultato": "1-2",
-      "prob": 0.0978
+      "prob": 0.0976
      },
      {
       "risultato": "1-1",
-      "prob": 0.0918
+      "prob": 0.0921
      },
      {
       "risultato": "0-2",
-      "prob": 0.0882
+      "prob": 0.0858
      },
      {
       "risultato": "0-1",
-      "prob": 0.0745
+      "prob": 0.0727
      },
      {
       "risultato": "1-3",
-      "prob": 0.073
+      "prob": 0.0724
      }
     ]
    },
+   "prima": {
+    "1": 0.185,
+    "X": 0.2101,
+    "2": 0.6049,
+    "attesi": "1.13-2.16"
+   },
+   "spostamento": 0.0101,
    "mercato": {
     "1": 0.2145,
     "X": 0.2754,
@@ -156,11 +170,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": -0.0418,
-    "X": -0.0724,
-    "2": 0.1141
+    "1": -0.0346,
+    "X": -0.0704,
+    "2": 0.1049
    },
-   "divergenza_max": 0.1141
+   "divergenza_max": 0.1049
   },
   {
    "fixture_id": 1552176,
