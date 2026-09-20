@@ -1,160 +1,80 @@
 {
- "generato": "2026-09-20T20:14:25.109233+00:00",
+ "generato": "2026-09-20T20:41:09.836001+00:00",
  "modello": "2026-09-20T05:20:31.037165+00:00",
  "previsioni": [
-  {
-   "fixture_id": 1549497,
-   "data": "2026-09-20T20:30:00+00:00",
-   "campionato": "Peru - Primera División",
-   "casa": "Juan Pablo II College",
-   "fuori": "UCV Moquegua",
-   "gol_attesi_casa": 2.04,
-   "gol_attesi_fuori": 0.87,
-   "gol_attesi_totali": 2.91,
-   "nettezza": 46.3,
-   "affidabilita": 100.0,
-   "affidabilita_etichetta": "alta",
-   "partite_storia_casa": 26,
-   "partite_storia_fuori": 26,
-   "formazioni": "ufficiale",
-   "mercati": {
-    "1": 0.6419,
-    "X": 0.2127,
-    "2": 0.1454,
-    "1X": 0.8546,
-    "12": 0.7873,
-    "X2": 0.3581,
-    "over15": 0.7919,
-    "under15": 0.2081,
-    "over25": 0.5564,
-    "under25": 0.4436,
-    "over35": 0.3326,
-    "under35": 0.6674,
-    "gol_gol": 0.5096,
-    "no_gol": 0.4904,
-    "1+over25": 0.4218,
-    "1+under25": 0.2201,
-    "2+over25": 0.0825,
-    "2+under25": 0.0629,
-    "1X+over25": 0.4739,
-    "1X+under25": 0.3807,
-    "X2+over25": 0.1347,
-    "X2+under25": 0.2234,
-    "12+over25": 0.5043,
-    "1+gol": 0.281,
-    "1+nogol": 0.3609,
-    "2+gol": 0.075,
-    "1X+nogol": 0.4201,
-    "punteggi_probabili": [
-     {
-      "risultato": "2-0",
-      "prob": 0.1137
-     },
-     {
-      "risultato": "1-0",
-      "prob": 0.1064
-     },
-     {
-      "risultato": "1-1",
-      "prob": 0.1013
-     },
-     {
-      "risultato": "2-1",
-      "prob": 0.0986
-     },
-     {
-      "risultato": "3-0",
-      "prob": 0.0775
-     }
-    ]
-   },
-   "prima": {
-    "1": 0.6552,
-    "X": 0.2071,
-    "2": 0.1377,
-    "attesi": "2.09-0.85"
-   },
-   "spostamento": 0.0133,
-   "mercato": {
-    "1": 0.5051,
-    "X": 0.2666,
-    "2": 0.2283,
-    "margine": 0.0861,
-    "bookmaker": 9
-   },
-   "divergenza": {
-    "1": 0.1368,
-    "X": -0.0539,
-    "2": -0.0829
-   },
-   "divergenza_max": 0.1368
-  },
   {
    "fixture_id": 1639818,
    "data": "2026-09-20T21:00:00+00:00",
    "campionato": "Ecuador - Liga Pro",
    "casa": "Deportivo Cuenca",
    "fuori": "Mushuc Runa SC",
-   "gol_attesi_casa": 1.19,
-   "gol_attesi_fuori": 0.94,
-   "gol_attesi_totali": 2.13,
-   "nettezza": 11.7,
-   "affidabilita": 84.0,
+   "gol_attesi_casa": 1.22,
+   "gol_attesi_fuori": 0.93,
+   "gol_attesi_totali": 2.16,
+   "nettezza": 13.2,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 30,
    "partite_storia_fuori": 30,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.4116,
-    "X": 0.3073,
-    "2": 0.2812,
-    "1X": 0.7188,
-    "12": 0.6927,
-    "X2": 0.5884,
-    "over15": 0.6339,
-    "under15": 0.3661,
-    "over25": 0.3576,
-    "under25": 0.6424,
-    "over35": 0.1665,
-    "under35": 0.8335,
-    "gol_gol": 0.4297,
-    "no_gol": 0.5703,
-    "1+over25": 0.1915,
-    "1+under25": 0.22,
-    "2+over25": 0.1242,
-    "2+under25": 0.157,
-    "1X+over25": 0.2335,
-    "1X+under25": 0.4854,
+    "1": 0.4211,
+    "X": 0.3039,
+    "2": 0.2751,
+    "1X": 0.7249,
+    "12": 0.6961,
+    "X2": 0.5789,
+    "over15": 0.6416,
+    "under15": 0.3584,
+    "over25": 0.3659,
+    "under25": 0.6341,
+    "over35": 0.1724,
+    "under35": 0.8276,
+    "gol_gol": 0.4351,
+    "no_gol": 0.5649,
+    "1+over25": 0.1998,
+    "1+under25": 0.2213,
+    "2+over25": 0.1232,
+    "2+under25": 0.1519,
+    "1X+over25": 0.2427,
+    "1X+under25": 0.4822,
     "X2+over25": 0.1661,
-    "X2+under25": 0.4224,
-    "12+over25": 0.3157,
-    "1+gol": 0.145,
-    "1+nogol": 0.2666,
-    "2+gol": 0.1033,
-    "1X+nogol": 0.3924,
+    "X2+under25": 0.4128,
+    "12+over25": 0.323,
+    "1+gol": 0.1505,
+    "1+nogol": 0.2706,
+    "2+gol": 0.103,
+    "1X+nogol": 0.3928,
     "punteggi_probabili": [
      {
       "risultato": "1-1",
-      "prob": 0.1395
+      "prob": 0.1387
      },
      {
       "risultato": "1-0",
-      "prob": 0.1354
+      "prob": 0.1348
      },
      {
       "risultato": "0-0",
-      "prob": 0.1258
+      "prob": 0.1222
      },
      {
       "risultato": "0-1",
-      "prob": 0.1049
+      "prob": 0.1014
      },
      {
       "risultato": "2-0",
-      "prob": 0.0846
+      "prob": 0.0865
      }
     ]
-   }
+   },
+   "prima": {
+    "1": 0.4129,
+    "X": 0.3085,
+    "2": 0.2786,
+    "attesi": "1.19-0.92"
+   },
+   "spostamento": 0.0082
   },
   {
    "fixture_id": 1549785,
