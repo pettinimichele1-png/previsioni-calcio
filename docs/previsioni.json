@@ -1,5 +1,5 @@
 {
- "generato": "2026-09-20T19:39:11.486679+00:00",
+ "generato": "2026-09-20T20:14:25.109233+00:00",
  "modello": "2026-09-20T05:20:31.037165+00:00",
  "previsioni": [
   {
@@ -8,66 +8,73 @@
    "campionato": "Peru - Primera División",
    "casa": "Juan Pablo II College",
    "fuori": "UCV Moquegua",
-   "gol_attesi_casa": 2.06,
-   "gol_attesi_fuori": 0.85,
+   "gol_attesi_casa": 2.04,
+   "gol_attesi_fuori": 0.87,
    "gol_attesi_totali": 2.91,
-   "nettezza": 47.2,
-   "affidabilita": 84.0,
+   "nettezza": 46.3,
+   "affidabilita": 100.0,
    "affidabilita_etichetta": "alta",
    "partite_storia_casa": 26,
    "partite_storia_fuori": 26,
-   "formazioni": "probabile",
+   "formazioni": "ufficiale",
    "mercati": {
-    "1": 0.6478,
-    "X": 0.2108,
-    "2": 0.1414,
-    "1X": 0.8586,
-    "12": 0.7892,
-    "X2": 0.3522,
+    "1": 0.6419,
+    "X": 0.2127,
+    "2": 0.1454,
+    "1X": 0.8546,
+    "12": 0.7873,
+    "X2": 0.3581,
     "over15": 0.7919,
     "under15": 0.2081,
-    "over25": 0.5565,
-    "under25": 0.4435,
-    "over35": 0.3327,
-    "under35": 0.6673,
-    "gol_gol": 0.5058,
-    "no_gol": 0.4942,
-    "1+over25": 0.4255,
-    "1+under25": 0.2223,
-    "2+over25": 0.0799,
-    "2+under25": 0.0616,
-    "1X+over25": 0.4766,
-    "1X+under25": 0.3819,
-    "X2+over25": 0.1311,
-    "X2+under25": 0.2212,
-    "12+over25": 0.5053,
-    "1+gol": 0.2814,
-    "1+nogol": 0.3664,
-    "2+gol": 0.0728,
-    "1X+nogol": 0.4256,
+    "over25": 0.5564,
+    "under25": 0.4436,
+    "over35": 0.3326,
+    "under35": 0.6674,
+    "gol_gol": 0.5096,
+    "no_gol": 0.4904,
+    "1+over25": 0.4218,
+    "1+under25": 0.2201,
+    "2+over25": 0.0825,
+    "2+under25": 0.0629,
+    "1X+over25": 0.4739,
+    "1X+under25": 0.3807,
+    "X2+over25": 0.1347,
+    "X2+under25": 0.2234,
+    "12+over25": 0.5043,
+    "1+gol": 0.281,
+    "1+nogol": 0.3609,
+    "2+gol": 0.075,
+    "1X+nogol": 0.4201,
     "punteggi_probabili": [
      {
       "risultato": "2-0",
-      "prob": 0.1151
+      "prob": 0.1137
      },
      {
       "risultato": "1-0",
-      "prob": 0.1072
+      "prob": 0.1064
      },
      {
       "risultato": "1-1",
-      "prob": 0.1004
+      "prob": 0.1013
      },
      {
       "risultato": "2-1",
-      "prob": 0.0984
+      "prob": 0.0986
      },
      {
       "risultato": "3-0",
-      "prob": 0.0789
+      "prob": 0.0775
      }
     ]
    },
+   "prima": {
+    "1": 0.6552,
+    "X": 0.2071,
+    "2": 0.1377,
+    "attesi": "2.09-0.85"
+   },
+   "spostamento": 0.0133,
    "mercato": {
     "1": 0.5051,
     "X": 0.2666,
@@ -76,11 +83,11 @@
     "bookmaker": 9
    },
    "divergenza": {
-    "1": 0.1427,
-    "X": -0.0558,
-    "2": -0.0869
+    "1": 0.1368,
+    "X": -0.0539,
+    "2": -0.0829
    },
-   "divergenza_max": 0.1427
+   "divergenza_max": 0.1368
   },
   {
    "fixture_id": 1639818,
