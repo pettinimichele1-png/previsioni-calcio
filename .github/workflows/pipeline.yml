@@ -12,7 +12,7 @@ on:
   schedule:
     - cron: "0 5,6 * * *"           # 07:00 italiane
     - cron: "0 6,7 * * *"           # 08:00 italiane
-    - cron: "*/30 9-23,0-1 * * *"       # fascia partite, notte compresa
+    - cron: "*/30 5-23,0-1 * * *"       # fascia partite, notte compresa
   workflow_dispatch:
     inputs:
       modalita:
@@ -64,7 +64,7 @@ jobs:
               azione = "raccolta"
           elif ora == 8:
               azione = "previsioni"
-          elif ora >= 11 or ora <= 2:
+          elif ora >= 7 or ora <= 2:
               azione = "live"
           else:
               # e' scattato il cron dell'altro fuso stagionale
