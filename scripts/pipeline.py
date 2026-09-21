@@ -37,7 +37,11 @@ import subprocess
 from datetime import datetime, timezone
 
 CARTELLA = os.path.dirname(os.path.abspath(__file__))
-SITO = "docs"
+# Dove gira il sistema. Su GitHub il database viaggia dalla Release e
+# le pagine vanno in docs/; sul server il database resta fermo nella
+# cartella e le pagine vanno dove le serve nginx (SITO_DIR).
+SU_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true"
+SITO = os.environ.get("SITO_DIR", "docs")
 DB_PATH = "calcio_dati.db"
 
 # File di stato che devono sopravvivere fra un'esecuzione e l'altra.
@@ -121,11 +125,19 @@ def main():
     print(f"PIPELINE '{modalita}' avviato il {avvio.strftime('%Y-%m-%d %H:%M')} UTC")
 
     sys.path.insert(0, CARTELLA)
-    import storage
+    print(f"Ambiente: {'GitHub Actions' if SU_GITHUB else 'server'}  "
+          f"-  pagine in {SITO}")
 
-    print(f"\n{'=' * 64}\nFASE: recupero del database e dello stato\n{'=' * 64}")
-    trovato = storage.scarica_database()
-    ripristina_stato()
+    if SU_GITHUB:
+        import storage
+        print(f"\n{'=' * 64}\nFASE: recupero del database e dello stato\n{'=' * 64}")
+        trovato = storage.scarica_database()
+        ripristina_stato()
+    else:
+        # sul server il database e il modello restano nella cartella
+        # fra un'esecuzione e l'altra: non c'e' niente da scaricare
+        trovato = os.path.exists(DB_PATH)
+        print(f"\nDatabase locale: {'presente' if trovato else 'ASSENTE'}")
     if not trovato:
         print("Nessun database disponibile.")
         if modalita != "raccolta":
@@ -164,14 +176,16 @@ def main():
             esegui("previsioni.py", "previsioni aggiornate")
             esegui("verifica.py", "archiviazione", ["archivia"])
 
-    salva_stato()
+    if SU_GITHUB:
+        salva_stato()
     pubblica()
 
-    print(f"\n{'=' * 64}\nFASE: salvataggio del database\n{'=' * 64}")
     if os.path.exists(DB_PATH):
         finale = os.path.getsize(DB_PATH) / 1024 / 1024
-        print(f"  dimensione: {dimensione_iniziale:.1f} MB -> {finale:.1f} MB")
-        storage.carica_database()
+        print(f"\n  database: {dimensione_iniziale:.1f} MB -> {finale:.1f} MB")
+        if SU_GITHUB:
+            print(f"\n{'=' * 64}\nFASE: salvataggio del database\n{'=' * 64}")
+            storage.carica_database()
 
     durata = (datetime.now(timezone.utc) - avvio).total_seconds()
     print(f"\nPIPELINE concluso in {durata/60:.1f} minuti")
