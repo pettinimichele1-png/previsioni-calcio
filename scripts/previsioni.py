@@ -1031,9 +1031,11 @@ def salva_schedine(proposte, conn):
     """)
     adesso = datetime.now(timezone.utc).isoformat()
     for categoria, elenco in proposte.items():
-        if categoria == "singole":
-            continue
         for s in elenco:
+            # una singola e' una schedina con un solo evento
+            if categoria == "singole":
+                s = {"titolo": "Singola", "quota": s.get("quota"),
+                     "prob": s["prob"], "voci": [s]}
             # il codice identifica la schedina dai suoi eventi: la stessa
             # proposta rigenerata piu' volte non viene contata due volte
             parti = sorted(f"{v['fixture_id']}:{v['esito']}" for v in s["voci"])

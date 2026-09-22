@@ -71,6 +71,38 @@
     var parti = String(campionato || "").split(" - ");
     return { paese: parti.length > 1 ? parti[0] : "", nome: parti[parti.length - 1] };
   }
+
+  // Bandierine: il paese arriva in inglese dall'API (es. "Czech-Republic").
+  // Inghilterra, Scozia e Galles hanno bandiere proprie, diverse dal Regno Unito.
+  var ISO = {
+    "italy": "IT", "spain": "ES", "germany": "DE", "france": "FR", "netherlands": "NL",
+    "portugal": "PT", "belgium": "BE", "turkey": "TR", "turkiye": "TR", "greece": "GR",
+    "austria": "AT", "switzerland": "CH", "denmark": "DK", "sweden": "SE", "norway": "NO",
+    "poland": "PL", "czech republic": "CZ", "czechia": "CZ", "croatia": "HR", "serbia": "RS",
+    "romania": "RO", "bulgaria": "BG", "ukraine": "UA", "israel": "IL", "finland": "FI",
+    "ireland": "IE", "northern ireland": "GB", "japan": "JP", "south korea": "KR",
+    "korea republic": "KR", "china": "CN", "saudi arabia": "SA", "qatar": "QA",
+    "united arab emirates": "AE", "brazil": "BR", "argentina": "AR", "colombia": "CO",
+    "chile": "CL", "peru": "PE", "ecuador": "EC", "uruguay": "UY", "paraguay": "PY",
+    "bolivia": "BO", "venezuela": "VE", "usa": "US", "united states": "US", "mexico": "MX",
+    "canada": "CA", "hungary": "HU", "slovakia": "SK", "slovenia": "SI", "cyprus": "CY",
+    "australia": "AU", "iceland": "IS", "russia": "RU", "egypt": "EG", "morocco": "MA",
+    "india": "IN", "iran": "IR", "kazakhstan": "KZ", "belarus": "BY", "lithuania": "LT",
+    "latvia": "LV", "estonia": "EE", "bosnia": "BA", "north macedonia": "MK", "albania": "AL",
+    "georgia": "GE", "armenia": "AM", "azerbaijan": "AZ", "moldova": "MD", "montenegro": "ME",
+    "wales": "#gbwls", "scotland": "#gbsct", "england": "#gbeng"
+  };
+  function bandiera(paese) {
+    var codice = ISO[String(paese || "").toLowerCase().replace(/[-_]/g, " ").trim()];
+    if (!codice) return "";
+    if (codice.charAt(0) === "#") {
+      var punti = [0x1F3F4];
+      codice.slice(1).split("").forEach(function (c) { punti.push(0xE0000 + c.charCodeAt(0)); });
+      punti.push(0xE007F);
+      return String.fromCodePoint.apply(null, punti);
+    }
+    return String.fromCodePoint(0x1F1E6 + codice.charCodeAt(0) - 65, 0x1F1E6 + codice.charCodeAt(1) - 65);
+  }
   function trovaPartita(id) {
     var lista = (stato.dati && stato.dati.partite) || [];
     for (var i = 0; i < lista.length; i++) if (String(lista[i].id) === String(id)) return lista[i];
@@ -128,6 +160,8 @@
     var leghe = Object.keys(conteggio).sort(function (a, b) { return conteggio[b] - conteggio[a]; });
     function etichettaLega(c) {
       var n = nomeLega(c);
+      var b = bandiera(n.paese);
+      if (b) return b + " " + n.nome;
       return Object.keys(perNome[n.nome]).length > 1 ? n.nome + " · " + n.paese : n.nome;
     }
     if (stato.lega !== "tutte" && !conteggio[stato.lega]) stato.lega = "tutte";
@@ -179,7 +213,7 @@
         var max = Math.max(m.p["1"], m.p["X"], m.p["2"]);
         html += '<a class="partita carta" href="#/partita/' + encodeURIComponent(m.id) + '">' +
           '<div class="riga"><div class="ora"><b>' + oraDi(d) + "</b><span>" + dataBreve(d) + "</span></div>" +
-          '<div class="etichette"><span class="lega">' + esc(nomeLega(m.campionato).nome) + "</span>" + badge(m.formazioni) + "</div></div>" +
+          '<div class="etichette"><span class="lega">' + bandiera(nomeLega(m.campionato).paese) + " " + esc(nomeLega(m.campionato).nome) + "</span>" + badge(m.formazioni) + "</div></div>" +
           '<div class="riga"><div class="squadre"><span>' + esc(m.casa) + "</span><span>" + esc(m.fuori) + "</span></div>" +
           '<div class="pillole">' + ["1", "X", "2"].map(function (k) {
             return '<div class="pillola' + (m.p[k] === max ? " forte" : "") + '"><small>' + k + "</small><b>" + pct(m.p[k]) + "</b></div>";
@@ -212,7 +246,7 @@
     var max = Math.max(m.p["1"], m.p["X"], m.p["2"]);
     var etichettaForm = m.formazioni === "ufficiale" ? "Formazioni ufficiali" :
                         m.formazioni === "probabile" ? "Formazioni probabili" : "Formazioni non note";
-    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + esc(lega.nome) +
+    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + bandiera(lega.paese) + " " + esc(lega.nome) +
       (lega.paese ? " · " + esc(lega.paese) : "") + '</span><span class="badge' + (m.formazioni === "ufficiale" ? " uff" : "") + '">' +
       etichettaForm.toUpperCase() + '</span></div><div class="nomi"><div class="nome">' + esc(m.casa) +
       '</div><div class="contro">contro</div><div class="nome">' + esc(m.fuori) + '</div></div>' +
@@ -354,7 +388,7 @@
   // ---------------------------------------------------------------
   //  VERIFICA
   // ---------------------------------------------------------------
-  var NOMI_CATEGORIE = { alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste" };
 
   function vistaVerifica() {
     var v = stato.dati.verifica;
@@ -396,7 +430,7 @@
         '<div><b class="verde">' + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "valore", "sistemi", "miste"].forEach(function (k) {
+      ["singole", "alta", "valore", "sistemi", "miste"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx verde">' +

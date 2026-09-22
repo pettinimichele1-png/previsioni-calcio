@@ -41,7 +41,11 @@ a { color: var(--lime); }
 .sottotitolo { font-size: 13px; color: var(--testo2); }
 
 /* ---------- filtri ---------- */
-.filtri { position: sticky; top: 0; z-index: 5; background: var(--fondo); padding-top: env(safe-area-inset-top); margin-top: calc(-1 * env(safe-area-inset-top)); border-bottom: 1px solid var(--linea); }
+/* Nell'app installata il contenuto arriva fin sotto la barra di stato
+   del telefono (ora, batteria). Una striscia fissa la copre, e i filtri
+   si fermano subito sotto invece di scivolarci dietro. */
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--fondo); z-index: 30; }
+.filtri { position: sticky; top: env(safe-area-inset-top); z-index: 5; background: var(--fondo); border-bottom: 1px solid var(--linea); }
 .riga-chip { display: flex; gap: 8px; padding: 6px 16px 10px 16px; overflow-x: auto; }
 .chip-giorno {
   min-width: 58px; height: 60px; padding: 0 12px; border-radius: 14px;
