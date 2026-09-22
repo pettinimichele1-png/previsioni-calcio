@@ -670,6 +670,12 @@ QUOTA_MINIMA_ALTA = 1.45     # sotto non vale la pena giocare
 PROB_MINIMA_MISTA = 0.30     # sotto e' un esito campato per aria
 QUOTE_MISTE = (5.0, 10.0, 17.0)
 MAX_EVENTI_MISTA = 5         # da due a cinque partite, non di piu'
+# Tetto alla quota di ogni singolo esito di una mista: 2.20 vuol dire
+# almeno il 42% di probabilita'. La regola sui componenti controlla i
+# pezzi uno per uno, questa controlla il loro prodotto: due condizioni
+# al 60% fanno una combo al 36%, cioe' una scelta rischiosa presa solo
+# perche' paga.
+QUOTA_MASSIMA_MISTA = 2.20
 # Limiti sul calcolo del vantaggio. Su un esito al 5% il vantaggio
 # stimato e' quasi tutto rumore: basta un errore di due punti nella
 # nostra probabilita' per farlo schizzare. E un vantaggio oltre il 50%
@@ -999,7 +1005,8 @@ def costruisci_giocate(previsioni):
     candidati = [v for v in _raccogli(previsioni, SEMPLICI + SICURI + COMBO,
                                       prob_min=PROB_MINIMA_MISTA)
                  if _col_favorito(per_id[v["fixture_id"]], v["esito"])
-                 and _sostenuto(per_id[v["fixture_id"]], v["esito"])]
+                 and _sostenuto(per_id[v["fixture_id"]], v["esito"])
+                 and (v["quota"] or _quota_equa(v["prob"])) <= QUOTA_MASSIMA_MISTA]
     migliori = {}
     for v in candidati:
         q = v["quota"] or _quota_equa(v["prob"])
