@@ -341,7 +341,8 @@
 
   function vistaGiocate() {
     var g = stato.dati.giocate || {};
-    var html = testa("Giocate") + '<div class="filtri"><div class="riga-chip nascosto-scroll">' +
+    var fatte = g.generato ? "Proposte di oggi, fatte alle " + oraDi(data(g.generato)) : "";
+    var html = testa("Giocate", fatte) + '<div class="filtri"><div class="riga-chip nascosto-scroll">' +
       SCHEDE.map(function (s) {
         return '<button class="chip' + (stato.scheda === s.id ? " attivo" : "") + '" data-scheda="' + s.id + '">' + s.nome + "</button>";
       }).join("") + "</div></div>" + avvisoFuoriLinea() + '<div class="corpo">';
@@ -375,7 +376,7 @@
       html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + valore + "</b></div></article>";
     });
 
-    return html + '<p class="nota-piccola">Nessuna di queste proposte ha un guadagno dimostrato: la verifica mostra che il mercato è più preciso del modello. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
+    return html + '<p class="nota-piccola">Le proposte si fanno una volta al mattino e non cambiano durante la giornata, anche se le previsioni si aggiornano. Nessuna di queste proposte ha un guadagno dimostrato: la verifica mostra che il mercato è più preciso del modello. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
   }
 
   // ---------------------------------------------------------------

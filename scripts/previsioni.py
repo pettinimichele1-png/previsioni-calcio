@@ -813,6 +813,39 @@ def _finestra_giorni(previsioni):
             for x in per_giorno.get(g, [])]
 
 
+FILE_GIOCATE = "giocate_giorno.json"
+
+
+def giocate_correnti(previsioni):
+    """
+    Le proposte del giorno. Si costruiscono UNA volta, al primo giro
+    della mattina, e restano quelle fino al giorno dopo: se cambiassero
+    a ogni aggiornamento, una schedina vista alle nove potrebbe sparire
+    dopo che l'hai giocata.
+
+    Restituisce (proposte, quando sono state fatte).
+    """
+    oggi = datetime.now(FUSO_GIOCATE).date().isoformat()
+    if os.path.exists(FILE_GIOCATE):
+        try:
+            with open(FILE_GIOCATE, encoding="utf-8") as f:
+                salvate = json.load(f)
+            if salvate.get("giorno") == oggi and salvate.get("giocate"):
+                return salvate["giocate"], salvate.get("generato")
+        except (ValueError, OSError):
+            pass
+
+    proposte = costruisci_giocate(previsioni)
+    quando = datetime.now(timezone.utc).isoformat(timespec="minutes")
+    try:
+        with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
+            json.dump({"giorno": oggi, "generato": quando, "giocate": proposte},
+                      f, ensure_ascii=False)
+    except OSError:
+        pass
+    return proposte, quando
+
+
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
@@ -1016,6 +1049,8 @@ def _costruisci_sistemi(previsioni):
             minima *= min(valori)
             massima *= max(valori)
         fuori.append({
+            "unioni": {str(d["p"]["fixture_id"]): round(d["unione"], 4)
+                       for d in gruppo},
             "titolo": f"Sistema integrale - {etichetta}",
             "nota": (f"{combinazioni} combinazioni. Per vincere qualcosa "
                      f"basta che in ogni partita si avveri almeno uno degli "
@@ -1151,7 +1186,7 @@ def rendimento_schedine():
 def scrivi_giocate(previsioni, generato, rho=-0.05):
     global RHO_SISTEMI
     RHO_SISTEMI = rho
-    proposte = costruisci_giocate(previsioni)
+    proposte, _ = giocate_correnti(previsioni)
     try:
         conn = sqlite3.connect(DB_PATH)
         salva_schedine(proposte, conn)

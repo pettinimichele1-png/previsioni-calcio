@@ -142,7 +142,7 @@ def evento_per_app(v):
 
 def giocate_per_app(previsioni, rho):
     P.RHO_SISTEMI = rho
-    proposte = P.costruisci_giocate(previsioni)
+    proposte, generato = P.giocate_correnti(previsioni)
     per_id = {p["fixture_id"]: p for p in previsioni}
     fuori = {k: [] for k in ("singole",) + CATEGORIE}
 
@@ -166,9 +166,11 @@ def giocate_per_app(previsioni, rho):
             gruppi.setdefault(v["fixture_id"], []).append(v)
         eventi = []
         for fid, voci in gruppi.items():
-            p = per_id.get(fid)
-            unione = None
-            if p:
+            # la probabilita' "almeno uno" e' quella calcolata al mattino,
+            # quando la schedina e' stata proposta
+            unione = (s.get("unioni") or {}).get(str(fid))
+            if unione is None and per_id.get(fid):
+                p = per_id[fid]
                 M = P.matrice(p["gol_attesi_casa"], p["gol_attesi_fuori"], rho)
                 unione = P.prob_unione(M, [x["esito"] for x in voci])
             eventi.append({
@@ -180,6 +182,7 @@ def giocate_per_app(previsioni, rho):
             "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"],
             "quota_max": s.get("quota_max"), "prob": s["prob"],
             "combinazioni": s.get("combinazioni"), "eventi": eventi})
+    fuori["generato"] = generato
     return fuori
 
 
@@ -313,7 +316,7 @@ def main():
 
     kb = os.path.getsize(USCITA) / 1024
     print(f"{USCITA}: {len(app['partite'])} partite, "
-          f"{sum(len(v) for v in app['giocate'].values())} proposte, "
+          f"{sum(len(v) for v in app['giocate'].values() if isinstance(v, list))} proposte, "
           f"{schedine['totale']['n']} schedine concluse "
           f"({len(schedine['ieri'])} ieri) - {kb:.0f} KB")
 
