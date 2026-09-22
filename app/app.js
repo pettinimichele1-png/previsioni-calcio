@@ -351,7 +351,10 @@
     html += '<div class="nota">' + scheda.testo + "</div>";
 
     var carte = g[stato.scheda] || [];
-    if (!carte.length) html += '<div class="vuoto"><h3>Nessuna proposta</h3>Oggi il modello non trova giocate di questo tipo.</div>';
+    if (!carte.length) {
+      var spiega = (g.note || {})[stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
+      html += '<div class="vuoto"><h3>Nessuna proposta</h3>' + esc(spiega) + "</div>";
+    }
 
     carte.forEach(function (c) {
       var sistema = stato.scheda === "sistemi";

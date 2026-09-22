@@ -669,6 +669,7 @@ MIN_AFFIDABILITA_GIOCATE = 55
 QUOTA_MINIMA_ALTA = 1.45     # sotto non vale la pena giocare
 PROB_MINIMA_MISTA = 0.30     # sotto e' un esito campato per aria
 QUOTE_MISTE = (5.0, 10.0, 17.0)
+MAX_EVENTI_MISTA = 5         # da due a cinque partite, non di piu'
 # Limiti sul calcolo del vantaggio. Su un esito al 5% il vantaggio
 # stimato e' quasi tutto rumore: basta un errore di due punti nella
 # nostra probabilita' per farlo schizzare. E un vantaggio oltre il 50%
@@ -683,6 +684,21 @@ RHO_SISTEMI = -0.05          # sostituito dal valore del modello a runtime
 # vale 1.05, e la combinazione piu' bassa del sistema finirebbe sotto
 # 1.10, cioe' una giocata che non vale la pena fare.
 QUOTA_MINIMA_ESITO = 1.10
+
+# Nelle miste non si gioca contro un favorito chiaro: se una squadra e'
+# data sopra questa soglia, l'esito scelto per quella partita deve
+# comprenderla. Giocare "X2" dove il padrone di casa e' al 69% significa
+# scommettere sul 31% solo perche' paga di piu'.
+SOGLIA_FAVORITO = 0.55
+
+# Ogni pezzo di una combo deve reggersi da solo: se giochiamo
+# "1X + Under 2.5", il modello deve ritenere probabile ANCHE che i gol
+# siano pochi, non solo che la squadra di casa non perda. Altrimenti si
+# sceglie una condizione qualsiasi perche' alza la quota.
+SOGLIA_COMPONENTE = 0.55
+PEZZI = {"gol": "gol_gol", "nogol": "no_gol"}
+ESITI_1X2 = {"1": {"1"}, "X": {"X"}, "2": {"2"},
+             "1X": {"1", "X"}, "X2": {"X", "2"}, "12": {"1", "2"}}
 FUSO_GIOCATE = ZoneInfo("Europe/Rome")
 GIORNI_GIOCATE = 2
 
@@ -742,6 +758,25 @@ def _voce(p, esito, prob, quota=None, mercato=None):
             "nome": NOMI.get(esito, esito), "prob": prob,
             "quota": quota, "mercato": mercato,
             "formazioni": p.get("formazioni", "nessuna")}
+
+
+def _sostenuto(p, esito):
+    """Ogni componente dell'esito e' ritenuta probabile dal modello."""
+    m = p["mercati"]
+    for pezzo in esito.split("+"):
+        if m.get(PEZZI.get(pezzo, pezzo), 0) < SOGLIA_COMPONENTE:
+            return False
+    return True
+
+
+def _col_favorito(p, esito):
+    """L'esito e' compatibile con il favorito della partita?"""
+    m = p["mercati"]
+    favorito = max(("1", "X", "2"), key=lambda k: m.get(k, 0))
+    if m.get(favorito, 0) < SOGLIA_FAVORITO:
+        return True                      # partita aperta: vale tutto
+    insieme = ESITI_1X2.get(esito.split("+")[0])
+    return insieme is None or favorito in insieme
 
 
 def _raccogli(previsioni, chiavi, prob_min=0.0):
@@ -816,34 +851,71 @@ def _finestra_giorni(previsioni):
 FILE_GIOCATE = "giocate_giorno.json"
 
 
-def giocate_correnti(previsioni):
-    """
-    Le proposte del giorno. Si costruiscono UNA volta, al primo giro
-    della mattina, e restano quelle fino al giorno dopo: se cambiassero
-    a ogni aggiornamento, una schedina vista alle nove potrebbe sparire
-    dopo che l'hai giocata.
+def _calcola_esatti(previsioni, quanti=5):
+    """I punteggi piu' probabili, nella stessa finestra delle schedine."""
+    tutti = []
+    for p in _finestra_giorni(previsioni):
+        punteggi = p["mercati"].get("punteggi_probabili") or []
+        if not punteggi:
+            continue
+        secondo = punteggi[1]["prob"] if len(punteggi) > 1 else 0.0
+        tutti.append({
+            "fixture_id": p["fixture_id"],
+            "risultato": punteggi[0]["risultato"],
+            "prob": punteggi[0]["prob"],
+            "distacco": punteggi[0]["prob"] - secondo,
+            "alternativi": punteggi[1:3],
+            # solo i campi che servono a mostrarli: cosi' restano validi
+            # anche quando la partita e' gia' stata giocata
+            "p": {k: p.get(k) for k in ("casa", "fuori", "campionato", "data",
+                                        "formazioni", "gol_attesi_casa",
+                                        "gol_attesi_fuori")},
+        })
+    tutti.sort(key=lambda d: -d["prob"])
+    return tutti[:quanti], len(tutti)
 
-    Restituisce (proposte, quando sono state fatte).
+
+def _proposte_giorno(previsioni):
+    """
+    Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
+    primo giro della mattina, e restano quelli fino al giorno dopo: se
+    cambiassero a ogni aggiornamento, una schedina vista alle nove
+    potrebbe sparire dopo che l'hai giocata.
     """
     oggi = datetime.now(FUSO_GIOCATE).date().isoformat()
     if os.path.exists(FILE_GIOCATE):
         try:
             with open(FILE_GIOCATE, encoding="utf-8") as f:
                 salvate = json.load(f)
-            if salvate.get("giorno") == oggi and salvate.get("giocate"):
-                return salvate["giocate"], salvate.get("generato")
+            if (salvate.get("giorno") == oggi and salvate.get("giocate")
+                    and "esatti" in salvate):
+                return salvate
         except (ValueError, OSError):
             pass
 
-    proposte = costruisci_giocate(previsioni)
-    quando = datetime.now(timezone.utc).isoformat(timespec="minutes")
+    esatti, disponibili = _calcola_esatti(previsioni)
+    dati = {"giorno": oggi,
+            "generato": datetime.now(timezone.utc).isoformat(timespec="minutes"),
+            "giocate": costruisci_giocate(previsioni),
+            "esatti": esatti, "esatti_disponibili": disponibili}
     try:
         with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
-            json.dump({"giorno": oggi, "generato": quando, "giocate": proposte},
-                      f, ensure_ascii=False)
+            json.dump(dati, f, ensure_ascii=False)
     except OSError:
         pass
-    return proposte, quando
+    return dati
+
+
+def giocate_correnti(previsioni):
+    """Le schedine del giorno e l'ora in cui sono state fatte."""
+    dati = _proposte_giorno(previsioni)
+    return dati["giocate"], dati["generato"]
+
+
+def esatti_correnti(previsioni):
+    """I risultati esatti del giorno e fra quante partite sono scelti."""
+    dati = _proposte_giorno(previsioni)
+    return dati["esatti"], dati.get("esatti_disponibili", len(dati["esatti"]))
 
 
 def costruisci_giocate(previsioni):
@@ -923,8 +995,11 @@ def costruisci_giocate(previsioni):
     # Tre proposte con quote crescenti. Per ognuna si aggiungono eventi
     # finche' la quota non si avvicina al bersaglio, partendo da punti
     # diversi della lista per non produrre tre schedine identiche.
-    candidati = _raccogli(previsioni, SEMPLICI + SICURI + COMBO,
-                          prob_min=PROB_MINIMA_MISTA)
+    per_id = {p["fixture_id"]: p for p in previsioni}
+    candidati = [v for v in _raccogli(previsioni, SEMPLICI + SICURI + COMBO,
+                                      prob_min=PROB_MINIMA_MISTA)
+                 if _col_favorito(per_id[v["fixture_id"]], v["esito"])
+                 and _sostenuto(per_id[v["fixture_id"]], v["esito"])]
     migliori = {}
     for v in candidati:
         q = v["quota"] or _quota_equa(v["prob"])
@@ -936,19 +1011,23 @@ def costruisci_giocate(previsioni):
                   key=lambda v: (v["quota"] or _quota_equa(v["prob"])))
 
     usate_miste = set()
+    note_miste = []
     for bersaglio in QUOTE_MISTE:
+        minimo, massimo = bersaglio * 0.70, bersaglio * 1.40
         migliore = None
         for partenza in range(len(pool)):
             voci, quota = [], 1.0
             for v in pool[partenza:]:
+                if len(voci) >= MAX_EVENTI_MISTA:
+                    break
                 q = v["quota"] or _quota_equa(v["prob"])
-                if quota * q > bersaglio * 1.35 and len(voci) >= 2:
+                if quota * q > massimo and len(voci) >= 2:
                     break
                 voci.append(v)
                 quota *= q
-                if quota >= bersaglio * 0.9:
+                if quota >= bersaglio:
                     break
-            if len(voci) < 2 or quota < bersaglio * 0.6:
+            if len(voci) < 2 or not minimo <= quota <= massimo:
                 continue
             chiave = tuple(sorted(x["fixture_id"] for x in voci))
             if chiave in usate_miste:
@@ -961,11 +1040,18 @@ def costruisci_giocate(previsioni):
             usate_miste.add(chiave)
             proposte["miste"].append(_schedina(
                 voci, f"Mista - quota {quota:.2f}",
-                f"Costruita attorno a quota {bersaglio:.0f}, usando solo "
-                f"esiti sopra il {PROB_MINIMA_MISTA:.0%}."))
+                f"Costruita attorno a quota {bersaglio:.0f}, con esiti in cui "
+                f"ogni condizione e' sostenuta dal modello."))
+        else:
+            # meglio non proporre niente che proporre una schedina storta
+            note_miste.append(f"{bersaglio:.0f}")
 
-    if not VALORE_ATTIVO:
-        proposte["singole"] = []
+    if note_miste:
+        quali = ", ".join(note_miste)
+        proposte["note"] = {"miste":
+            f"Oggi non ci sono le condizioni per la mista attorno a quota "
+            f"{quali}: servono partite con esiti solidi, e non ce ne sono "
+            f"abbastanza fra quelle dei prossimi due giorni."}
         proposte["valore"] = []
     return proposte
 
@@ -1113,6 +1199,8 @@ def salva_schedine(proposte, conn):
     """)
     adesso = datetime.now(timezone.utc).isoformat()
     for categoria, elenco in proposte.items():
+        if not isinstance(elenco, list):
+            continue                      # le note non sono schedine
         for s in elenco:
             # una singola e' una schedina con un solo evento
             if categoria == "singole":
@@ -1433,21 +1521,8 @@ def scrivi_esatti(previsioni, generato):
     verificabile: se diciamo 14% e succede il 14% delle volte, il
     numero e' onesto.
     """
-    tutti = []
-    for p in previsioni:
-        punteggi = p["mercati"].get("punteggi_probabili") or []
-        if not punteggi:
-            continue
-        migliore = punteggi[0]
-        secondo = punteggi[1]["prob"] if len(punteggi) > 1 else 0.0
-        tutti.append({
-            "p": p, "risultato": migliore["risultato"],
-            "prob": migliore["prob"],
-            "distacco": migliore["prob"] - secondo,
-            "alternativi": punteggi[1:3],
-        })
-    tutti.sort(key=lambda d: -d["prob"])
-    scelti = tutti[:5]
+    scelti, disponibili = esatti_correnti(previsioni)
+    tutti = range(disponibili)          # serve solo a contare, piu' sotto
 
     voci = []
     for i, d in enumerate(scelti, 1):

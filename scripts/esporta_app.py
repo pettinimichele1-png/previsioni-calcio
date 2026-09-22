@@ -183,6 +183,7 @@ def giocate_per_app(previsioni, rho):
             "quota_max": s.get("quota_max"), "prob": s["prob"],
             "combinazioni": s.get("combinazioni"), "eventi": eventi})
     fuori["generato"] = generato
+    fuori["note"] = proposte.get("note", {})
     return fuori
 
 
@@ -191,18 +192,11 @@ def giocate_per_app(previsioni, rho):
 # ---------------------------------------------------------------
 
 def esatti_per_app(previsioni):
-    tutti = []
-    for p in previsioni:
-        punteggi = p["mercati"].get("punteggi_probabili") or []
-        if len(punteggi) < 2:
-            continue
-        tutti.append({
-            "ris": punteggi[0]["risultato"], "p": punteggi[0]["prob"],
-            "partita": f"{p['casa']} – {p['fuori']}",
-            "info": info_partita(p),
-            "distacco": punteggi[0]["prob"] - punteggi[1]["prob"]})
-    tutti.sort(key=lambda d: -d["p"])
-    return tutti[:5]
+    """Gli stessi risultati esatti congelati al mattino."""
+    scelti, _ = P.esatti_correnti(previsioni)
+    return [{"ris": d["risultato"], "p": d["prob"], "distacco": d["distacco"],
+             "partita": f"{d['p']['casa']} – {d['p']['fuori']}",
+             "info": info_partita(d["p"])} for d in scelti]
 
 
 # ---------------------------------------------------------------
