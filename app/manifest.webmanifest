@@ -1,0 +1,17 @@
+{
+  "name": "Previsioni Calcio",
+  "short_name": "Previsioni",
+  "description": "Previsioni calcistiche, giocate e verifica",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0F16",
+  "theme_color": "#0B0F16",
+  "icons": [
+    { "src": "icona-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -107,12 +107,25 @@ def esegui(script, descrizione, argomenti=(), obbligatoria=False):
 
 
 def pubblica():
-    """Sposta gli HTML e i JSON nella cartella del sito."""
+    """
+    Sposta gli HTML e i JSON nella cartella del sito, e pubblica l'app:
+    i suoi file stanno nella cartella app/ del repository e vengono
+    copiati a ogni giro, cosi' un aggiornamento via git pull arriva da
+    solo sul telefono.
+    """
     os.makedirs(SITO, exist_ok=True)
     for origine, destinazione in PUBBLICATI.items():
         if os.path.exists(origine):
             shutil.move(origine, os.path.join(SITO, destinazione))
             print(f"  pubblicato: {SITO}/{destinazione}")
+
+    sorgente_app = os.path.join(os.path.dirname(CARTELLA), "app")
+    destinazione_app = os.path.join(SITO, "app")
+    if os.path.isdir(sorgente_app):
+        shutil.copytree(sorgente_app, destinazione_app, dirs_exist_ok=True)
+        if os.path.exists("app.json"):
+            shutil.move("app.json", os.path.join(destinazione_app, "app.json"))
+        print(f"  app pubblicata: {destinazione_app}")
 
 
 def main():
@@ -163,18 +176,21 @@ def main():
         if esegui("previsioni.py", "previsioni della giornata"):
             esegui("verifica.py", "archiviazione delle previsioni", ["archivia"])
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])
+        esegui("esporta_app.py", "dati per l'app")
 
     elif modalita == "previsioni":
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])
         if esegui("previsioni.py", "previsioni della giornata"):
             esegui("verifica.py", "archiviazione delle previsioni", ["archivia"])
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])
+        esegui("esporta_app.py", "dati per l'app")
 
     else:  # live
         if esegui("formazioni_previste.py",
                   "formazioni ufficiali delle partite imminenti", ["ufficiali"]):
             esegui("previsioni.py", "previsioni aggiornate")
             esegui("verifica.py", "archiviazione", ["archivia"])
+            esegui("esporta_app.py", "dati per l'app")
 
     if SU_GITHUB:
         salva_stato()
