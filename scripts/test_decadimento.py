@@ -63,8 +63,10 @@ MIN_PARTITE = 3
 MAX_GOL = 8
 INIZIO_STAGIONE = 5
 
-DECADIMENTI = [0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-PESI_STAGIONE = [1.0, 0.7, 0.5, 0.3]
+# griglia allargata dopo la prima prova, che aveva scelto 0.95 e 0.3, cioe'
+# i valori al bordo: l'ottimo vero poteva stare piu' in la'
+DECADIMENTI = [0.85, 0.90, 0.95, 0.97, 0.99, 1.00]
+PESI_STAGIONE = [1.0, 0.5, 0.3, 0.2, 0.1]
 ATTUALE = (0.85, 1.0)
 
 
@@ -330,6 +332,14 @@ def main():
         scelta = ATTUALE          # a parita' si tiene quello che c'e'
     print(f"\nMigliore sulle settimane pari: decadimento {scelta[0]:.2f}, "
           f"peso stagione scorsa {scelta[1]:.1f}")
+    bordi = []
+    if scelta[0] in (DECADIMENTI[0], DECADIMENTI[-1]) and scelta[0] != 1.0:
+        bordi.append("decadimento")
+    if scelta[1] in (PESI_STAGIONE[0], PESI_STAGIONE[-1]) and scelta[1] != 1.0:
+        bordi.append("peso della stagione scorsa")
+    if bordi:
+        print(f"  ATTENZIONE: {' e '.join(bordi)} sul bordo della griglia, "
+              f"l'ottimo potrebbe stare oltre")
 
     if scelta == ATTUALE:
         print("\nLa combinazione migliore e' quella attuale: non c'e' niente da cambiare.")
