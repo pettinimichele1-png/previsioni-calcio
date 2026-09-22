@@ -12,7 +12,8 @@
     giorno: "tutti",
     lega: "tutte",
     scheda: "alta",
-    aperta: false
+    aperta: false,
+    notifiche: "sconosciuto"   // attive, spente, negate, installa, non-supportate
   };
 
   var schermo = document.getElementById("schermo");
@@ -112,10 +113,19 @@
   // ---------------------------------------------------------------
   //  pezzi grafici ricorrenti
   // ---------------------------------------------------------------
-  function testa(titolo, sotto) {
-    return '<header class="testa"><div class="marchio">Previsioni</div>' +
+  function testa(titolo, sotto, destra) {
+    return '<header class="testa"><div class="testa-riga"><div class="testa-testi">' +
+           '<div class="marchio">Previsioni</div>' +
            '<h1 class="titolo">' + esc(titolo) + '</h1>' +
-           (sotto ? '<div class="sottotitolo">' + sotto + '</div>' : "") + "</header>";
+           (sotto ? '<div class="sottotitolo">' + sotto + '</div>' : "") + "</div>" +
+           (destra || "") + "</div></header>";
+  }
+  function campana() {
+    var attiva = stato.notifiche === "attive";
+    return '<button class="campana' + (attiva ? " attiva" : "") + '" data-campana="1" aria-label="' +
+      (attiva ? "Notifiche attive: tocca per disattivarle" : "Attiva le notifiche") + '">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"></path>' +
+      '<path d="M10 20.5a2 2 0 0 0 4 0"></path></svg></button>';
   }
   function avvisoFuoriLinea() {
     return stato.fuoriLinea
@@ -181,7 +191,7 @@
 
     var agg = stato.dati.generato ? oraDi(data(stato.dati.generato)) : "";
     var n = filtrate.length;
-    var html = testa("Palinsesto", "Aggiornato alle " + agg + " · " + n + (n === 1 ? " partita" : " partite"));
+    var html = testa("Palinsesto", "Aggiornato alle " + agg + " · " + n + (n === 1 ? " partita" : " partite"), campana());
 
     html += '<div class="filtri"><div class="riga-chip nascosto-scroll">';
     html += '<button class="chip-giorno' + (stato.giorno === "tutti" ? " attivo" : "") +
@@ -504,6 +514,7 @@
     else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; disegna(); }
     else if (el.hasAttribute("data-azzera")) { stato.giorno = "tutti"; stato.lega = "tutte"; disegna(); }
     else if (el.hasAttribute("data-ricarica")) { carica(); }
+    else if (el.hasAttribute("data-campana")) { gestisciCampana(); }
   });
 
   window.addEventListener("hashchange", function () { disegna(); window.scrollTo(0, 0); });
@@ -530,8 +541,113 @@
   });
   setInterval(function () { if (document.visibilityState === "visible") carica(); }, 5 * 60 * 1000);
 
+  // ---------------------------------------------------------------
+  //  notifiche
+  // ---------------------------------------------------------------
+  function avviso(testo) {
+    var vecchio = document.getElementById("avviso-app");
+    if (vecchio) vecchio.remove();
+    var d = document.createElement("div");
+    d.id = "avviso-app";
+    d.setAttribute("role", "status");
+    d.textContent = testo;
+    document.body.appendChild(d);
+    setTimeout(function () { if (d.parentNode) d.remove(); }, 5000);
+  }
+
+  function suIPhone() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+           (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function installata() {
+    return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  }
+
+  function controllaNotifiche() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      stato.notifiche = suIPhone() && !installata() ? "installa" : "non-supportate";
+      return disegna();
+    }
+    if (Notification.permission === "denied") { stato.notifiche = "negate"; return disegna(); }
+    navigator.serviceWorker.ready
+      .then(function (reg) { return reg.pushManager.getSubscription(); })
+      .then(function (s) { stato.notifiche = s ? "attive" : "spente"; disegna(); })
+      .catch(function () { stato.notifiche = "spente"; disegna(); });
+  }
+
+  function chiaveInByte(testo) {
+    var b = atob((testo + "===".slice((testo.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+    var out = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) out[i] = b.charCodeAt(i);
+    return out;
+  }
+
+  function attivaNotifiche() {
+    // il permesso va chiesto subito, dentro il tocco: iPhone lo esige
+    Notification.requestPermission().then(function (permesso) {
+      if (permesso !== "granted") {
+        stato.notifiche = permesso === "denied" ? "negate" : "spente";
+        disegna();
+        if (permesso === "denied") avviso("Hai negato il permesso. Si riattiva dalle impostazioni del telefono, alla voce di questa app.");
+        return;
+      }
+      return Promise.all([
+        navigator.serviceWorker.ready,
+        fetch("/api/notifiche/chiave", { cache: "no-store" }).then(function (r) {
+          if (!r.ok) throw new Error("chiave");
+          return r.json();
+        })
+      ]).then(function (v) {
+        return v[0].pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chiaveInByte(v[1].chiave) });
+      }).then(function (iscrizione) {
+        return fetch("/api/notifiche/iscrivi", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(iscrizione)
+        }).then(function (r) { if (!r.ok) throw new Error("iscrizione"); });
+      }).then(function () {
+        stato.notifiche = "attive";
+        disegna();
+        avviso("Notifiche attivate. Ti avviso quando una previsione cambia molto con le formazioni ufficiali.");
+      });
+    }).catch(function () {
+      avviso("Non sono riuscito ad attivare le notifiche. Controlla la connessione e riprova.");
+    });
+  }
+
+  function disattivaNotifiche() {
+    navigator.serviceWorker.ready
+      .then(function (reg) { return reg.pushManager.getSubscription(); })
+      .then(function (s) {
+        if (!s) return;
+        var endpoint = s.endpoint;
+        return s.unsubscribe().then(function () {
+          return fetch("/api/notifiche/disiscrivi", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: endpoint })
+          }).catch(function () {});
+        });
+      })
+      .then(function () { stato.notifiche = "spente"; disegna(); avviso("Notifiche disattivate."); })
+      .catch(function () { avviso("Non sono riuscito a disattivare le notifiche. Riprova."); });
+  }
+
+  function gestisciCampana() {
+    if (stato.notifiche === "attive") {
+      if (window.confirm("Disattivare le notifiche?")) disattivaNotifiche();
+    } else if (stato.notifiche === "spente" || stato.notifiche === "sconosciuto") {
+      attivaNotifiche();
+    } else if (stato.notifiche === "negate") {
+      avviso("Le notifiche sono bloccate. Si riattivano dalle impostazioni del telefono, alla voce di questa app.");
+    } else if (stato.notifiche === "installa") {
+      avviso("Su iPhone le notifiche funzionano solo dall'app installata: aggiungila alla schermata Home e aprila da lì.");
+    } else {
+      avviso("Questo browser non supporta le notifiche.");
+    }
+  }
+
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
   carica();
+  controllaNotifiche();
 })();
