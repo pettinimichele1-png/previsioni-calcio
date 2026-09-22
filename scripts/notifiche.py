@@ -56,7 +56,9 @@ CARTELLA_DATI = os.environ.get("NOTIFICHE_DIR",
 CHIAVE_PRIVATA = os.path.join(CARTELLA_DATI, "vapid_privata.pem")
 DB_NOTIFICHE = os.path.join(CARTELLA_DATI, "notifiche.db")
 SOGGETTO = os.environ.get("NOTIFICHE_SOGGETTO", "https://vps-a07482f3.vps.ovh.net")
-SOGLIA = float(os.environ.get("SOGLIA_NOTIFICHE", "10")) / 100
+SOGLIA = float(os.environ.get("SOGLIA_NOTIFICHE", "4")) / 100
+# quanto il favorito deve staccare il secondo esito per dirsi "chiaro"
+STACCO_SORPASSO = float(os.environ.get("STACCO_SORPASSO", "3")) / 100
 PORTA = int(os.environ.get("NOTIFICHE_PORTA", "8081"))
 
 DB_PATH = "calcio_dati.db"
@@ -235,13 +237,47 @@ def _con_articolo(preposizione, n):
     return f"{preposizione}ll'{n}%" if vocale else f"{preposizione}l {n}%"
 
 
+def sorpasso(p):
+    """
+    Il favorito cambia davvero: era chiaro prima, e' chiaro dopo, e si e'
+    invertito. In una partita da 34/34/32 il favorito cambia di continuo
+    senza che sia cambiato niente, e quella non e' una notizia.
+    Restituisce (nuovo favorito, vecchio favorito) oppure None.
+    """
+    def chiaro(q):
+        ordinati = sorted(q.values(), reverse=True)
+        return ordinati[0] - ordinati[1] >= STACCO_SORPASSO
+
+    m, prima = p["mercati"], p["prima"]
+    dopo_f = max(("1", "X", "2"), key=lambda k: m[k])
+    prima_f = max(("1", "X", "2"), key=lambda k: prima[k])
+    if dopo_f != prima_f and chiaro(prima) and chiaro(m):
+        return dopo_f, prima_f
+    return None
+
+
+def da_notificare(p):
+    return (p.get("spostamento") or 0) >= SOGLIA or sorpasso(p) is not None
+
+
 def messaggio(p):
     m, prima = p["mercati"], p["prima"]
+    lega = (p.get("campionato") or "").split(" - ")[-1]
+    ora = datetime.fromisoformat(p["data"]).astimezone(FUSO).strftime("%H:%M")
+    cambio = sorpasso(p)
+    if cambio:
+        nuovo, vecchio = cambio
+        return {
+            "titolo": f"{p['casa']} – {p['fuori']}",
+            "testo": f"Con le formazioni ufficiali passa avanti {ESITI[nuovo]}: "
+                     f"{round(m[nuovo] * 100)}% contro {round(m[vecchio] * 100)}%. "
+                     f"{lega}, ore {ora}.",
+            "url": f"./#/partita/{p['fixture_id']}",
+            "tag": f"partita-{p['fixture_id']}",
+        }
     esito = max(("1", "X", "2"), key=lambda k: abs(m[k] - prima[k]))
     da, a = round(prima[esito] * 100), round(m[esito] * 100)
     verso = "sale" if a > da else "scende"
-    lega = (p.get("campionato") or "").split(" - ")[-1]
-    ora = datetime.fromisoformat(p["data"]).astimezone(FUSO).strftime("%H:%M")
     return {
         "titolo": f"{p['casa']} – {p['fuori']}",
         "testo": f"Con le formazioni ufficiali {ESITI[esito]} {verso} "
@@ -277,11 +313,11 @@ def comando_invia():
     adesso = datetime.now(timezone.utc)
     candidate = [p for p in previsioni
                  if p.get("formazioni") == "ufficiale" and p.get("prima")
-                 and (p.get("spostamento") or 0) >= SOGLIA
+                 and da_notificare(p)
                  and p["fixture_id"] not in gia
                  and datetime.fromisoformat(p["data"]) > adesso]
-    print(f"Telefoni iscritti: {n_iscritti}. Previsioni oltre la soglia di "
-          f"{SOGLIA * 100:.0f} punti da notificare: {len(candidate)}")
+    print(f"Telefoni iscritti: {n_iscritti}. Da notificare (soglia "
+          f"{SOGLIA * 100:.0f} punti, o sorpasso netto): {len(candidate)}")
     if not n_iscritti:
         conn.close()
         return
@@ -351,7 +387,7 @@ def comando_soglie():
     print(f"Spostamento tipico: {valori[len(valori) // 2] * 100:.1f} punti; "
           f"nel 10% dei casi oltre {valori[int(len(valori) * .9)] * 100:.1f}\n")
     print(f"{'soglia':<14}{'notifiche':>10}{'al giorno':>11}{'giorno peggiore':>17}")
-    for punti in (5, 8, 10, 12, 15, 20):
+    for punti in (2, 3, 4, 5, 8, 10):
         per_giorno = {}
         for g, s in spostamenti:
             if s >= punti / 100:
