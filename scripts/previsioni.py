@@ -26,6 +26,7 @@ import sqlite3
 import urllib.request
 import urllib.parse
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from nucleo import media_pesata, carica_conservazione, indicatori_squadra
 
 DB_PATH = "calcio_dati.db"
@@ -678,6 +679,13 @@ PROB_MINIMA_VALORE = 0.20
 VANTAGGIO_MASSIMO = 0.50
 RHO_SISTEMI = -0.05          # sostituito dal valore del modello a runtime
 
+# Nei sistemi ogni esito deve valere almeno questa quota: un 1X al 93%
+# vale 1.05, e la combinazione piu' bassa del sistema finirebbe sotto
+# 1.10, cioe' una giocata che non vale la pena fare.
+QUOTA_MINIMA_ESITO = 1.10
+FUSO_GIOCATE = ZoneInfo("Europe/Rome")
+GIORNI_GIOCATE = 2
+
 NOMI = {
     "1": "1", "X": "X", "2": "2",
     "1X": "1X", "12": "12", "X2": "X2",
@@ -785,10 +793,31 @@ def _sistema(gruppi, titolo, nota):
             "prob": prob, "quota": quota, "sistema": True}
 
 
+def _finestra_giorni(previsioni):
+    """
+    Solo le partite dei primi due giorni in programma. Una schedina
+    spalmata su cinque giorni resta aperta troppo a lungo: si segue
+    peggio, e un evento perso il primo giorno la chiude subito.
+    """
+    per_giorno = {}
+    for p in previsioni:
+        try:
+            g = datetime.fromisoformat(p["data"]).astimezone(FUSO_GIOCATE).date()
+        except (KeyError, TypeError, ValueError):
+            continue
+        per_giorno.setdefault(g, []).append(p)
+    if not per_giorno:
+        return previsioni
+    primo = min(per_giorno)
+    return [x for g in (primo, primo + timedelta(days=1))
+            for x in per_giorno.get(g, [])]
+
+
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
                 "sistemi": [], "miste": []}
+    previsioni = _finestra_giorni(previsioni)
 
     # --- singole: le migliori per vantaggio stimato ----------------
     con_quota = [v for v in _raccogli(previsioni, SEMPLICI + SICURI)
@@ -930,14 +959,20 @@ def _costruisci_sistemi(previsioni):
         m = p["mercati"]
 
         # per ogni partita scelgo tre esiti di natura diversa:
-        # uno prudente, uno intermedio, uno ardito
-        prudente = max(("1X", "X2", "12", "over15", "under35"),
-                       key=lambda k: m.get(k, 0))
+        # uno prudente, uno intermedio, uno ardito. Nessuno puo' valere
+        # meno della quota minima.
+        def abbastanza(k):
+            pe = m.get(k, 0)
+            return pe > 0 and _quota_equa(pe) >= QUOTA_MINIMA_ESITO
+
+        prudenti = [k for k in ("1X", "X2", "12", "over15", "under35")
+                    if abbastanza(k)]
+        prudente = max(prudenti, key=lambda k: m[k]) if prudenti else None
         intermedi = [k for k in ("1", "2", "over25", "under25",
                                  "gol_gol", "no_gol")
-                     if m.get(k, 0) >= 0.35]
+                     if m.get(k, 0) >= 0.35 and abbastanza(k)]
         intermedio = max(intermedi, key=lambda k: m[k]) if intermedi else None
-        combo = [k for k in COMBO if m.get(k, 0) >= 0.30]
+        combo = [k for k in COMBO if m.get(k, 0) >= 0.30 and abbastanza(k)]
         combo_scelta = max(combo, key=lambda k: m[k]) if combo else None
         esatto = (m.get("punteggi_probabili") or [{}])[0].get("risultato")
 
