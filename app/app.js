@@ -320,10 +320,11 @@
   // ---------------------------------------------------------------
   //  GIOCATE
   // ---------------------------------------------------------------
+  // Singole consigliate e Valore sono state tolte: si basavano sul
+  // "vantaggio stimato" sul mercato, e la verifica ha dimostrato che
+  // quelle giocate perdevano (-14,6% per puntata su 466 casi).
   var SCHEDE = [
-    { id: "singole", nome: "Singole", testo: "Le tre giocate con il miglior rapporto fra la nostra probabilità e la quota offerta." },
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
-    { id: "valore", nome: "Valore", testo: "Solo esiti dove stimiamo più probabilità di quanta ne implichi la quota." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
     { id: "miste", nome: "Miste", testo: "Schedine attorno a quota 5, 10 e 17, solo con esiti sopra il 30%." }
   ];
@@ -335,6 +336,7 @@
         return '<button class="chip' + (stato.scheda === s.id ? " attivo" : "") + '" data-scheda="' + s.id + '">' + s.nome + "</button>";
       }).join("") + "</div></div>" + avvisoFuoriLinea() + '<div class="corpo">';
     var scheda = SCHEDE.filter(function (s) { return s.id === stato.scheda; })[0];
+    if (!scheda) { stato.scheda = "alta"; scheda = SCHEDE[0]; }
     html += '<div class="nota">' + scheda.testo + "</div>";
 
     var carte = g[stato.scheda] || [];
@@ -363,7 +365,7 @@
       html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + valore + "</b></div></article>";
     });
 
-    return html + '<p class="nota-piccola">Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
+    return html + '<p class="nota-piccola">Nessuna di queste proposte ha un guadagno dimostrato: la verifica mostra che il mercato è più preciso del modello. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
   }
 
   // ---------------------------------------------------------------

@@ -3,7 +3,7 @@
  * chiedono sempre prima alla rete, e solo senza rete si usa l'ultima
  * copia salvata. Quando si cambiano i file dell'app si alza VERSIONE.
  */
-const VERSIONE = "previsioni-2";
+const VERSIONE = "previsioni-3";
 const GUSCIO = ["./", "./index.html", "./stile.css", "./app.js",
                 "./manifest.webmanifest", "./icona-180.png",
                 "./icona-192.png", "./icona-512.png"];

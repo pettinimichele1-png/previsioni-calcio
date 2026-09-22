@@ -655,6 +655,15 @@ vale qualcosa, e servira' qualche mese di dati.<br><br>
 # ============================================================
 
 USCITA_GIOCATE = "giocate.html"
+
+# LE GIOCATE BASATE SUL "VANTAGGIO STIMATO" SONO SPENTE.
+# Singole consigliate, Valore e Selezione scelgono gli esiti dove la nostra
+# probabilita' supera quella del mercato. La verifica dal vivo (settembre
+# 2026, 536 partite) ha mostrato che il mercato e' piu' preciso di noi e
+# che quelle giocate avrebbero reso -14,6% per puntata, perdita dimostrata:
+# il vantaggio stimato misurava il nostro errore, non un'occasione.
+# Si riaccendono solo se il modello dimostra di battere il mercato.
+VALORE_ATTIVO = False
 MIN_AFFIDABILITA_GIOCATE = 55
 QUOTA_MINIMA_ALTA = 1.45     # sotto non vale la pena giocare
 PROB_MINIMA_MISTA = 0.30     # sotto e' un esito campato per aria
@@ -893,6 +902,9 @@ def costruisci_giocate(previsioni):
                 f"Costruita attorno a quota {bersaglio:.0f}, usando solo "
                 f"esiti sopra il {PROB_MINIMA_MISTA:.0%}."))
 
+    if not VALORE_ATTIVO:
+        proposte["singole"] = []
+        proposte["valore"] = []
     return proposte
 
 
@@ -1641,7 +1653,7 @@ def main():
         json.dump({"generato": generato, "modello": mod["generato"],
                    "previsioni": previsioni}, f, ensure_ascii=False, indent=1)
     scrivi_html(previsioni, generato, mod)
-    n_scelte = scrivi_selezione(previsioni, generato)
+    n_scelte = scrivi_selezione(previsioni, generato) if VALORE_ATTIVO else 0
     n_giocate = scrivi_giocate(previsioni, generato, mod["rho"])
     n_esatti = scrivi_esatti(previsioni, generato)
 

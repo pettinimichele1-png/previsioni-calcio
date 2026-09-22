@@ -45,6 +45,12 @@ import urllib.request
 import urllib.parse
 from datetime import datetime, timezone
 
+# le quote di Over/Under e Gol/NoGol si leggono come fa previsioni.py
+try:
+    from previsioni import quote_mercati
+except Exception:
+    quote_mercati = None
+
 DB_PATH = "calcio_dati.db"
 PREVISIONI = "previsioni.json"
 BASE_URL = "https://v3.football.api-sports.io"
@@ -86,6 +92,12 @@ def crea_tabella(conn):
             q1 REAL, qx REAL, q2 REAL, margine REAL, n_bookmaker INTEGER,
             archiviato_il TEXT)
     """)
+    # quote degli altri mercati, archiviate da settembre 2026: le partite
+    # archiviate prima restano senza e vengono escluse da quel confronto
+    colonne = {r[1] for r in conn.execute("PRAGMA table_info(archivio_previsioni)")}
+    for nome in ("q_over25", "q_gol", "margine_ou", "margine_gg"):
+        if nome not in colonne:
+            conn.execute(f"ALTER TABLE archivio_previsioni ADD COLUMN {nome} REAL")
     conn.commit()
 
 
@@ -189,6 +201,7 @@ def archivia(conn):
         return
 
     quote = {}
+    altre = {}
     if API_KEY:
         print("Scarico le quote del momento...")
         chiamate = 0
@@ -204,10 +217,15 @@ def archivia(conn):
                     est = quote_1x2(voce) if fid else None
                     if est:
                         quote[fid] = est
+                    if fid and quote_mercati:
+                        tutte = quote_mercati(voce) or {}
+                        if "over25" in tutte or "gol_gol" in tutte:
+                            altre[fid] = tutte
                 if pagina >= (paging or {}).get("total", 1):
                     break
                 pagina += 1
-        print(f"  quote trovate: {len(quote)} (chiamate {chiamate})")
+        print(f"  quote trovate: {len(quote)} (chiamate {chiamate}), "
+              f"con Over/Under o Gol/NoGol: {len(altre)}")
     else:
         print("API_FOOTBALL_KEY assente: archivio senza quote.")
 
@@ -215,16 +233,24 @@ def archivia(conn):
     for p in nuove:
         m = p["mercati"]
         q = quote.get(p["fixture_id"])
+        a = altre.get(p["fixture_id"]) or {}
         cur.execute("""
-            INSERT OR REPLACE INTO archivio_previsioni VALUES
-            (?,?,?,?,?, ?,?,?, ?,?, ?,?, ?,?,?, ?, ?,?,?,?,?, ?)
+            INSERT OR REPLACE INTO archivio_previsioni
+            (fixture_id, data, campionato, casa, fuori, p1, px, p2,
+             over25, gol_gol, gol_attesi_casa, gol_attesi_fuori,
+             nettezza, affidabilita, affidabilita_etichetta, formazioni,
+             q1, qx, q2, margine, n_bookmaker, archiviato_il,
+             q_over25, q_gol, margine_ou, margine_gg)
+            VALUES (?,?,?,?,?, ?,?,?, ?,?, ?,?, ?,?,?, ?, ?,?,?,?,?, ?, ?,?,?,?)
         """, (p["fixture_id"], p["data"], p["campionato"], p["casa"], p["fuori"],
               m["1"], m["X"], m["2"], m.get("over25"), m.get("gol_gol"),
               p.get("gol_attesi_casa"), p.get("gol_attesi_fuori"),
               p.get("nettezza"), p.get("affidabilita"), p.get("affidabilita_etichetta"),
               p.get("formazioni"),
               q[0] if q else None, q[1] if q else None, q[2] if q else None,
-              q[3] if q else None, q[4] if q else None, adesso))
+              q[3] if q else None, q[4] if q else None, adesso,
+              a.get("over25"), a.get("gol_gol"),
+              a.get("margine_ou25"), a.get("margine_gg")))
     conn.commit()
     print(f"\nArchiviate {len(nuove)} previsioni.")
     cur.execute("SELECT COUNT(*), COUNT(q1) FROM archivio_previsioni")
@@ -241,6 +267,30 @@ def perdita(p1, px, p2, esito):
 def intervallo(v, livello=0.95):
     v = sorted(v)
     return v[int(len(v) * (1 - livello) / 2)], v[int(len(v) * (1 - (1 - livello) / 2))]
+
+
+def confronto_binario(righe, chiave_noi, chiave_mercato, avvenuto):
+    """Log loss nostro e del mercato su un mercato a due esiti (si'/no)."""
+    g = [r for r in righe
+         if r.get(chiave_mercato) is not None and r.get(chiave_noi) is not None]
+    if len(g) < 30:
+        return {"partite": len(g)}
+
+    def ll(p, si):
+        return -math.log(max(p if si else 1 - p, 1e-15))
+
+    n_q = [ll(r[chiave_noi], avvenuto(r)) for r in g]
+    m_q = [ll(r[chiave_mercato], avvenuto(r)) for r in g]
+    random.seed(SEED)
+    idx = list(range(len(g)))
+    diffs = []
+    for _ in range(N_BOOTSTRAP):
+        c = [random.choice(idx) for _ in idx]
+        diffs.append(sum(m_q[i] - n_q[i] for i in c) / len(c))
+    lo, hi = intervallo(diffs)
+    return {"partite": len(g), "log_loss": sum(n_q) / len(g),
+            "log_loss_mercato": sum(m_q) / len(g),
+            "vantaggio": sum(diffs) / len(diffs), "intervallo": [lo, hi]}
 
 
 def report(conn):
@@ -553,6 +603,31 @@ def report(conn):
                             key=lambda t: t[1])[0] == r["esito"])
             print(f"  {v:<14} {len(g):>6} {ll:>10.4f} {ok/len(g):>10.1%}")
 
+    # ---- altri mercati contro il mercato ---------------------------
+    print("\n" + "=" * 70)
+    print("OVER/UNDER 2.5 E GOL/NOGOL CONTRO IL MERCATO")
+    print("=" * 70)
+    altri = {
+        "over25": confronto_binario(
+            righe, "over25", "q_over25",
+            lambda r: r["goals_home"] + r["goals_away"] > 2.5),
+        "gol": confronto_binario(
+            righe, "gol_gol", "q_gol",
+            lambda r: r["goals_home"] > 0 and r["goals_away"] > 0),
+    }
+    for nome, etichetta in (("over25", "Over/Under 2.5"), ("gol", "Gol/NoGol")):
+        c = altri[nome]
+        if "vantaggio" not in c:
+            print(f"  {etichetta}: {c['partite']} partite con quote, ne servono "
+                  f"almeno 30 (le quote si archiviano da settembre 2026)")
+            continue
+        lo, hi = c["intervallo"]
+        esito = ("battiamo il mercato" if lo > 0 else
+                 ("il mercato e' migliore" if hi < 0 else "non distinguibile"))
+        print(f"  {etichetta}: {c['partite']} partite, noi {c['log_loss']:.4f}, "
+              f"mercato {c['log_loss_mercato']:.4f}, vantaggio {c['vantaggio']:+.4f} "
+              f"[{lo:+.4f}, {hi:+.4f}] -> {esito}")
+
     # ---- salvataggio ---------------------------------------------
     riepilogo = {
         "generato": datetime.now(timezone.utc).isoformat(),
@@ -565,6 +640,7 @@ def report(conn):
         riepilogo["log_loss_mercato"] = mm
         riepilogo["vantaggio"] = media
         riepilogo["intervallo"] = [lo, hi]
+    riepilogo["altri_mercati"] = altri
     with open(USCITA_JSON, "w", encoding="utf-8") as f:
         json.dump(riepilogo, f, ensure_ascii=False, indent=1)
 
