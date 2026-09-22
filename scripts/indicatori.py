@@ -314,7 +314,8 @@ def main():
                 return media_lega.get((lega, stagione), (None, None))[quale]
 
             ind = indicatori_squadra(precedenti, lega_ora, media_di,
-                                     conservazione, r["is_home"])
+                                     conservazione, r["is_home"],
+                                     stagione_ora=r["season"])
             for chiave in ("att_gol", "dif_gol", "att_xg", "dif_xg",
                            "conversione", "tenuta", "possesso", "passaggi_pct",
                            "duelli_pct", "tiri", "tiri_in_porta", "tiri_area",

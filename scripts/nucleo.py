@@ -33,44 +33,65 @@ import os
 import json
 
 # Peso delle partite piu' vecchie: la decima indietro pesa circa il 20%
-# della piu' recente.
+# della piu' recente. E' il valore predefinito delle funzioni di media.
 DECADIMENTO = 0.85
+
+# FORZA DELLE SQUADRE (indicatori_squadra): due regole tarate a settembre
+# 2026 con test_decadimento.py su 4.185 partite.
+#   - le partite di questa stagione si ricordano a lungo: ognuna pesa il
+#     95% della successiva (prima era l'85%)
+#   - quelle della stagione scorsa pesano il 30%, perche' d'estate le
+#     rose cambiano: a inizio stagione il nostro storico era in buona
+#     parte fatto di squadre che non esistono piu'
+# Risultato: guadagno a inizio stagione, neutro nel resto, distanza dal
+# mercato ridotta di circa un decimo. Con 0.85 e 1.0 si torna a prima.
+DECADIMENTO_SQUADRA = 0.95
+PESO_STAGIONE_PRECEDENTE = 0.3
 
 CORREZIONE_PATH = "correzione_divisione.json"
 
 
-def media_pesata(valori):
-    """valori: lista dal piu' recente al piu' vecchio. Salta i None."""
+def _peso(k, fattori, decadimento):
+    d = DECADIMENTO if decadimento is None else decadimento
+    return d ** k * (fattori[k] if fattori else 1.0)
+
+
+def media_pesata(valori, fattori=None, decadimento=None):
+    """
+    valori: lista dal piu' recente al piu' vecchio. Salta i None.
+    fattori: moltiplicatore facoltativo per ogni valore (es. stagione).
+    """
     num = den = 0.0
     for k, v in enumerate(valori):
         if v is None:
             continue
-        p = DECADIMENTO ** k
+        p = _peso(k, fattori, decadimento)
         num += p * v
         den += p
     return num / den if den > 0 else None
 
 
-def rapporto_pesato(numeratori, denominatori):
+def rapporto_pesato(numeratori, denominatori, fattori=None, decadimento=None):
     """Rapporto tra somme pesate: piu' stabile della media dei rapporti."""
     num = den = 0.0
     for k, (a, b) in enumerate(zip(numeratori, denominatori)):
         if a is None or b is None:
             continue
-        p = DECADIMENTO ** k
+        p = _peso(k, fattori, decadimento)
         num += p * a
         den += p * b
     return num / den if den > 0 else None
 
 
-def deviazione_pesata(valori):
+def deviazione_pesata(valori, fattori=None, decadimento=None):
     """
     Quanto sono ballerini i valori, con lo stesso peso decrescente della
     media. Misura la COSTANZA di una squadra: chi alterna 4-0 e 0-3 ha
     deviazione alta anche avendo la stessa media di chi fa sempre 1-1.
     Serve almeno qualche partita: sotto le 4 restituisce None.
     """
-    coppie = [(v, DECADIMENTO ** k) for k, v in enumerate(valori) if v is not None]
+    coppie = [(v, _peso(k, fattori, decadimento))
+              for k, v in enumerate(valori) if v is not None]
     if len(coppie) < 4:
         return None
     peso_tot = sum(p for _, p in coppie)
@@ -128,7 +149,7 @@ def normalizza(partita, campo, quale, tipo, lega_ora, media_di, conservazione):
 
 
 def indicatori_squadra(precedenti, lega_ora, media_di, conservazione,
-                       is_home_attuale=None):
+                       is_home_attuale=None, stagione_ora=None):
     """
     Calcola gli indicatori di una squadra dalle sue partite precedenti.
 
@@ -140,10 +161,30 @@ def indicatori_squadra(precedenti, lega_ora, media_di, conservazione,
     is_home_attuale: se indicato (0 o 1), lo split casa/trasferta viene
                 calcolato solo su quel contesto; altrimenti su entrambi.
 
+    stagione_ora: stagione della partita da prevedere. Se manca si usa
+                quella della partita piu' recente: a inizio stagione, prima
+                della prima giornata, il risultato e' lo stesso, perche' se
+                tutte le partite hanno lo stesso fattore la media non cambia.
+
     Restituisce un dizionario di indicatori (valori mancanti = None).
     """
     if not precedenti:
         return {}
+    if stagione_ora is None:
+        stagione_ora = precedenti[0].get("season")
+
+    def fattori(lista=None):
+        return [1.0 if p.get("season") == stagione_ora else PESO_STAGIONE_PRECEDENTE
+                for p in (lista if lista is not None else precedenti)]
+
+    def mp(valori, lista=None):
+        return media_pesata(valori, fattori(lista), DECADIMENTO_SQUADRA)
+
+    def rp(num, den):
+        return rapporto_pesato(num, den, fattori(), DECADIMENTO_SQUADRA)
+
+    def dp(valori):
+        return deviazione_pesata(valori, fattori(), DECADIMENTO_SQUADRA)
 
     def norma(campo, quale, tipo, lista=None):
         return [normalizza(p, campo, quale, tipo, lega_ora, media_di, conservazione)
@@ -151,22 +192,22 @@ def indicatori_squadra(precedenti, lega_ora, media_di, conservazione,
 
     ind = {
         "n_precedenti": len(precedenti),
-        "att_gol": media_pesata(norma("goals_for", 0, "attacco")),
-        "dif_gol": media_pesata(norma("goals_against", 0, "difesa")),
-        "att_xg": media_pesata(norma("xg_finale", 1, "attacco")),
-        "dif_xg": media_pesata(norma("xg_against", 1, "difesa")),
-        "gol_medi": media_pesata([p.get("goals_for") for p in precedenti]),
-        "gol_subiti_medi": media_pesata([p.get("goals_against") for p in precedenti]),
-        "punti_medi": media_pesata([p.get("points") for p in precedenti]),
-        "conversione": rapporto_pesato([p.get("goals_for") for p in precedenti],
-                                       [p.get("xg_finale") for p in precedenti]),
+        "att_gol": mp(norma("goals_for", 0, "attacco")),
+        "dif_gol": mp(norma("goals_against", 0, "difesa")),
+        "att_xg": mp(norma("xg_finale", 1, "attacco")),
+        "dif_xg": mp(norma("xg_against", 1, "difesa")),
+        "gol_medi": mp([p.get("goals_for") for p in precedenti]),
+        "gol_subiti_medi": mp([p.get("goals_against") for p in precedenti]),
+        "punti_medi": mp([p.get("points") for p in precedenti]),
+        "conversione": rp([p.get("goals_for") for p in precedenti],
+                           [p.get("xg_finale") for p in precedenti]),
         # costanza di rendimento: quanto la squadra oscilla intorno alla
         # propria media. Non e' forza: e' prevedibilita'.
-        "volatilita_gol": deviazione_pesata(norma("goals_for", 0, "attacco")),
-        "volatilita_dif": deviazione_pesata(norma("goals_against", 0, "difesa")),
-        "volatilita_xg": deviazione_pesata(norma("xg_finale", 1, "attacco")),
-        "tenuta": rapporto_pesato([p.get("goals_against") for p in precedenti],
-                                  [p.get("xg_against") for p in precedenti]),
+        "volatilita_gol": dp(norma("goals_for", 0, "attacco")),
+        "volatilita_dif": dp(norma("goals_against", 0, "difesa")),
+        "volatilita_xg": dp(norma("xg_finale", 1, "attacco")),
+        "tenuta": rp([p.get("goals_against") for p in precedenti],
+                      [p.get("xg_against") for p in precedenti]),
     }
 
     # split casa / trasferta
@@ -175,8 +216,8 @@ def indicatori_squadra(precedenti, lega_ora, media_di, conservazione,
     for casa in contesti:
         stesse = [p for p in precedenti if p.get("is_home") == casa]
         if len(stesse) >= 2:
-            ctx_att[casa] = media_pesata(norma("goals_for", 0, "attacco", stesse))
-            ctx_dif[casa] = media_pesata(norma("goals_against", 0, "difesa", stesse))
+            ctx_att[casa] = mp(norma("goals_for", 0, "attacco", stesse), stesse)
+            ctx_dif[casa] = mp(norma("goals_against", 0, "difesa", stesse), stesse)
         else:
             ctx_att[casa] = None
             ctx_dif[casa] = None
@@ -191,6 +232,6 @@ def indicatori_squadra(precedenti, lega_ora, media_di, conservazione,
                           ("corner", "corners"), ("rating", "avg_rating"),
                           ("falli", "fouls"), ("cartellini", "yellow_cards"),
                           ("gol_prevenuti", "goals_prevented")]:
-        ind[chiave] = media_pesata([p.get(campo) for p in con_stat]) if con_stat else None
+        ind[chiave] = mp([p.get(campo) for p in con_stat], con_stat) if con_stat else None
 
     return ind
