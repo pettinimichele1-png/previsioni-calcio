@@ -333,6 +333,76 @@ def main():
     if not tabella:
         print("  Nessun campionato con abbastanza partite nel test.")
 
+    # ---- 5. c'e' segnale, o lo stiamo solo amplificando? -------------
+    print("\n" + "=" * 74)
+    print("5. C'E' SEGNALE? CORRELAZIONE E SMORZAMENTO")
+    print("=" * 74)
+
+    def correlazione(x, y):
+        mx, my = media(x), media(y)
+        sx = math.sqrt(sum((a - mx) ** 2 for a in x))
+        sy = math.sqrt(sum((b - my) ** 2 for b in y))
+        return sum((a - mx) * (b - my) for a, b in zip(x, y)) / (sx * sy) if sx and sy else 0.0
+
+    lam_test = [attesi(m, fattore) for m in test]
+    base_test = [2 * m["media_lega"] for m in test]
+    veri_test = [m["totale"] for m in test]
+    print(f"  correlazione fra corner attesi e corner veri:  {correlazione(lam_test, veri_test):+.3f}")
+    print(f"  la stessa per la sola media di lega:           {correlazione(base_test, veri_test):+.3f}")
+    print("  Se la prima e' vicina a zero, non c'e' niente da smorzare.")
+
+    # smorzamento: quanto conviene dare retta alla nostra deviazione
+    lam_all = [attesi(m, fattore) for m in allenamento]
+    base_all = [2 * m["media_lega"] for m in allenamento]
+    veri_all = [m["totale"] for m in allenamento]
+
+    def con_peso(lam, base, w):
+        return [b * (l / b) ** w for l, b in zip(lam, base)]
+
+    def punteggio(lams, veri):
+        tot = []
+        for lam, vero in zip(lams, veri):
+            for soglia in SOGLIE:
+                tot.append(perdita(binneg_over(lam, soglia, dispersione), vero > soglia))
+        return media(tot)
+
+    griglia = [i / 10 for i in range(11)]
+    scelte = [(punteggio(con_peso(lam_all, base_all, w), veri_all), w) for w in griglia]
+    migliore = min(scelte)[1]
+    print(f"\n  Peso migliore da dare alla nostra deviazione (0 = solo media di")
+    print(f"  lega, 1 = modello pieno), scelto sulle partite di stima: {migliore:.1f}")
+    print("  " + "  ".join(f"{w:.1f}:{s:.4f}" for s, w in sorted(scelte, key=lambda x: x[1])[:6]))
+
+    smorzato = [perdita(binneg_over(l, 9.5, dispersione), m["totale"] > 9.5)
+                for l, m in zip(con_peso(lam_test, base_test, migliore), test)]
+    solo_lega = [perdita(binneg_over(b, 9.5, dispersione), m["totale"] > 9.5)
+                 for b, m in zip(base_test, test)]
+    c = confronto(solo_lega, smorzato)
+    print(f"\n  Sulla soglia 9.5, con lo smorzamento: {media(smorzato):.4f} "
+          f"contro {media(solo_lega):.4f} della sola media di lega")
+    if c:
+        print(f"  guadagno {c[0]:+.4f} [{c[1]:+.4f}, {c[2]:+.4f}] -> {verdetto(c, 'il modello smorzato')}")
+
+    # ---- 6. solo squadre con storico vero ---------------------------
+    print("\n" + "=" * 74)
+    print("6. SOLO PARTITE CON SQUADRE GIA' RODATE (almeno 10 partite a testa)")
+    print("=" * 74)
+    rodate = [m for m in test if m["casa"][3] >= 10 and m["ospite"][3] >= 10]
+    if len(rodate) < 100:
+        print(f"  Solo {len(rodate)} partite: troppo poche per un giudizio.")
+    else:
+        lam_r = con_peso([attesi(m, fattore) for m in rodate],
+                         [2 * m["media_lega"] for m in rodate], migliore)
+        a = [perdita(binneg_over(2 * m["media_lega"], 9.5, dispersione), m["totale"] > 9.5)
+             for m in rodate]
+        b = [perdita(binneg_over(l, 9.5, dispersione), m["totale"] > 9.5)
+             for l, m in zip(lam_r, rodate)]
+        c = confronto(a, b)
+        print(f"  {len(rodate)} partite: modello {media(b):.4f}, media di lega {media(a):.4f}")
+        if c:
+            print(f"  guadagno {c[0]:+.4f} [{c[1]:+.4f}, {c[2]:+.4f}] -> {verdetto(c)}")
+        print("  Se qui va meglio, il problema era lo scarso storico, non i corner.")
+
     print("\n" + "=" * 74)
     print("""COME LEGGERE
   Il punto 2 dice se sappiamo stimare QUANTI corner ci saranno; il punto
