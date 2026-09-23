@@ -6,6 +6,8 @@
 (function () {
   "use strict";
 
+  var VERSIONE_APP = "8";
+
   var stato = {
     dati: null,
     fuoriLinea: false,
@@ -483,7 +485,7 @@
     }
     html += "</div>";
 
-    return html + '<p class="nota-piccola">Ogni partita e ogni schedina restano salvate: contano tutte nei totali qui sopra, anche se non vengono elencate.</p></div>';
+    return html + '<p class="nota-piccola">Ogni partita e ogni schedina restano salvate: contano tutte nei totali qui sopra, anche se non vengono elencate.<br><br>App versione ' + VERSIONE_APP + '</p></div>';
   }
 
   // ---------------------------------------------------------------

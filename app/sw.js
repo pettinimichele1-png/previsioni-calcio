@@ -3,7 +3,7 @@
  * chiedono sempre prima alla rete, e solo senza rete si usa l'ultima
  * copia salvata. Quando si cambiano i file dell'app si alza VERSIONE.
  */
-const VERSIONE = "previsioni-7";
+const VERSIONE = "previsioni-8";
 const GUSCIO = ["./", "./index.html", "./stile.css", "./app.js",
                 "./manifest.webmanifest", "./icona-180.png",
                 "./icona-192.png", "./icona-512.png"];
@@ -35,15 +35,13 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // l'interfaccia: subito dalla copia salvata, aggiornata in background
+  // l'interfaccia: prima la rete, cosi' un aggiornamento arriva subito;
+  // senza rete si usa la copia salvata
   e.respondWith(
-    caches.match(e.request).then((salvata) => {
-      const rete = fetch(e.request).then((r) => {
-        if (r.ok) { const copia = r.clone(); caches.open(VERSIONE).then((c) => c.put(e.request, copia)); }
-        return r;
-      }).catch(() => salvata);
-      return salvata || rete;
-    })
+    fetch(e.request).then((r) => {
+      if (r.ok) { const copia = r.clone(); caches.open(VERSIONE).then((c) => c.put(e.request, copia)); }
+      return r;
+    }).catch(() => caches.match(e.request))
   );
 });
 
