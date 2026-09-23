@@ -160,9 +160,13 @@
     });
     if (stato.giorno !== "tutti" && giorni.indexOf(stato.giorno) < 0) stato.giorno = "tutti";
 
-    // campionati: se due hanno lo stesso nome si aggiunge il paese
+    // campionati: solo quelli che giocano nel giorno scelto, e se due
+    // hanno lo stesso nome si aggiunge il paese
+    var delGiorno = tutte.filter(function (m) {
+      return stato.giorno === "tutti" || chiaveGiorno(data(m.data)) === stato.giorno;
+    });
     var conteggio = {}, perNome = {};
-    tutte.forEach(function (m) {
+    delGiorno.forEach(function (m) {
       conteggio[m.campionato] = (conteggio[m.campionato] || 0) + 1;
       var n = nomeLega(m.campionato);
       (perNome[n.nome] = perNome[n.nome] || {})[m.campionato] = true;
