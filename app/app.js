@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "8";
+  var VERSIONE_APP = "9";
 
   var stato = {
     dati: null,
@@ -458,7 +458,10 @@
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx verde">' +
           pct(c.vinte / c.n) + '</span><span class="c dx">' + pct(c.attesa) + "</span>";
       });
-      html += '</div><span class="nota" style="padding:0">Se "uscite" e "attese" restano vicine, le probabilità delle schedine sono oneste.</span></div>';
+      html += '</div><span class="nota" style="padding:0">Se "uscite" e "attese" restano vicine, le probabilità delle schedine sono oneste.'
+        + (t.annullate ? " " + t.annullate + (t.annullate === 1 ? " schedina annullata" : " schedine annullate")
+           + " per partite rinviate o mai arrivate." : "")
+        + "</span></div>";
     }
 
     var ieri = s.ieri || [];

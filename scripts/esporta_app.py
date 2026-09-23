@@ -63,6 +63,11 @@ def trova(nome):
 
 CATEGORIE = ("alta", "valore", "sistemi", "miste")
 
+# Una partita senza risultato dopo tre giorni e' rinviata o persa per
+# strada: la schedina che la contiene viene annullata, invece di restare
+# in sospeso per sempre e bloccare i conteggi.
+GIORNI_ANNULLAMENTO = 3
+
 
 def giorno_locale(iso):
     """Data italiana di un orario ISO in UTC."""
@@ -220,21 +225,33 @@ def schedine_per_app(conn):
     except sqlite3.OperationalError:
         return vuoto
 
+    limite = datetime.now(FUSO) - timedelta(days=GIORNI_ANNULLAMENTO)
     eventi = {}
     for codice, fid, esito, casa, fuori, gc, ga, data, stato in righe:
+        giocata = gc is not None and stato in ("FT", "AET", "PEN")
+        try:
+            passata = datetime.fromisoformat(data).astimezone(FUSO) < limite
+        except (TypeError, ValueError):
+            passata = False
         eventi.setdefault(codice, []).append({
             "fid": fid, "esito": esito, "partita": f"{casa} – {fuori}",
-            "gc": gc, "ga": ga, "data": data,
-            "giocata": gc is not None and stato in ("FT", "AET", "PEN")})
+            "gc": gc, "ga": ga, "data": data, "giocata": giocata,
+            "persa": not giocata and passata})
 
     ieri = datetime.now(FUSO).date() - timedelta(days=1)
     totale = {"n": 0, "vinte": 0, "attesa": 0.0}
     categorie = {}
     di_ieri = []
 
+    annullate = 0
     for codice, categoria, titolo, quota, prob in schedine:
         ev = eventi.get(codice, [])
-        if not ev or not all(e["giocata"] for e in ev):
+        if not ev:
+            continue
+        if any(e["persa"] for e in ev):
+            annullate += 1                 # partita rinviata o mai arrivata
+            continue
+        if not all(e["giocata"] for e in ev):
             continue                       # non ancora conclusa
         for e in ev:
             e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
@@ -264,6 +281,7 @@ def schedine_per_app(conn):
 
     for d in [totale] + list(categorie.values()):
         d["attesa"] = d["attesa"] / d["n"] if d["n"] else 0.0
+    totale["annullate"] = annullate
     return {"totale": totale, "categorie": categorie, "ieri": di_ieri}
 
 
