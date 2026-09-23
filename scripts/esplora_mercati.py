@@ -20,8 +20,8 @@ database e fa pochissime chiamate all'API.
    li elenca.
 
 USO:
-    python scripts/esplora_mercati.py            5 partite (5 chiamate)
-    python scripts/esplora_mercati.py 10         10 partite
+    python scripts/esplora_mercati.py            oggi e domani (2 chiamate)
+    python scripts/esplora_mercati.py 3          tre giorni (3 chiamate)
 """
 
 import os
@@ -82,27 +82,25 @@ def statistiche_disponibili(conn):
     print("  Per stimare corner attesi servono almeno 8-10 partite per squadra.")
 
 
-def mercati_quotati(conn, quante):
+def mercati_quotati(conn, giorni):
+    """
+    Le partite future non stanno nel database: si chiedono all'API le
+    quote per data, una chiamata per giorno, e si guarda quali mercati
+    compaiono e in quali campionati.
+    """
     print("\n" + "=" * 78)
     print("2. MERCATI CHE L'API CI QUOTA DAVVERO")
     print("=" * 78)
     if not API_KEY:
-        print("  Chiave API assente: salto (serve il file ~/.previsioni_env).")
-        return
-    domani = datetime.now(timezone.utc) + timedelta(days=1)
-    prossime = conn.execute("""
-        SELECT id, date FROM fixtures
-        WHERE date > ? AND goals_home IS NULL
-        ORDER BY date LIMIT ?
-    """, (datetime.now(timezone.utc).isoformat(), quante)).fetchall()
-    if not prossime:
-        print("  Nessuna partita futura nel database.")
+        print("  Chiave API assente: lancia prima  source ~/.previsioni_env")
         return
 
-    conteggio, esempi, chiamate = {}, {}, 0
-    for fid, data in prossime:
+    conteggio, esempi, leghe, chiamate, partite = {}, {}, {}, 0, 0
+    oggi = datetime.now(timezone.utc).date()
+    for giorno in range(giorni):
+        data = (oggi + timedelta(days=giorno)).isoformat()
         try:
-            risposta, errori = chiamata("odds", {"fixture": fid})
+            risposta, errori = chiamata("odds", {"date": data, "page": 1})
             chiamate += 1
         except (urllib.error.URLError, OSError) as e:
             print(f"  errore di rete: {e}")
@@ -110,46 +108,59 @@ def mercati_quotati(conn, quante):
         if errori:
             print(f"  l'API risponde: {errori}")
             break
+        partite += len(risposta)
         for voce in risposta:
+            lega = voce.get("league") or {}
+            nome_lega = f"{(lega.get('country') or '')} - {lega.get('name', '?')}".strip(" -")
             for book in voce.get("bookmakers", []):
                 for bet in book.get("bets", []):
                     nome = bet.get("name", "?")
                     conteggio.setdefault(nome, set()).add(book.get("name"))
+                    if any(p in nome.lower() for p in PAROLE_INTERESSANTI):
+                        leghe.setdefault(nome, set()).add(nome_lega)
                     if nome not in esempi and bet.get("values"):
                         esempi[nome] = bet["values"][:4]
 
     if not conteggio:
         print(f"  Nessuna quota trovata in {chiamate} chiamate.")
         return
-    print(f"  {chiamate} chiamate, {len(conteggio)} mercati diversi trovati.\n")
+    print(f"  {chiamate} chiamate, {partite} partite quotate, "
+          f"{len(conteggio)} mercati diversi.\n")
+
     interessanti = {k: v for k, v in conteggio.items()
                     if any(p in k.lower() for p in PAROLE_INTERESSANTI)}
-    print(f"  MERCATI SU CORNER, CARTELLINI E TIRI: {len(interessanti)}")
+    print(f"  MERCATI SU CORNER, CARTELLINI, TIRI: {len(interessanti)}")
     if not interessanti:
-        print("    nessuno: il nostro piano non li quota, e questa strada e' chiusa")
-        print("    senza cambiare fornitore di dati.")
+        print("    nessuno: il nostro piano non li quota, e questa strada e'")
+        print("    chiusa senza cambiare fornitore di dati.")
     for nome, books in sorted(interessanti.items(), key=lambda kv: -len(kv[1])):
         valori = ", ".join(f"{v.get('value')} @ {v.get('odd')}"
                            for v in esempi.get(nome, []))
-        print(f"    {nome[:44]:<46}{len(books):>3} bookmaker")
+        campionati = sorted(leghe.get(nome, []))
+        print(f"    {nome[:44]:<46}{len(books):>3} bookmaker, "
+              f"{len(campionati)} campionati")
         if valori:
             print(f"      esempio: {valori}")
-    print(f"\n  ALTRI MERCATI DISPONIBILI: {len(conteggio) - len(interessanti)}")
+        if campionati:
+            print(f"      campionati: {', '.join(c[:28] for c in campionati[:6])}"
+                  + (f" e altri {len(campionati) - 6}" if len(campionati) > 6 else ""))
+
     altri = [k for k in conteggio if k not in interessanti]
-    for nome in sorted(altri, key=lambda k: -len(conteggio[k]))[:12]:
+    print(f"\n  ALTRI MERCATI: {len(altri)}")
+    for nome in sorted(altri, key=lambda k: -len(conteggio[k]))[:15]:
         print(f"    {nome[:44]:<46}{len(conteggio[nome]):>3} bookmaker")
-    if len(altri) > 12:
-        print(f"    ... e altri {len(altri) - 12}")
+    if len(altri) > 15:
+        print(f"    ... e altri {len(altri) - 15}")
 
 
 def main():
-    quante = int(sys.argv[1]) if len(sys.argv) > 1 else 5
+    giorni = int(sys.argv[1]) if len(sys.argv) > 1 else 2
     if not os.path.exists(DB_PATH):
         print(f"{DB_PATH} non trovato: lancialo dalla cartella del codice.")
         return
     conn = sqlite3.connect(DB_PATH)
     statistiche_disponibili(conn)
-    mercati_quotati(conn, quante)
+    mercati_quotati(conn, giorni)
     conn.close()
     print("\n" + "=" * 78)
     print("""COME LEGGERE
