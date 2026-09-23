@@ -161,6 +161,7 @@ def main():
 
     if modalita == "raccolta":
         esegui("aggiorna_dati.py", "partite giocate e statistiche")
+        esegui("raccolta_giocatori.py", "statistiche dei giocatori", ["60"])
         esegui("raccolta_formazioni.py", "formazioni delle partite nuove")
 
         if esegui("normalizza.py", "normalizzazione dei dati grezzi"):
