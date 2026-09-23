@@ -178,6 +178,7 @@ def main():
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])
         esegui("esporta_app.py", "dati per l'app")
         esegui("notifiche.py", "notifiche", ["invia"])
+        esegui("quote_extra.py", "quote su corner e cartellini")
 
     elif modalita == "previsioni":
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])
@@ -186,6 +187,7 @@ def main():
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])
         esegui("esporta_app.py", "dati per l'app")
         esegui("notifiche.py", "notifiche", ["invia"])
+        esegui("quote_extra.py", "quote su corner e cartellini")
 
     else:  # live
         if esegui("formazioni_previste.py",
@@ -194,6 +196,7 @@ def main():
             esegui("verifica.py", "archiviazione", ["archivia"])
             esegui("esporta_app.py", "dati per l'app")
             esegui("notifiche.py", "notifiche", ["invia"])
+            esegui("quote_extra.py", "quote su corner e cartellini")
 
     if SU_GITHUB:
         salva_stato()
