@@ -103,6 +103,60 @@ def info_partita(v):
 #  PARTITE
 # ---------------------------------------------------------------
 
+# I gruppi cosi' come li vede chi apre la scheda della partita.
+# Sono in ordine di quanto vengono giocati, e lasciano fuori quello
+# che l'app mostra gia' piu' in alto (esito finale, Over/Under
+# principali, Gol/NoGol).
+GRUPPI_APP = [
+    ("Multigol", ["mg_0_1", "mg_1_2", "mg_1_3", "mg_1_4", "mg_2_3",
+                  "mg_2_4", "mg_2_5", "mg_3_4", "mg_3_5", "mg_3_6"]),
+    ("Gol di una sola squadra",
+     ["casa_segna", "casa_nonsegna", "fuori_segna", "fuori_nonsegna",
+      "casa_over15", "casa_under15", "casa_over25", "casa_under25",
+      "fuori_over15", "fuori_under15", "fuori_over25", "fuori_under25",
+      "casa_mg_1_2", "casa_mg_1_3", "fuori_mg_1_2", "fuori_mg_1_3"]),
+    ("Scarto e handicap",
+     ["casa_2plus", "casa_3plus", "casa_h1",
+      "fuori_2plus", "fuori_3plus", "fuori_h1"]),
+    ("Combinazioni",
+     ["1+over25", "1+under25", "X+over25", "X+under25",
+      "2+over25", "2+under25", "1X+over25", "1X+under25",
+      "X2+over25", "X2+under25", "12+over25", "12+under25",
+      "1+over15", "2+over15", "1X+over15", "X2+over15",
+      "1+over35", "2+over35",
+      "1+gol", "1+nogol", "X+gol", "2+gol", "2+nogol",
+      "1X+gol", "1X+nogol", "X2+gol", "X2+nogol", "12+gol", "12+nogol",
+      "1+mg_1_3", "2+mg_1_3", "1X+mg_1_3", "X2+mg_1_3",
+      "1+mg_2_4", "2+mg_2_4"]),
+    ("Altri totali", ["over05", "under05", "over45", "under45",
+                      "pari", "dispari"]),
+]
+
+
+def vocabolario_mercati():
+    """
+    I nomi dei mercati, scritti una volta sola in cima al file invece
+    che dentro ogni partita. Con 300 partite e 70 mercati l'uno,
+    ripeterli costerebbe quasi un mega di traffico a ogni
+    aggiornamento: il telefono scarica app.json ogni mezz'ora.
+    """
+    return [{"t": titolo, "n": [P.NOMI.get(k, k) for k in chiavi]}
+            for titolo, chiavi in GRUPPI_APP]
+
+
+def altri_mercati(m):
+    """
+    Le probabilita' dei nuovi mercati, nello stesso ordine del
+    vocabolario. Sono numeri interi per mille (264 vuol dire 26,4%):
+    bastano per la percentuale e per la quota equa, e occupano un
+    decimo dello spazio. Sotto lo 0,5% si lascia perdere: sono esiti
+    che nessun bookmaker quota.
+    """
+    return [[(round(m[k] * 1000) if m.get(k, 0) >= 0.005 else 0)
+             for k in chiavi]
+            for _, chiavi in GRUPPI_APP]
+
+
 def partita_per_app(p):
     m = p["mercati"]
     mk = p.get("mercato")
@@ -120,6 +174,9 @@ def partita_per_app(p):
         "gol": {k: m[k] for k in ("over15", "under15", "over25",
                                   "under25", "over35", "under35")},
         "gg": {"gol": m["gol_gol"], "nogol": m["no_gol"]},
+        # Gli altri mercati giocabili, gia' raggruppati e con
+        # l'etichetta pronta: l'app li mostra e basta.
+        "altri": altri_mercati(m),
         "esatti": esatti,
         "attesi": [p.get("gol_attesi_casa"), p.get("gol_attesi_fuori")],
         "affidabilita": p.get("affidabilita"),
@@ -316,6 +373,7 @@ def main():
 
     app = {
         "generato": datetime.now(FUSO).isoformat(timespec="minutes"),
+        "mercati": vocabolario_mercati(),
         "partite": sorted((partita_per_app(p) for p in previsioni),
                           key=lambda x: x["data"]),
         "giocate": giocate_per_app(previsioni, rho),

@@ -45,10 +45,13 @@ import urllib.request
 import urllib.parse
 from datetime import datetime, timezone
 
-# le quote di Over/Under e Gol/NoGol si leggono come fa previsioni.py
+# le quote di Over/Under e Gol/NoGol si leggono come fa previsioni.py,
+# e da li' arrivano anche le regole dei mercati per la taratura
 try:
+    import previsioni as P
     from previsioni import quote_mercati
 except Exception:
+    P = None
     quote_mercati = None
 
 DB_PATH = "calcio_dati.db"
@@ -291,6 +294,61 @@ def confronto_binario(righe, chiave_noi, chiave_mercato, avvenuto):
     return {"partite": len(g), "log_loss": sum(n_q) / len(g),
             "log_loss_mercato": sum(m_q) / len(g),
             "vantaggio": sum(diffs) / len(diffs), "intervallo": [lo, hi]}
+
+
+def controlla_taratura(righe):
+    """
+    I mercati nuovi non hanno una quota di mercato con cui confrontarsi,
+    ma si puo' controllare una cosa altrettanto importante: quando
+    diciamo che un esito succede nel 60% dei casi, succede davvero nel
+    60% dei casi?
+
+    Non serve archiviare nulla di nuovo. Ogni partita ha gia' i gol
+    attesi delle due squadre: da quelli si rifa' la matrice esatta che
+    avevamo allora, e da li' ogni mercato. Vale quindi anche per tutte
+    le partite gia' verificate nei mesi scorsi.
+
+    La tolleranza e' l'errore che ci si aspetta per puro caso, cioe'
+    due deviazioni standard della media: sotto quella soglia uno
+    scarto non vuol dire niente.
+    """
+    if P is None:
+        return None
+    utili = [r for r in righe
+             if r.get("gol_attesi_casa") is not None
+             and r.get("gol_attesi_fuori") is not None]
+    if len(utili) < 50:
+        return None
+
+    rho = -0.05
+    for percorso in ("stato/modello.json", "modello.json"):
+        if os.path.exists(percorso):
+            with open(percorso, encoding="utf-8") as f:
+                rho = json.load(f).get("rho", rho)
+            break
+
+    chiavi = [k for k in P.TUTTI_I_MERCATI if "+" not in k]
+    somma = {k: 0.0 for k in chiavi}
+    avvenuti = {k: 0 for k in chiavi}
+    for r in utili:
+        m = P.mercati(P.matrice(r["gol_attesi_casa"], r["gol_attesi_fuori"], rho))
+        gc, ga = r["goals_home"], r["goals_away"]
+        for k in chiavi:
+            somma[k] += m[k]
+            if P.esito_avvenuto(k, gc, ga):
+                avvenuti[k] += 1
+
+    n = len(utili)
+    voci = []
+    for k in chiavi:
+        nostra = somma[k] / n
+        reale = avvenuti[k] / n
+        tolleranza = 2 * math.sqrt(max(nostra * (1 - nostra), 1e-9) / n)
+        voci.append({"chiave": k, "nome": P.NOMI.get(k, k),
+                     "nostra": nostra, "reale": reale,
+                     "scarto": nostra - reale, "tolleranza": tolleranza})
+    voci.sort(key=lambda v: -abs(v["scarto"]) / max(v["tolleranza"], 1e-9))
+    return {"partite": n, "voci": voci}
 
 
 def report(conn):
@@ -628,12 +686,34 @@ def report(conn):
               f"mercato {c['log_loss_mercato']:.4f}, vantaggio {c['vantaggio']:+.4f} "
               f"[{lo:+.4f}, {hi:+.4f}] -> {esito}")
 
+    # ---- taratura dei mercati nuovi --------------------------------
+    print("\n" + "=" * 70)
+    print("TARATURA DEI MERCATI NUOVI")
+    print("=" * 70)
+    taratura = controlla_taratura(righe)
+    if not taratura:
+        print("  Servono i gol attesi archiviati: nessuna partita utilizzabile.")
+    else:
+        print(f"  {taratura['partite']} partite. Per ogni mercato: quante volte")
+        print("  diciamo che succede, e quante volte succede davvero.\n")
+        print(f"  {'mercato':<22} {'noi':>8} {'realta':>8} {'scarto':>8}   giudizio")
+        for v in taratura["voci"]:
+            segnale = ("ok" if abs(v["scarto"]) <= v["tolleranza"] else
+                       "sovrastimato" if v["scarto"] > 0 else "sottostimato")
+            print(f"  {v['nome']:<22} {v['nostra']:>7.1%} {v['reale']:>8.1%} "
+                  f"{v['scarto']:>+8.1%}   {segnale}")
+        storti = [v["nome"] for v in taratura["voci"]
+                  if abs(v["scarto"]) > v["tolleranza"]]
+        print(f"\n  Fuori taratura: {len(storti)} su {len(taratura['voci'])}"
+              + (" -> " + ", ".join(storti[:6]) if storti else ""))
+
     # ---- salvataggio ---------------------------------------------
     riepilogo = {
         "generato": datetime.now(timezone.utc).isoformat(),
         "verificate": len(righe),
         "azzeccate": azzeccate,
         "log_loss": sum(nostre) / len(nostre),
+        "taratura": taratura,
     }
     if con_quote:
         riepilogo["con_quote"] = len(con_quote)

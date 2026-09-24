@@ -255,3 +255,18 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #barra a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 70px; min-height: 52px; text-decoration: none; color: var(--testo3); font-size: 11px; font-weight: 700; }
 #barra a.attiva { color: var(--lime); }
 #barra svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* --- altri mercati giocabili, nella scheda della partita --- */
+.blocco.elenco { padding: 0; gap: 8px; }
+.blocco.elenco h2 { padding: 4px 2px 0 2px; }
+.apribile.mercati > button { min-height: 54px; }
+.apribile.mercati .t1 { font-size: 16px; letter-spacing: .02em; }
+.listino { display: flex; flex-direction: column; }
+.voce-mercato { display: grid; grid-template-columns: 1fr auto auto; align-items: center;
+  gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--linea); }
+.voce-mercato:last-child { border-bottom: none; }
+.voce-mercato .em { font-size: 14px; color: var(--testo); }
+.voce-mercato .eq { font-size: 13px; color: var(--testo3); font-variant-numeric: tabular-nums;
+  min-width: 42px; text-align: right; }
+.voce-mercato b { font-family: var(--titolo); font-size: 19px; font-weight: 800;
+  min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }

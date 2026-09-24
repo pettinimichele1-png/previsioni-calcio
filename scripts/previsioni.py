@@ -86,69 +86,88 @@ def matrice(lc, lf, rho):
     return [[v / tot for v in riga] for riga in M]
 
 
+# ---------------------------------------------------------------
+#  I MERCATI
+#
+#  Ogni mercato e' definito UNA VOLTA SOLA, in esito_avvenuto(), come
+#  regola sul risultato finale. Da quella stessa regola nascono tre
+#  cose:
+#    - la probabilita', sommando le caselle della matrice che la
+#      soddisfano;
+#    - la verifica della schedina a partita giocata;
+#    - i sistemi integrali.
+#  Cosi' il calcolo e la verifica non possono andare in disaccordo:
+#  sono la stessa riga di codice letta due volte.
+#
+#  Attenzione: le probabilita' di due mercati diversi NON si
+#  moltiplicano mai fra loro sulla stessa partita. Gli eventi non sono
+#  indipendenti (se finisce 3-0 si avverano insieme l'1, l'Over 2.5 e
+#  il NoGol). Le combinazioni si ottengono sommando le caselle che
+#  soddisfano tutte le condizioni insieme, ed e' esattamente quello
+#  che fa il codice qui sotto.
+# ---------------------------------------------------------------
+
+GRUPPI_MERCATI = {
+    "esito":     ["1", "X", "2", "1X", "12", "X2"],
+    "gol":       ["over05", "under05", "over15", "under15",
+                  "over25", "under25", "over35", "under35",
+                  "over45", "under45", "pari", "dispari"],
+    "multigol":  ["mg_0_1", "mg_0_2", "mg_0_3", "mg_1_2", "mg_1_3",
+                  "mg_1_4", "mg_2_3", "mg_2_4", "mg_2_5",
+                  "mg_3_4", "mg_3_5", "mg_3_6"],
+    "entrambe":  ["gol_gol", "no_gol"],
+    "squadra":   ["casa_segna", "casa_nonsegna",
+                  "fuori_segna", "fuori_nonsegna",
+                  "casa_over15", "casa_under15",
+                  "casa_over25", "casa_under25",
+                  "fuori_over15", "fuori_under15",
+                  "fuori_over25", "fuori_under25",
+                  "casa_mg_1_2", "casa_mg_1_3",
+                  "fuori_mg_1_2", "fuori_mg_1_3"],
+    "scarto":    ["casa_2plus", "casa_3plus", "casa_h1",
+                  "fuori_2plus", "fuori_3plus", "fuori_h1"],
+    "combo":     ["1+over25", "1+under25", "2+over25", "2+under25",
+                  "1X+over25", "1X+under25", "X2+over25", "X2+under25",
+                  "12+over25", "12+under25",
+                  "X+over25", "X+under25",
+                  "1+over15", "2+over15", "1X+over15", "X2+over15",
+                  "1+over35", "2+over35",
+                  "1+gol", "1+nogol", "2+gol", "2+nogol",
+                  "X+gol", "1X+gol", "1X+nogol",
+                  "X2+gol", "X2+nogol", "12+gol", "12+nogol",
+                  "1+mg_1_3", "2+mg_1_3", "1X+mg_1_3", "X2+mg_1_3",
+                  "1+mg_2_4", "2+mg_2_4"],
+}
+
+TUTTI_I_MERCATI = [k for gruppo in GRUPPI_MERCATI.values() for k in gruppo]
+
+_MASCHERE = {}
+
+
+def maschere(n):
+    """
+    Per ogni mercato, l'elenco delle caselle della matrice che lo fanno
+    vincere. Dipende solo dalla dimensione della matrice, non dalla
+    partita: si calcola una volta sola e vale per tutte.
+    """
+    if n not in _MASCHERE:
+        _MASCHERE[n] = {
+            k: [(x, y) for x in range(n) for y in range(n)
+                if esito_avvenuto(k, x, y)]
+            for k in TUTTI_I_MERCATI
+        }
+    return _MASCHERE[n]
+
+
 def mercati(M):
     """Tutte le probabilita' derivate dalla matrice dei punteggi."""
-    n = len(M)
-    p1 = sum(M[x][y] for x in range(n) for y in range(n) if x > y)
-    px = sum(M[x][x] for x in range(n))
-    p2 = sum(M[x][y] for x in range(n) for y in range(n) if x < y)
-
-    def over(soglia):
-        """Probabilita' che i gol totali superino la soglia."""
-        return sum(M[x][y] for x in range(n) for y in range(n) if x + y > soglia)
-
-    gg = sum(M[x][y] for x in range(1, n) for y in range(1, n))
-
-    def congiunta(esito, soglia_gol=None, entrambe=None):
-        """
-        Probabilita' che DUE condizioni si verifichino insieme nella
-        stessa partita. Si calcola sommando le celle della matrice che
-        soddisfano entrambe: moltiplicare le due probabilita' separate
-        sarebbe sbagliato, perche' gli eventi non sono indipendenti.
-        """
-        tot = 0.0
-        for x in range(n):
-            for y in range(n):
-                if esito == "1" and not x > y: continue
-                if esito == "X" and not x == y: continue
-                if esito == "2" and not x < y: continue
-                if esito == "1X" and x < y: continue
-                if esito == "X2" and x > y: continue
-                if esito == "12" and x == y: continue
-                if soglia_gol is not None:
-                    sopra = (x + y) > abs(soglia_gol)
-                    if (soglia_gol > 0) != sopra: continue
-                if entrambe is not None:
-                    segnano = x > 0 and y > 0
-                    if entrambe != segnano: continue
-                tot += M[x][y]
-        return tot
+    caselle = maschere(len(M))
+    fuori = {k: sum(M[x][y] for x, y in caselle[k]) for k in TUTTI_I_MERCATI}
     punteggi = sorted(((M[x][y], f"{x}-{y}") for x in range(6) for y in range(6)),
                       reverse=True)[:5]
-
-    return {
-        # esito finale
-        "1": p1, "X": px, "2": p2,
-        # doppia chance: due esiti su tre
-        "1X": p1 + px, "12": p1 + p2, "X2": px + p2,
-        # totale gol
-        "over15": over(1.5), "under15": 1 - over(1.5),
-        "over25": over(2.5), "under25": 1 - over(2.5),
-        "over35": over(3.5), "under35": 1 - over(3.5),
-        # entrambe le squadre a segno
-        "gol_gol": gg, "no_gol": 1 - gg,
-        # combinazioni nella stessa partita, calcolate correttamente
-        "1+over25": congiunta("1", 2.5), "1+under25": congiunta("1", -2.5),
-        "2+over25": congiunta("2", 2.5), "2+under25": congiunta("2", -2.5),
-        "1X+over25": congiunta("1X", 2.5), "1X+under25": congiunta("1X", -2.5),
-        "X2+over25": congiunta("X2", 2.5), "X2+under25": congiunta("X2", -2.5),
-        "12+over25": congiunta("12", 2.5),
-        "1+gol": congiunta("1", None, True), "1+nogol": congiunta("1", None, False),
-        "2+gol": congiunta("2", None, True),
-        "1X+nogol": congiunta("1X", None, False),
-        "punteggi_probabili": [{"risultato": r, "prob": round(p, 4)}
-                               for p, r in punteggi],
-    }
+    fuori["punteggi_probabili"] = [{"risultato": r, "prob": round(p, 4)}
+                                   for p, r in punteggi]
+    return fuori
 
 
 def quote_mercati(voce):
@@ -702,6 +721,7 @@ SOGLIA_FAVORITO = 0.55
 # siano pochi, non solo che la squadra di casa non perda. Altrimenti si
 # sceglie una condizione qualsiasi perche' alza la quota.
 SOGLIA_COMPONENTE = 0.55
+SOGLIA_PRUDENTE = 0.70     # sotto questa, un esito non e' piu' "prudente"
 PEZZI = {"gol": "gol_gol", "nogol": "no_gol"}
 ESITI_1X2 = {"1": {"1"}, "X": {"X"}, "2": {"2"},
              "1X": {"1", "X"}, "X2": {"X", "2"}, "12": {"1", "2"}}
@@ -709,26 +729,85 @@ FUSO_GIOCATE = ZoneInfo("Europe/Rome")
 GIORNI_GIOCATE = 2
 
 NOMI = {
+    # esito finale
     "1": "1", "X": "X", "2": "2",
     "1X": "1X", "12": "12", "X2": "X2",
+    # totale gol
+    "over05": "Over 0.5", "under05": "Under 0.5",
     "over15": "Over 1.5", "under15": "Under 1.5",
     "over25": "Over 2.5", "under25": "Under 2.5",
     "over35": "Over 3.5", "under35": "Under 3.5",
+    "over45": "Over 4.5", "under45": "Under 4.5",
+    "pari": "Pari", "dispari": "Dispari",
+    # multigol
+    "mg_0_1": "Multigol 0-1", "mg_0_2": "Multigol 0-2",
+    "mg_0_3": "Multigol 0-3", "mg_1_2": "Multigol 1-2",
+    "mg_1_3": "Multigol 1-3", "mg_1_4": "Multigol 1-4",
+    "mg_2_3": "Multigol 2-3", "mg_2_4": "Multigol 2-4",
+    "mg_2_5": "Multigol 2-5", "mg_3_4": "Multigol 3-4",
+    "mg_3_5": "Multigol 3-5", "mg_3_6": "Multigol 3-6",
+    # entrambe a segno
     "gol_gol": "Gol", "no_gol": "NoGol",
+    # gol della singola squadra
+    "casa_segna": "Casa segna", "casa_nonsegna": "Casa non segna",
+    "fuori_segna": "Ospite segna", "fuori_nonsegna": "Ospite non segna",
+    "casa_over15": "Casa Over 1.5", "casa_under15": "Casa Under 1.5",
+    "casa_over25": "Casa Over 2.5", "casa_under25": "Casa Under 2.5",
+    "fuori_over15": "Ospite Over 1.5", "fuori_under15": "Ospite Under 1.5",
+    "fuori_over25": "Ospite Over 2.5", "fuori_under25": "Ospite Under 2.5",
+    "casa_mg_1_2": "Casa Multigol 1-2", "casa_mg_1_3": "Casa Multigol 1-3",
+    "fuori_mg_1_2": "Ospite Multigol 1-2", "fuori_mg_1_3": "Ospite Multigol 1-3",
+    # scarto / handicap
+    "casa_2plus": "Casa vince di 2+", "casa_3plus": "Casa vince di 3+",
+    "fuori_2plus": "Ospite vince di 2+", "fuori_3plus": "Ospite vince di 3+",
+    "casa_h1": "Casa handicap +1", "fuori_h1": "Ospite handicap +1",
+    # combinazioni
     "1+over25": "1 + Over 2.5", "1+under25": "1 + Under 2.5",
     "2+over25": "2 + Over 2.5", "2+under25": "2 + Under 2.5",
     "1X+over25": "1X + Over 2.5", "1X+under25": "1X + Under 2.5",
     "X2+over25": "X2 + Over 2.5", "X2+under25": "X2 + Under 2.5",
-    "12+over25": "12 + Over 2.5",
+    "12+over25": "12 + Over 2.5", "12+under25": "12 + Under 2.5",
+    "X+over25": "X + Over 2.5", "X+under25": "X + Under 2.5",
+    "1+over15": "1 + Over 1.5", "2+over15": "2 + Over 1.5",
+    "1X+over15": "1X + Over 1.5", "X2+over15": "X2 + Over 1.5",
+    "1+over35": "1 + Over 3.5", "2+over35": "2 + Over 3.5",
     "1+gol": "1 + Gol", "1+nogol": "1 + NoGol",
-    "2+gol": "2 + Gol", "1X+nogol": "1X + NoGol",
+    "2+gol": "2 + Gol", "2+nogol": "2 + NoGol",
+    "X+gol": "X + Gol", "1X+gol": "1X + Gol", "1X+nogol": "1X + NoGol",
+    "X2+gol": "X2 + Gol", "X2+nogol": "X2 + NoGol",
+    "12+gol": "12 + Gol", "12+nogol": "12 + NoGol",
+    "1+mg_1_3": "1 + Multigol 1-3", "2+mg_1_3": "2 + Multigol 1-3",
+    "1X+mg_1_3": "1X + Multigol 1-3", "X2+mg_1_3": "X2 + Multigol 1-3",
+    "1+mg_2_4": "1 + Multigol 2-4", "2+mg_2_4": "2 + Multigol 2-4",
 }
 
+# Da quali mercati il motore pesca per costruire le proposte.
+# Non e' l'elenco di quello che l'app mostra: l'app mostra tutto.
+# Qui c'e' solo cio' che ha senso proporre in una schedina.
 SEMPLICI = ["1", "X", "2", "over25", "under25", "gol_gol", "no_gol"]
 COMBO = ["1+over25", "1+under25", "2+over25", "2+under25",
          "1X+over25", "1X+under25", "X2+over25", "X2+under25",
-         "12+over25", "1+gol", "1+nogol", "2+gol", "1X+nogol"]
-SICURI = ["1X", "12", "X2", "over15", "under35"]
+         "12+over25", "12+under25", "1+gol", "1+nogol",
+         "2+gol", "2+nogol", "1X+gol", "1X+nogol", "X2+gol", "X2+nogol",
+         "1+mg_1_3", "2+mg_1_3", "1X+mg_1_3", "X2+mg_1_3"]
+SICURI = ["1X", "12", "X2", "over15", "under35",
+          "mg_1_4", "casa_h1", "fuori_h1"]
+# Mercati a quota piu' alta ma ancora leggibili dal modello: servono
+# alle miste, dove da soli 1X e Under non arrivano mai alla quota
+# richiesta.
+#
+# Restano fuori di proposito:
+#  - Pari/Dispari: e' quasi sempre una moneta, il modello non ha nulla
+#    da dire e finirebbe in schedina solo per la quota;
+#  - "vince di 2+" e simili: non superano mai la soglia di componente,
+#    starebbero nell'elenco senza poterci mai entrare.
+# Nell'app si vedono lo stesso: sono giocabili, ma non li proponiamo.
+ALTA_QUOTA = ["mg_1_2", "mg_1_3", "mg_2_3", "mg_2_4",
+              "casa_over15", "fuori_over15",
+              "casa_mg_1_2", "casa_mg_1_3",
+              "fuori_mg_1_2", "fuori_mg_1_3",
+              "casa_segna", "fuori_segna",
+              "casa_under25", "fuori_under25"]
 
 
 def prob_unione(M, esiti):
@@ -1002,7 +1081,8 @@ def costruisci_giocate(previsioni):
     # finche' la quota non si avvicina al bersaglio, partendo da punti
     # diversi della lista per non produrre tre schedine identiche.
     per_id = {p["fixture_id"]: p for p in previsioni}
-    candidati = [v for v in _raccogli(previsioni, SEMPLICI + SICURI + COMBO,
+    candidati = [v for v in _raccogli(previsioni,
+                                      SEMPLICI + SICURI + COMBO + ALTA_QUOTA,
                                       prob_min=PROB_MINIMA_MISTA)
                  if _col_favorito(per_id[v["fixture_id"]], v["esito"])
                  and _sostenuto(per_id[v["fixture_id"]], v["esito"])
@@ -1091,11 +1171,20 @@ def _costruisci_sistemi(previsioni):
             pe = m.get(k, 0)
             return pe > 0 and _quota_equa(pe) >= QUOTA_MINIMA_ESITO
 
-        prudenti = [k for k in ("1X", "X2", "12", "over15", "under35")
-                    if abbastanza(k)]
-        prudente = max(prudenti, key=lambda k: m[k]) if prudenti else None
+        # La gamba prudente non deve essere la piu' probabile in
+        # assoluto: sarebbe quasi sempre una quasi-certezza che paga
+        # 1.12 e rende inutile tutto il sistema. Fra quelle abbastanza
+        # sicure si prende quella che paga di piu'.
+        prudenti = [k for k in SICURI if abbastanza(k)]
+        solide = [k for k in prudenti if m[k] >= SOGLIA_PRUDENTE]
+        prudente = (min(solide, key=lambda k: m[k]) if solide else
+                    max(prudenti, key=lambda k: m[k]) if prudenti else None)
+        # La seconda gamba resta nella fascia di mezzo: se ci mettessimo
+        # anche i mercati ad alta probabilita' (l'Under 2.5 di una
+        # squadra, per dire) l'unione salirebbe al 99% e la quota del
+        # sistema crollerebbe. Quelli servono alle miste, non qui.
         intermedi = [k for k in ("1", "2", "over25", "under25",
-                                 "gol_gol", "no_gol")
+                                 "gol_gol", "no_gol", "mg_1_2", "mg_2_3")
                      if m.get(k, 0) >= 0.35 and abbastanza(k)]
         intermedio = max(intermedi, key=lambda k: m[k]) if intermedi else None
         combo = [k for k in COMBO if m.get(k, 0) >= 0.30 and abbastanza(k)]
@@ -1179,14 +1268,54 @@ def esito_avvenuto(esito, gc, ga):
             return None
 
     totale = gc + ga
+    scarto = gc - ga
+
+    def fascia(minimo, massimo):
+        """Il totale dei gol cade dentro l'intervallo: e' il multigol."""
+        return minimo <= totale <= massimo
+
     tabella = {
+        # --- esito finale e doppia chance ---
         "1": gc > ga, "X": gc == ga, "2": gc < ga,
         "1X": gc >= ga, "12": gc != ga, "X2": gc <= ga,
+
+        # --- totale gol ---
+        "over05": totale >= 1, "under05": totale < 1,
         "over15": totale >= 2, "under15": totale < 2,
         "over25": totale >= 3, "under25": totale < 3,
         "over35": totale >= 4, "under35": totale < 4,
+        "over45": totale >= 5, "under45": totale < 5,
+        "pari": totale % 2 == 0, "dispari": totale % 2 == 1,
+
+        # --- multigol: quanti gol in tutto, dentro una fascia ---
+        "mg_0_1": fascia(0, 1), "mg_0_2": fascia(0, 2), "mg_0_3": fascia(0, 3),
+        "mg_1_2": fascia(1, 2), "mg_1_3": fascia(1, 3), "mg_1_4": fascia(1, 4),
+        "mg_2_3": fascia(2, 3), "mg_2_4": fascia(2, 4), "mg_2_5": fascia(2, 5),
+        "mg_3_4": fascia(3, 4), "mg_3_5": fascia(3, 5), "mg_3_6": fascia(3, 6),
+
+        # --- entrambe le squadre a segno ---
         "gol_gol": gc > 0 and ga > 0, "gol": gc > 0 and ga > 0,
         "no_gol": not (gc > 0 and ga > 0), "nogol": not (gc > 0 and ga > 0),
+
+        # --- gol della singola squadra ---
+        # "casa_nonsegna" e' anche la porta inviolata dell'ospite,
+        # e viceversa: e' lo stesso evento visto dai due lati.
+        "casa_segna": gc > 0, "casa_nonsegna": gc == 0,
+        "fuori_segna": ga > 0, "fuori_nonsegna": ga == 0,
+        "casa_over15": gc >= 2, "casa_under15": gc < 2,
+        "casa_over25": gc >= 3, "casa_under25": gc < 3,
+        "fuori_over15": ga >= 2, "fuori_under15": ga < 2,
+        "fuori_over25": ga >= 3, "fuori_under25": ga < 3,
+        "casa_mg_1_2": 1 <= gc <= 2, "casa_mg_1_3": 1 <= gc <= 3,
+        "fuori_mg_1_2": 1 <= ga <= 2, "fuori_mg_1_3": 1 <= ga <= 3,
+
+        # --- scarto di gol, cioe' l'handicap ---
+        # "casa_2plus": la casa vince con almeno due gol di scarto.
+        # "casa_h1": la casa con un gol di vantaggio regalato non perde,
+        #            cioe' l'handicap +1 tipico dei bookmaker.
+        "casa_2plus": scarto >= 2, "casa_3plus": scarto >= 3,
+        "fuori_2plus": scarto <= -2, "fuori_3plus": scarto <= -3,
+        "casa_h1": scarto >= -1, "fuori_h1": scarto <= 1,
     }
     return tabella.get(esito)
 

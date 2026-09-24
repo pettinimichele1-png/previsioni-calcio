@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "9";
+  var VERSIONE_APP = "10";
 
   var stato = {
     dati: null,
@@ -15,6 +15,7 @@
     lega: "tutte",
     scheda: "alta",
     aperta: false,
+    mercati: {},               // quali gruppi di mercati sono aperti
     notifiche: "sconosciuto"   // attive, spente, negate, installa, non-supportate
   };
 
@@ -291,6 +292,43 @@
         }).join("") + "</div></section>";
     }
 
+    // tutti gli altri mercati giocabili, un gruppo per volta.
+    // I nomi stanno nel vocabolario in cima ad app.json; qui dentro la
+    // partita ci sono solo i numeri, nello stesso ordine.
+    var vocab = (stato.dati && stato.dati.mercati) || [];
+    if (m.altri && m.altri.length && vocab.length) {
+      var righe = vocab.map(function (g, i) {
+        var valori = m.altri[i] || [];
+        return {
+          t: g.t,
+          v: g.n.map(function (nome, j) { return { n: nome, p: (valori[j] || 0) / 1000 }; })
+                .filter(function (x) { return x.p > 0; })
+        };
+      }).filter(function (g) { return g.v.length; });
+
+      var totale = righe.reduce(function (n, g) { return n + g.v.length; }, 0);
+      html += '<section class="blocco elenco"><h2>Altri mercati · ' + totale + '</h2>';
+      righe.forEach(function (g) {
+        var apertoG = !!stato.mercati[g.t];
+        html += '<div class="carta apribile mercati' + (apertoG ? " aperta" : "") +
+          '"><button data-mercato="' + esc(g.t) + '" aria-expanded="' + apertoG + '">' +
+          '<span><span class="t1">' + esc(g.t) + '</span><span class="t2">' +
+          g.v.length + ' esiti</span></span><span class="bottone">' +
+          (apertoG ? "Chiudi" : "Apri") + "</span></button>";
+        if (apertoG) {
+          html += '<div class="dentro"><div class="listino">' +
+            g.v.map(function (v) {
+              return '<div class="voce-mercato"><span class="em">' + esc(v.n) +
+                '</span><span class="eq">' + quota(1 / v.p) + '</span><b>' + pct(v.p) + "</b></div>";
+            }).join("") +
+            '</div><div class="nota">La colonna di mezzo è la quota equa: è solo il rovescio ' +
+            'della percentuale, non un consiglio di gioco.</div></div>';
+        }
+        html += "</div>";
+      });
+      html += "</section>";
+    }
+
     // prima e dopo le formazioni ufficiali
     if (m.prima && m.formazioni === "ufficiale") {
       html += '<section class="blocco carta"><h2>Prima e dopo le formazioni</h2><div class="confronto">' +
@@ -525,6 +563,13 @@
     else if (el.hasAttribute("data-lega")) { stato.lega = el.getAttribute("data-lega"); disegna(); }
     else if (el.hasAttribute("data-scheda")) { stato.scheda = el.getAttribute("data-scheda"); disegna(); }
     else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; disegna(); }
+    else if (el.hasAttribute("data-mercato")) {
+      var g = el.getAttribute("data-mercato");
+      stato.mercati[g] = !stato.mercati[g];
+      var y = window.scrollY;
+      disegna();
+      window.scrollTo(0, y);          // si riapre dove si era rimasti
+    }
     else if (el.hasAttribute("data-azzera")) { stato.giorno = "tutti"; stato.lega = "tutte"; disegna(); }
     else if (el.hasAttribute("data-ricarica")) { carica(); }
     else if (el.hasAttribute("data-campana")) { gestisciCampana(); }
