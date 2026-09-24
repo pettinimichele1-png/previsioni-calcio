@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "10";
+  var VERSIONE_APP = "11";
 
   var stato = {
     dati: null,
@@ -253,6 +253,25 @@
       '<div class="' + (Math.abs(a - b) < 0.02 ? "pari" : (!vinceA ? "forte" : "")) + '" style="width:' + (b * 100).toFixed(1) + '%"></div></div></div>';
   }
 
+  // Il contenuto di un gruppo di mercati, disegnato come il resto
+  // della scheda: le barre a due teste della sezione Gol per gli esiti
+  // che vanno a coppie, i riquadri dei risultati esatti per gli altri.
+  function corpoMercati(g) {
+    if (g.f === "coppie") {
+      var barre = "";
+      for (var i = 0; i + 1 < g.v.length; i += 2) {
+        barre += soglia(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p);
+      }
+      return '<div class="coppie">' + barre + "</div>";
+    }
+    var massimo = Math.max.apply(null, g.v.map(function (x) { return x.p; }));
+    return '<div class="griglia3">' + g.v.map(function (x) {
+      return '<div class="ris-tessera mercato' + (x.p === massimo ? " primo" : "") +
+        '" title="' + esc(x.lungo) + '"><b>' + esc(x.n) + "</b><small>" +
+        pct(x.p) + "</small><span class=\"eq\">" + quota(1 / x.p) + "</span></div>";
+    }).join("") + "</div>";
+  }
+
   function vistaDettaglio(id) {
     var m = trovaPartita(id);
     var indietro = '<a class="indietro" href="#/"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Palinsesto</a>';
@@ -300,33 +319,35 @@
       var righe = vocab.map(function (g, i) {
         var valori = m.altri[i] || [];
         return {
-          t: g.t,
-          v: g.n.map(function (nome, j) { return { n: nome, p: (valori[j] || 0) / 1000 }; })
-                .filter(function (x) { return x.p > 0; })
+          chiave: g.t,
+          t: g.t.replace("{casa}", m.casa).replace("{fuori}", m.fuori),
+          f: g.f,
+          v: g.n.map(function (nome, j) {
+            return { n: nome, lungo: (g.lunghi || [])[j] || nome,
+                     p: (valori[j] || 0) / 1000 };
+          })
         };
+      }).map(function (g) {
+        // nelle tessere gli esiti sotto lo 0,5% si tolgono; nelle coppie
+        // no, altrimenti si scompagnano e la barra non torna
+        if (g.f !== "coppie") g.v = g.v.filter(function (x) { return x.p > 0; });
+        return g;
       }).filter(function (g) { return g.v.length; });
 
       var totale = righe.reduce(function (n, g) { return n + g.v.length; }, 0);
       html += '<section class="blocco elenco"><h2>Altri mercati · ' + totale + '</h2>';
       righe.forEach(function (g) {
-        var apertoG = !!stato.mercati[g.t];
+        var apertoG = !!stato.mercati[g.chiave];
         html += '<div class="carta apribile mercati' + (apertoG ? " aperta" : "") +
-          '"><button data-mercato="' + esc(g.t) + '" aria-expanded="' + apertoG + '">' +
+          '"><button data-mercato="' + esc(g.chiave) + '" aria-expanded="' + apertoG + '">' +
           '<span><span class="t1">' + esc(g.t) + '</span><span class="t2">' +
           g.v.length + ' esiti</span></span><span class="bottone">' +
           (apertoG ? "Chiudi" : "Apri") + "</span></button>";
-        if (apertoG) {
-          html += '<div class="dentro"><div class="listino">' +
-            g.v.map(function (v) {
-              return '<div class="voce-mercato"><span class="em">' + esc(v.n) +
-                '</span><span class="eq">' + quota(1 / v.p) + '</span><b>' + pct(v.p) + "</b></div>";
-            }).join("") +
-            '</div><div class="nota">La colonna di mezzo è la quota equa: è solo il rovescio ' +
-            'della percentuale, non un consiglio di gioco.</div></div>';
-        }
+        if (apertoG) html += '<div class="dentro">' + corpoMercati(g) + "</div>";
         html += "</div>";
       });
-      html += "</section>";
+      html += '<div class="nota">Il numero piccolo sotto la percentuale è la quota equa: ' +
+        'è solo il rovescio della percentuale, non un consiglio di gioco.</div></section>';
     }
 
     // prima e dopo le formazioni ufficiali

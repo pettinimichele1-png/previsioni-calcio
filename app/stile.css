@@ -261,12 +261,12 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .blocco.elenco h2 { padding: 4px 2px 0 2px; }
 .apribile.mercati > button { min-height: 54px; }
 .apribile.mercati .t1 { font-size: 16px; letter-spacing: .02em; }
-.listino { display: flex; flex-direction: column; }
-.voce-mercato { display: grid; grid-template-columns: 1fr auto auto; align-items: center;
-  gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--linea); }
-.voce-mercato:last-child { border-bottom: none; }
-.voce-mercato .em { font-size: 14px; color: var(--testo); }
-.voce-mercato .eq { font-size: 13px; color: var(--testo3); font-variant-numeric: tabular-nums;
-  min-width: 42px; text-align: right; }
-.voce-mercato b { font-family: var(--titolo); font-size: 19px; font-weight: 800;
-  min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+.apribile.mercati .dentro { padding: 2px 12px 14px 12px; }
+.coppie { display: flex; flex-direction: column; gap: 14px; }
+.ris-tessera.mercato { padding: 10px 4px; gap: 2px; }
+.ris-tessera.mercato b { font-size: 15px; font-weight: 800; letter-spacing: .01em;
+  line-height: 1.15; text-align: center; }
+.ris-tessera.mercato small { font-family: var(--titolo); font-size: 21px; font-weight: 800;
+  color: var(--testo); font-variant-numeric: tabular-nums; }
+.ris-tessera.mercato.primo small { color: var(--lime); }
+.ris-tessera.mercato .eq { font-size: 11px; color: var(--testo3); font-variant-numeric: tabular-nums; }

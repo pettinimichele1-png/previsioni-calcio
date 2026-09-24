@@ -104,57 +104,94 @@ def info_partita(v):
 # ---------------------------------------------------------------
 
 # I gruppi cosi' come li vede chi apre la scheda della partita.
-# Sono in ordine di quanto vengono giocati, e lasciano fuori quello
-# che l'app mostra gia' piu' in alto (esito finale, Over/Under
-# principali, Gol/NoGol).
+# Lasciano fuori quello che l'app mostra gia' piu' in alto: esito
+# finale, Over/Under principali, Gol/NoGol.
+#
+# La forma dice come disegnarli, riusando quello che c'e' gia':
+#   "coppie"  -> la barra a due teste della sezione Gol. Gli esiti
+#                vanno a due a due e devono essere l'uno il contrario
+#                dell'altro, cosi' la barra e' piena e le due
+#                percentuali fanno cento.
+#   "tessere" -> i riquadri dei risultati esatti, per gli esiti che
+#                non hanno un contrario (i multigol si sovrappongono
+#                fra loro, le combinazioni pure).
+#
+# Nei titoli {casa} e {fuori} vengono sostituiti dai nomi veri delle
+# due squadre, cosi' dentro al gruppo le etichette restano corte.
 GRUPPI_APP = [
-    ("Multigol", ["mg_0_1", "mg_1_2", "mg_1_3", "mg_1_4", "mg_2_3",
-                  "mg_2_4", "mg_2_5", "mg_3_4", "mg_3_5", "mg_3_6"]),
-    ("Gol di una sola squadra",
-     ["casa_segna", "casa_nonsegna", "fuori_segna", "fuori_nonsegna",
-      "casa_over15", "casa_under15", "casa_over25", "casa_under25",
-      "fuori_over15", "fuori_under15", "fuori_over25", "fuori_under25",
-      "casa_mg_1_2", "casa_mg_1_3", "fuori_mg_1_2", "fuori_mg_1_3"]),
-    ("Scarto e handicap",
-     ["casa_2plus", "casa_3plus", "casa_h1",
-      "fuori_2plus", "fuori_3plus", "fuori_h1"]),
-    ("Combinazioni",
-     ["1+over25", "1+under25", "X+over25", "X+under25",
-      "2+over25", "2+under25", "1X+over25", "1X+under25",
-      "X2+over25", "X2+under25", "12+over25", "12+under25",
-      "1+over15", "2+over15", "1X+over15", "X2+over15",
-      "1+over35", "2+over35",
-      "1+gol", "1+nogol", "X+gol", "2+gol", "2+nogol",
-      "1X+gol", "1X+nogol", "X2+gol", "X2+nogol", "12+gol", "12+nogol",
-      "1+mg_1_3", "2+mg_1_3", "1X+mg_1_3", "X2+mg_1_3",
-      "1+mg_2_4", "2+mg_2_4"]),
-    ("Altri totali", ["over05", "under05", "over45", "under45",
-                      "pari", "dispari"]),
+    ("Multigol", "tessere",
+     [("mg_0_1", "0-1"), ("mg_1_2", "1-2"), ("mg_1_3", "1-3"),
+      ("mg_1_4", "1-4"), ("mg_2_3", "2-3"), ("mg_2_4", "2-4"),
+      ("mg_2_5", "2-5"), ("mg_3_4", "3-4"), ("mg_3_5", "3-5"),
+      ("mg_3_6", "3-6")]),
+
+    ("Gol di {casa}", "coppie",
+     [("casa_segna", "Segna"), ("casa_nonsegna", "Non segna"),
+      ("casa_over15", "Over 1.5"), ("casa_under15", "Under 1.5"),
+      ("casa_over25", "Over 2.5"), ("casa_under25", "Under 2.5")]),
+
+    ("Gol di {fuori}", "coppie",
+     [("fuori_segna", "Segna"), ("fuori_nonsegna", "Non segna"),
+      ("fuori_over15", "Over 1.5"), ("fuori_under15", "Under 1.5"),
+      ("fuori_over25", "Over 2.5"), ("fuori_under25", "Under 2.5")]),
+
+    ("Multigol di squadra", "tessere",
+     [("casa_mg_1_2", "Casa 1-2"), ("casa_mg_1_3", "Casa 1-3"),
+      ("fuori_mg_1_2", "Osp. 1-2"), ("fuori_mg_1_3", "Osp. 1-3")]),
+
+    ("Scarto e handicap", "tessere",
+     [("casa_2plus", "Casa -2"), ("casa_3plus", "Casa -3"),
+      ("casa_h1", "Casa +1"), ("fuori_2plus", "Osp. -2"),
+      ("fuori_3plus", "Osp. -3"), ("fuori_h1", "Osp. +1")]),
+
+    ("Combinazioni", "tessere",
+     [("1+over25", "1+O2.5"), ("1+under25", "1+U2.5"),
+      ("X+over25", "X+O2.5"), ("X+under25", "X+U2.5"),
+      ("2+over25", "2+O2.5"), ("2+under25", "2+U2.5"),
+      ("1X+over25", "1X+O2.5"), ("1X+under25", "1X+U2.5"),
+      ("X2+over25", "X2+O2.5"), ("X2+under25", "X2+U2.5"),
+      ("12+over25", "12+O2.5"), ("12+under25", "12+U2.5"),
+      ("1+over15", "1+O1.5"), ("2+over15", "2+O1.5"),
+      ("1X+over15", "1X+O1.5"), ("X2+over15", "X2+O1.5"),
+      ("1+over35", "1+O3.5"), ("2+over35", "2+O3.5"),
+      ("1+gol", "1+Gol"), ("1+nogol", "1+NoGol"),
+      ("X+gol", "X+Gol"), ("2+gol", "2+Gol"), ("2+nogol", "2+NoGol"),
+      ("1X+gol", "1X+Gol"), ("1X+nogol", "1X+NoGol"),
+      ("X2+gol", "X2+Gol"), ("X2+nogol", "X2+NoGol"),
+      ("12+gol", "12+Gol"), ("12+nogol", "12+NoGol"),
+      ("1+mg_1_3", "1+MG1-3"), ("2+mg_1_3", "2+MG1-3"),
+      ("1X+mg_1_3", "1X+MG1-3"), ("X2+mg_1_3", "X2+MG1-3"),
+      ("1+mg_2_4", "1+MG2-4"), ("2+mg_2_4", "2+MG2-4")]),
+
+    ("Altri totali", "coppie",
+     [("over05", "Over 0.5"), ("under05", "Under 0.5"),
+      ("over45", "Over 4.5"), ("under45", "Under 4.5"),
+      ("pari", "Pari"), ("dispari", "Dispari")]),
 ]
 
 
 def vocabolario_mercati():
     """
-    I nomi dei mercati, scritti una volta sola in cima al file invece
-    che dentro ogni partita. Con 300 partite e 70 mercati l'uno,
-    ripeterli costerebbe quasi un mega di traffico a ogni
-    aggiornamento: il telefono scarica app.json ogni mezz'ora.
+    Titoli, forma ed etichette dei gruppi, scritti una volta sola in
+    cima al file invece che dentro ogni partita. Con 300 partite e 70
+    mercati l'uno, ripeterli costerebbe quasi un mega di traffico a
+    ogni aggiornamento: il telefono scarica app.json ogni mezz'ora.
     """
-    return [{"t": titolo, "n": [P.NOMI.get(k, k) for k in chiavi]}
-            for titolo, chiavi in GRUPPI_APP]
+    return [{"t": titolo, "f": forma, "n": [e for _, e in voci],
+             "lunghi": [P.NOMI.get(k, k) for k, _ in voci]}
+            for titolo, forma, voci in GRUPPI_APP]
 
 
 def altri_mercati(m):
     """
-    Le probabilita' dei nuovi mercati, nello stesso ordine del
-    vocabolario. Sono numeri interi per mille (264 vuol dire 26,4%):
-    bastano per la percentuale e per la quota equa, e occupano un
-    decimo dello spazio. Sotto lo 0,5% si lascia perdere: sono esiti
-    che nessun bookmaker quota.
+    Le probabilita', nello stesso ordine del vocabolario. Sono numeri
+    interi per mille (264 vuol dire 26,4%): bastano per la percentuale
+    e per la quota equa, e occupano un decimo dello spazio. Sotto lo
+    0,5% si lascia perdere: sono esiti che nessun bookmaker quota.
     """
     return [[(round(m[k] * 1000) if m.get(k, 0) >= 0.005 else 0)
-             for k in chiavi]
-            for _, chiavi in GRUPPI_APP]
+             for k, _ in voci]
+            for _, _, voci in GRUPPI_APP]
 
 
 def partita_per_app(p):
