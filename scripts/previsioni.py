@@ -1922,6 +1922,12 @@ def main():
             p["mercato"] = {k: round(q[k], 4) for k in ("1", "X", "2")}
             p["mercato"]["margine"] = round(q["margine"], 4)
             p["mercato"]["bookmaker"] = q["bookmaker"]
+            # quote medie vere (margine compreso), per il registro delle
+            # giocate dell'app: si propongono gia' scritte nel modulo.
+            # Stanno in una chiave a parte per non toccare le proposte.
+            p["mercato"]["quote"] = {
+                k[len("quota_"):]: round(v, 2) for k, v in q.items()
+                if k.startswith("quota_") and v}
             p["divergenza"] = {k: round(m[k] - q[k], 4) for k in ("1", "X", "2")}
             p["divergenza_max"] = round(
                 max(abs(v) for v in p["divergenza"].values()), 4)

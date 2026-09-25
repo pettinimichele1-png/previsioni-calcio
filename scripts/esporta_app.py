@@ -178,7 +178,10 @@ def vocabolario_mercati():
     ogni aggiornamento: il telefono scarica app.json ogni mezz'ora.
     """
     return [{"t": titolo, "f": forma, "n": [e for _, e in voci],
-             "lunghi": [P.NOMI.get(k, k) for k, _ in voci]}
+             "lunghi": [P.NOMI.get(k, k) for k, _ in voci],
+             # i codici interni: servono all'app per chiudere da sola le
+             # giocate registrate su questi mercati
+             "k": [k for k, _ in voci]}
             for titolo, forma, voci in GRUPPI_APP]
 
 
@@ -227,6 +230,46 @@ def partita_per_app(p):
         fuori["mercato"] = {"1": mk["1"], "X": mk["X"], "2": mk["2"],
                             "margine": mk.get("margine"),
                             "bookmaker": mk.get("bookmaker")}
+    # quote medie dei bookmaker (1X2, Over/Under 2.5, Gol/NoGol), con i
+    # nomi degli esiti usati dall'app: il registro le propone gia' scritte
+    q = (mk or {}).get("quote") or {}
+    rinomina = {"gol_gol": "gol", "no_gol": "nogol"}
+    fuori["quote"] = {rinomina.get(k, k): v for k, v in q.items()} or None
+    return fuori
+
+
+# ---------------------------------------------------------------
+#  RISULTATI RECENTI, per chiudere da sole le giocate registrate
+# ---------------------------------------------------------------
+
+GIORNI_RISULTATI = 21
+FINITE = ("FT", "AET", "PEN")
+ANNULLATE = ("PST", "CANC", "ABD", "AWD", "WO")
+
+
+def risultati_per_app(conn):
+    """
+    Le partite delle ultime tre settimane gia' concluse, come
+    {id: [gol casa, gol ospiti]}, e quelle rinviate o annullate come
+    {id: null}. Il registro delle giocate vive sul telefono: con questi
+    numeri l'app capisce da sola se una giocata e' vinta o persa.
+    Si usano i gol dei 90 minuti piu' eventuali supplementari, come nel
+    resto del sistema; per i campionati non cambia nulla.
+    """
+    limite = (datetime.now(FUSO) - timedelta(days=GIORNI_RISULTATI)).date().isoformat()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT id, goals_home, goals_away, status FROM fixtures "
+                    "WHERE date >= ?", (limite,))
+        righe = cur.fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    fuori = {}
+    for fid, gc, ga, stato in righe:
+        if stato in FINITE and gc is not None and ga is not None:
+            fuori[str(fid)] = [gc, ga]
+        elif stato in ANNULLATE:
+            fuori[str(fid)] = None
     return fuori
 
 
@@ -403,9 +446,11 @@ def main():
 
     schedine = {"totale": {"n": 0, "vinte": 0, "attesa": 0.0},
                 "categorie": {}, "ieri": []}
+    risultati = {}
     if os.path.exists(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
         schedine = schedine_per_app(conn)
+        risultati = risultati_per_app(conn)
         conn.close()
 
     app = {
@@ -417,6 +462,7 @@ def main():
         "esatti": esatti_per_app(previsioni),
         "verifica": verifica,
         "schedine": schedine,
+        "risultati": risultati,
     }
     with open(USCITA, "w", encoding="utf-8") as f:
         json.dump(app, f, ensure_ascii=False, separators=(",", ":"))
