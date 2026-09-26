@@ -722,6 +722,11 @@ SOGLIA_FAVORITO = 0.55
 # sceglie una condizione qualsiasi perche' alza la quota.
 SOGLIA_COMPONENTE = 0.55
 SOGLIA_PRUDENTE = 0.70     # sotto questa, un esito non e' piu' "prudente"
+# Quante gambe dello stesso mercato possono stare in una schedina.
+# Ripetere quattro volte lo stesso tipo di giocata non e' solo brutto
+# da vedere: se su quel mercato il modello sbaglia, sbaglia su tutte
+# e quattro insieme.
+MAX_STESSO_MERCATO = 2
 PEZZI = {"gol": "gol_gol", "nogol": "no_gol"}
 ESITI_1X2 = {"1": {"1"}, "X": {"X"}, "2": {"2"},
              "1X": {"1", "X"}, "X2": {"X", "2"}, "12": {"1", "2"}}
@@ -1029,34 +1034,52 @@ def costruisci_giocate(previsioni):
                                    prob_min=0.60)
               if v["prob"] <= 0.90]
     sicuri.sort(key=lambda v: -v["prob"])
-    usate, sicuri_unici = set(), []
-    for v in sicuri:
-        if v["fixture_id"] in usate:
-            continue
-        usate.add(v["fixture_id"])
-        sicuri_unici.append(v)
 
-    for partenza in range(min(4, len(sicuri_unici))):
-        voci, quota = [], 1.0
-        for v in sicuri_unici[partenza:]:
+    # Per ogni partita si tengono piu' esiti possibili, non solo il piu'
+    # probabile. Prendendo sempre e solo il massimo si finiva col
+    # proporre quattro volte lo stesso mercato: l'handicap +1 della
+    # casa sta quasi sempre fra il 75 e il 90%, quindi vinceva su
+    # ogni partita e le tre schedine uscivano identiche.
+    per_partita = {}
+    for v in sicuri:
+        per_partita.setdefault(v["fixture_id"], []).append(v)
+    ordine = sorted(per_partita.values(), key=lambda lista: -lista[0]["prob"])
+
+    for partenza in range(len(ordine)):
+        if len(proposte["alta"]) >= 3:
+            break
+        voci, quota, quanti = [], 1.0, {}
+        for lista in ordine[partenza:]:
+            # una sola giocata per partita: gli esiti della stessa gara
+            # non sono indipendenti e le probabilita' non si potrebbero
+            # moltiplicare. Fra quelli disponibili si prende il piu'
+            # probabile fra i mercati non ancora saturi.
+            v = next((x for x in lista
+                      if quanti.get(x["esito"], 0) < MAX_STESSO_MERCATO), None)
+            if v is None:
+                continue
             voci.append(v)
+            quanti[v["esito"]] = quanti.get(v["esito"], 0) + 1
             quota *= v["quota"] or _quota_equa(v["prob"])
             if quota >= QUOTA_MINIMA_ALTA and len(voci) >= 2:
                 break
             if len(voci) >= 5:
                 break
         if quota >= QUOTA_MINIMA_ALTA and 2 <= len(voci) <= 5:
-            gia = {tuple(sorted(x["fixture_id"] for x in s["voci"]))
-                   for s in proposte["alta"]}
-            chiave = tuple(sorted(x["fixture_id"] for x in voci))
-            if chiave not in gia:
+            # tre schedine che condividono tre partite su quattro sono
+            # una schedina sola mostrata tre volte: si accetta la nuova
+            # solo se meta' delle partite sono diverse
+            partite_nuove = {x["fixture_id"] for x in voci}
+            simile = any(
+                len(partite_nuove & {x["fixture_id"] for x in s["voci"]})
+                > len(partite_nuove) / 2
+                for s in proposte["alta"])
+            if not simile:
                 proposte["alta"].append(_schedina(
                     voci, f"Alta probabilita' - {len(voci)} eventi",
                     "Esiti molto probabili combinati fino a superare "
                     f"quota {QUOTA_MINIMA_ALTA:.2f}, la soglia sotto la "
                     "quale vincere non cambierebbe nulla."))
-        if len(proposte["alta"]) >= 3:
-            break
 
     # --- valore atteso ---------------------------------------------
     valore = [v for v in con_quota if v["vantaggio"] > 0]
@@ -1103,14 +1126,17 @@ def costruisci_giocate(previsioni):
         minimo, massimo = bersaglio * 0.70, bersaglio * 1.40
         migliore = None
         for partenza in range(len(pool)):
-            voci, quota = [], 1.0
+            voci, quota, quanti = [], 1.0, {}
             for v in pool[partenza:]:
                 if len(voci) >= MAX_EVENTI_MISTA:
                     break
+                if quanti.get(v["esito"], 0) >= MAX_STESSO_MERCATO:
+                    continue
                 q = v["quota"] or _quota_equa(v["prob"])
                 if quota * q > massimo and len(voci) >= 2:
                     break
                 voci.append(v)
+                quanti[v["esito"]] = quanti.get(v["esito"], 0) + 1
                 quota *= q
                 if quota >= bersaglio:
                     break
@@ -1922,12 +1948,6 @@ def main():
             p["mercato"] = {k: round(q[k], 4) for k in ("1", "X", "2")}
             p["mercato"]["margine"] = round(q["margine"], 4)
             p["mercato"]["bookmaker"] = q["bookmaker"]
-            # quote medie vere (margine compreso), per il registro delle
-            # giocate dell'app: si propongono gia' scritte nel modulo.
-            # Stanno in una chiave a parte per non toccare le proposte.
-            p["mercato"]["quote"] = {
-                k[len("quota_"):]: round(v, 2) for k, v in q.items()
-                if k.startswith("quota_") and v}
             p["divergenza"] = {k: round(m[k] - q[k], 4) for k in ("1", "X", "2")}
             p["divergenza_max"] = round(
                 max(abs(v) for v in p["divergenza"].values()), 4)
