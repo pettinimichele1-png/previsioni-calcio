@@ -938,6 +938,92 @@ def _finestra_giorni(previsioni):
             for x in per_giorno.get(g, [])]
 
 
+def _solo_primo_giorno(previsioni):
+    """Solo le partite del primo giorno in programma, cioe' oggi."""
+    per_giorno = {}
+    for p in previsioni:
+        try:
+            g = datetime.fromisoformat(p["data"]).astimezone(FUSO_GIOCATE).date()
+        except (KeyError, TypeError, ValueError):
+            continue
+        per_giorno.setdefault(g, []).append(p)
+    return per_giorno[min(per_giorno)] if per_giorno else []
+
+
+def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=()):
+    """
+    Schedine di esiti molto probabili, combinati fino a superare una
+    quota che renda la vincita sensata.
+
+    Una doppia chance al 93% da' quota 1.07: vincerla non cambia
+    niente. Percio' si usano anche esiti un po' meno scontati, cosi'
+    bastano due o tre eventi invece di otto, e si scarta tutto quello
+    che sta oltre il 90%.
+    """
+    sicuri = [v for v in _raccogli(previsioni, SEMPLICI + SICURI,
+                                   prob_min=0.60)
+              if v["prob"] <= 0.90]
+    sicuri.sort(key=lambda v: -v["prob"])
+
+    # Per ogni partita si tengono piu' esiti possibili, non solo il piu'
+    # probabile. Prendendo sempre e solo il massimo si finiva col
+    # proporre quattro volte lo stesso mercato: l'handicap +1 della
+    # casa sta quasi sempre fra il 75 e il 90%, quindi vinceva su
+    # ogni partita e le schedine uscivano identiche.
+    per_partita = {}
+    for v in sicuri:
+        per_partita.setdefault(v["fixture_id"], []).append(v)
+    ordine = sorted(per_partita.values(), key=lambda lista: -lista[0]["prob"])
+
+    fuori = []
+    for partenza in range(len(ordine)):
+        if len(fuori) >= quante:
+            break
+        voci, quota, quanti = [], 1.0, {}
+        for lista in ordine[partenza:]:
+            # una sola giocata per partita: gli esiti della stessa gara
+            # non sono indipendenti e le probabilita' non si potrebbero
+            # moltiplicare. Fra quelli disponibili si prende il piu'
+            # probabile fra i mercati non ancora saturi.
+            v = next((x for x in lista
+                      if quanti.get(x["esito"], 0) < MAX_STESSO_MERCATO), None)
+            if v is None:
+                continue
+            voci.append(v)
+            quanti[v["esito"]] = quanti.get(v["esito"], 0) + 1
+            quota *= v["quota"] or _quota_equa(v["prob"])
+            if quota >= QUOTA_MINIMA_ALTA and len(voci) >= 2:
+                break
+            if len(voci) >= 5:
+                break
+        if not (quota >= QUOTA_MINIMA_ALTA and 2 <= len(voci) <= 5):
+            continue
+        # Dentro lo stesso gruppo, schedine che condividono la maggior
+        # parte delle partite sono una schedina sola mostrata piu'
+        # volte: se ne accetta una nuova solo se almeno meta' delle
+        # partite sono diverse.
+        nuove = {x["fixture_id"] for x in voci}
+        if any(len(nuove & {x["fixture_id"] for x in s["voci"]}) > len(nuove) / 2
+               for s in fuori):
+            continue
+        # Con le schedine dell'altro gruppo invece si rifiuta solo la
+        # copia esatta: quelle di oggi e quelle sui due giorni si
+        # chiudono in momenti diversi, quindi possono benissimo
+        # contenere la stessa partita. Altrimenti al gruppo di oggi
+        # resterebbero sempre e solo gli scarti dell'altro.
+        if any(nuove == {x["fixture_id"] for x in s["voci"]} for s in gia_fatte):
+            continue
+        titolo = f"Alta probabilita' - {len(voci)} eventi"
+        nota = ("Esiti molto probabili combinati fino a superare quota "
+                f"{QUOTA_MINIMA_ALTA:.2f}, la soglia sotto la quale vincere "
+                "non cambierebbe nulla.")
+        if etichetta:
+            titolo += f" - {etichetta}"
+            nota += " Tutte le partite si giocano oggi: la schedina si chiude in giornata."
+        fuori.append(_schedina(voci, titolo, nota))
+    return fuori
+
+
 FILE_GIOCATE = "giocate_giorno.json"
 
 
@@ -1024,62 +1110,16 @@ def costruisci_giocate(previsioni):
     con_quota.sort(key=lambda v: -v["vantaggio"])
     proposte["singole"] = con_quota[:3]
 
-    # --- alta probabilita': quota utile ----------------------------
-    # Una doppia chance al 93% da' quota 1.07: vincerla non cambia
-    # niente. Si usano anche esiti un po' meno scontati, cosi' bastano
-    # due o tre eventi per superare la soglia invece di otto.
-    # si scartano gli esiti oltre il 90%: danno quote intorno a 1.05 e
-    # servirebbero otto eventi per arrivare alla soglia
-    sicuri = [v for v in _raccogli(previsioni, SEMPLICI + SICURI,
-                                   prob_min=0.60)
-              if v["prob"] <= 0.90]
-    sicuri.sort(key=lambda v: -v["prob"])
-
-    # Per ogni partita si tengono piu' esiti possibili, non solo il piu'
-    # probabile. Prendendo sempre e solo il massimo si finiva col
-    # proporre quattro volte lo stesso mercato: l'handicap +1 della
-    # casa sta quasi sempre fra il 75 e il 90%, quindi vinceva su
-    # ogni partita e le tre schedine uscivano identiche.
-    per_partita = {}
-    for v in sicuri:
-        per_partita.setdefault(v["fixture_id"], []).append(v)
-    ordine = sorted(per_partita.values(), key=lambda lista: -lista[0]["prob"])
-
-    for partenza in range(len(ordine)):
-        if len(proposte["alta"]) >= 3:
-            break
-        voci, quota, quanti = [], 1.0, {}
-        for lista in ordine[partenza:]:
-            # una sola giocata per partita: gli esiti della stessa gara
-            # non sono indipendenti e le probabilita' non si potrebbero
-            # moltiplicare. Fra quelli disponibili si prende il piu'
-            # probabile fra i mercati non ancora saturi.
-            v = next((x for x in lista
-                      if quanti.get(x["esito"], 0) < MAX_STESSO_MERCATO), None)
-            if v is None:
-                continue
-            voci.append(v)
-            quanti[v["esito"]] = quanti.get(v["esito"], 0) + 1
-            quota *= v["quota"] or _quota_equa(v["prob"])
-            if quota >= QUOTA_MINIMA_ALTA and len(voci) >= 2:
-                break
-            if len(voci) >= 5:
-                break
-        if quota >= QUOTA_MINIMA_ALTA and 2 <= len(voci) <= 5:
-            # tre schedine che condividono tre partite su quattro sono
-            # una schedina sola mostrata tre volte: si accetta la nuova
-            # solo se meta' delle partite sono diverse
-            partite_nuove = {x["fixture_id"] for x in voci}
-            simile = any(
-                len(partite_nuove & {x["fixture_id"] for x in s["voci"]})
-                > len(partite_nuove) / 2
-                for s in proposte["alta"])
-            if not simile:
-                proposte["alta"].append(_schedina(
-                    voci, f"Alta probabilita' - {len(voci)} eventi",
-                    "Esiti molto probabili combinati fino a superare "
-                    f"quota {QUOTA_MINIMA_ALTA:.2f}, la soglia sotto la "
-                    "quale vincere non cambierebbe nulla."))
+    # --- alta probabilita' -----------------------------------------
+    # Prima quelle sui due giorni, poi quelle di sola oggi: si chiudono
+    # in serata invece di restare aperte fino a domani.
+    proposte["alta"] = _alta_probabilita(previsioni, 3)
+    oggi = _solo_primo_giorno(previsioni)
+    if len(oggi) < len(previsioni):
+        # se il palinsesto e' gia' tutto di oggi, il secondo gruppo
+        # ripeterebbe il primo e non serve a niente
+        proposte["alta"] += _alta_probabilita(
+            oggi, 3, etichetta="solo oggi", gia_fatte=proposte["alta"])
 
     # --- valore atteso ---------------------------------------------
     valore = [v for v in con_quota if v["vantaggio"] > 0]
