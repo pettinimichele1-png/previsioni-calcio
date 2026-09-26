@@ -1025,6 +1025,23 @@ def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=()):
 
 
 FILE_GIOCATE = "giocate_giorno.json"
+ORA_PROPOSTE = 7          # a che ora del mattino nascono le proposte
+
+
+def giornata_giocate(adesso=None):
+    """
+    Qual e' la "giornata" delle proposte in questo momento.
+
+    Non coincide con la giornata del calendario: comincia alle sette
+    del mattino. Prima di quell'ora si vedono ancora le proposte del
+    giorno prima, e le nuove nascono al primo ciclo dopo le sette,
+    quando sono uscite le prime formazioni probabili e si sanno gli
+    infortuni e i rinvii dell'ultimo momento. Costruirle a mezzanotte
+    e un minuto vorrebbe dire farle con la minima informazione
+    disponibile su quella giornata.
+    """
+    adesso = adesso or datetime.now(FUSO_GIOCATE)
+    return (adesso - timedelta(hours=ORA_PROPOSTE)).date()
 
 
 def _calcola_esatti(previsioni, quanti=5):
@@ -1058,7 +1075,7 @@ def _proposte_giorno(previsioni):
     cambiassero a ogni aggiornamento, una schedina vista alle nove
     potrebbe sparire dopo che l'hai giocata.
     """
-    oggi = datetime.now(FUSO_GIOCATE).date().isoformat()
+    oggi = giornata_giocate().isoformat()
     if os.path.exists(FILE_GIOCATE):
         try:
             with open(FILE_GIOCATE, encoding="utf-8") as f:
@@ -1114,12 +1131,21 @@ def costruisci_giocate(previsioni):
     # Prima quelle sui due giorni, poi quelle di sola oggi: si chiudono
     # in serata invece di restare aperte fino a domani.
     proposte["alta"] = _alta_probabilita(previsioni, 3)
-    oggi = _solo_primo_giorno(previsioni)
-    if len(oggi) < len(previsioni):
-        # se il palinsesto e' gia' tutto di oggi, il secondo gruppo
-        # ripeterebbe il primo e non serve a niente
+    primo_giorno = _solo_primo_giorno(previsioni)
+    if len(primo_giorno) < len(previsioni):
+        # se il palinsesto e' gia' tutto di un giorno solo, il secondo
+        # gruppo ripeterebbe il primo e non serve a niente.
+        # L'etichetta dice "oggi" solo se il primo giorno in programma
+        # e' davvero oggi: capita che il palinsesto cominci domani.
+        try:
+            giorno = datetime.fromisoformat(
+                primo_giorno[0]["data"]).astimezone(FUSO_GIOCATE).date()
+        except (KeyError, IndexError, TypeError, ValueError):
+            giorno = None
         proposte["alta"] += _alta_probabilita(
-            oggi, 3, etichetta="solo oggi", gia_fatte=proposte["alta"])
+            primo_giorno, 3, gia_fatte=proposte["alta"],
+            etichetta=("solo oggi" if giorno == giornata_giocate()
+                       else "un solo giorno"))
 
     # --- valore atteso ---------------------------------------------
     valore = [v for v in con_quota if v["vantaggio"] > 0]
