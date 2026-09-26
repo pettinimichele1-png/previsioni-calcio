@@ -1499,13 +1499,36 @@ def rendimento_schedine():
     return per_categoria or None
 
 
+def esatti_come_schedine(esatti):
+    """
+    I risultati esatti proposti, nella forma di una schedina da un
+    evento solo. Servono a registrarli e a verificarli come tutto il
+    resto: altrimenti resterebbero solo dentro il file del giorno, che
+    viene riscritto ogni mattina, e non sapremmo mai quante volte il
+    risultato proposto e' poi uscito davvero.
+    """
+    fuori = []
+    for d in esatti:
+        p = d.get("p") or {}
+        fuori.append({
+            "titolo": "Risultato esatto",
+            "quota": _quota_equa(d["prob"]),
+            "prob": d["prob"],
+            "voci": [{"fixture_id": d["fixture_id"], "esito": d["risultato"],
+                      "casa": p.get("casa", ""), "fuori": p.get("fuori", ""),
+                      "prob": d["prob"]}],
+        })
+    return fuori
+
+
 def scrivi_giocate(previsioni, generato, rho=-0.05):
     global RHO_SISTEMI
     RHO_SISTEMI = rho
     proposte, _ = giocate_correnti(previsioni)
+    esatti, _ = esatti_correnti(previsioni)
     try:
         conn = sqlite3.connect(DB_PATH)
-        salva_schedine(proposte, conn)
+        salva_schedine(dict(proposte, esatti=esatti_come_schedine(esatti)), conn)
         conn.close()
     except sqlite3.OperationalError:
         pass
