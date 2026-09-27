@@ -950,7 +950,8 @@ def _solo_primo_giorno(previsioni):
     return per_giorno[min(per_giorno)] if per_giorno else []
 
 
-def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=()):
+def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=(),
+                      oltre_oggi=None):
     """
     Schedine di esiti molto probabili, combinati fino a superare una
     quota che renda la vincita sensata.
@@ -997,6 +998,12 @@ def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=()):
             if len(voci) >= 5:
                 break
         if not (quota >= QUOTA_MINIMA_ALTA and 2 <= len(voci) <= 5):
+            continue
+        # Il secondo gruppo ha senso solo se arriva davvero oltre oggi.
+        # Di domenica le partite migliori sono quasi tutte di giornata,
+        # quindi senza questo controllo i due gruppi verrebbero uguali.
+        if oltre_oggi is not None and not any(
+                v["fixture_id"] not in oltre_oggi for v in voci):
             continue
         # Dentro lo stesso gruppo, schedine che condividono la maggior
         # parte delle partite sono una schedina sola mostrata piu'
@@ -1130,22 +1137,24 @@ def costruisci_giocate(previsioni):
     # --- alta probabilita' -----------------------------------------
     # Prima quelle sui due giorni, poi quelle di sola oggi: si chiudono
     # in serata invece di restare aperte fino a domani.
-    proposte["alta"] = _alta_probabilita(previsioni, 3)
+    # Prima quelle che si chiudono in giornata, che sono le piu' utili
+    # subito. Poi quelle che arrivano a domani, ma solo se contengono
+    # davvero una partita di domani: altrimenti sarebbero le stesse.
     primo_giorno = _solo_primo_giorno(previsioni)
+    try:
+        giorno = datetime.fromisoformat(
+            primo_giorno[0]["data"]).astimezone(FUSO_GIOCATE).date()
+    except (KeyError, IndexError, TypeError, ValueError):
+        giorno = None
+    proposte["alta"] = _alta_probabilita(
+        primo_giorno, 3,
+        etichetta=("solo oggi" if giorno == giornata_giocate()
+                   else "un solo giorno"))
     if len(primo_giorno) < len(previsioni):
-        # se il palinsesto e' gia' tutto di un giorno solo, il secondo
-        # gruppo ripeterebbe il primo e non serve a niente.
-        # L'etichetta dice "oggi" solo se il primo giorno in programma
-        # e' davvero oggi: capita che il palinsesto cominci domani.
-        try:
-            giorno = datetime.fromisoformat(
-                primo_giorno[0]["data"]).astimezone(FUSO_GIOCATE).date()
-        except (KeyError, IndexError, TypeError, ValueError):
-            giorno = None
+        di_oggi = {p["fixture_id"] for p in primo_giorno}
         proposte["alta"] += _alta_probabilita(
-            primo_giorno, 3, gia_fatte=proposte["alta"],
-            etichetta=("solo oggi" if giorno == giornata_giocate()
-                       else "un solo giorno"))
+            previsioni, 3, etichetta="fino a domani",
+            gia_fatte=proposte["alta"], oltre_oggi=di_oggi)
 
     # --- valore atteso ---------------------------------------------
     valore = [v for v in con_quota if v["vantaggio"] > 0]
