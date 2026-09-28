@@ -314,6 +314,62 @@ def scarica_quote(giorni, id_ammessi):
     return quote
 
 
+def ricorda_quote(fresche, id_ammessi):
+    """
+    Tiene memoria delle quote viste, e le riusa quando l'API smette di
+    darcele.
+
+    L'API toglie le quote di una partita quando si avvicina al calcio
+    d'inizio: nel log si vede il conteggio che cala di sera in sera,
+    13, 12, 11. Finora chi usciva dall'elenco restava senza confronto
+    proprio nell'ora in cui uno lo guarda, e soprattutto non finiva
+    nell'archivio che serve a verificare se battiamo il mercato.
+
+    Le quote ricordate sono le ultime viste prima che sparissero,
+    cioe' le piu' vicine al calcio d'inizio: sono le migliori che
+    potessimo avere, non un ripiego.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS quote_note (
+                fixture_id INTEGER PRIMARY KEY,
+                aggiornato TEXT,
+                dati TEXT)
+        """)
+        adesso = datetime.now(timezone.utc).isoformat()
+        for fid, q in fresche.items():
+            conn.execute("INSERT OR REPLACE INTO quote_note VALUES (?,?,?)",
+                         (fid, adesso, json.dumps(q)))
+        # le partite vecchie sono gia' state verificate: non servono piu'
+        conn.execute("DELETE FROM quote_note WHERE aggiornato < ?",
+                     ((datetime.now(timezone.utc) -
+                       timedelta(days=30)).isoformat(),))
+        conn.commit()
+
+        mancanti = [f for f in id_ammessi if f not in fresche]
+        recuperate = 0
+        if mancanti:
+            # a blocchi, per non costruire una query lunghissima
+            for i in range(0, len(mancanti), 400):
+                pezzo = mancanti[i:i + 400]
+                segni = ",".join("?" * len(pezzo))
+                for fid, dati in conn.execute(
+                        f"SELECT fixture_id, dati FROM quote_note "
+                        f"WHERE fixture_id IN ({segni})", pezzo):
+                    try:
+                        fresche[fid] = json.loads(dati)
+                        recuperate += 1
+                    except ValueError:
+                        pass
+        conn.close()
+        if recuperate:
+            print(f"  quote ricordate da prima: {recuperate}")
+    except sqlite3.OperationalError as e:
+        print(f"  [quote ricordate non disponibili: {e}]")
+    return fresche
+
+
 def nettezza(p1, px, p2):
     """
     Quanto il pronostico e' sbilanciato, da 0 a 100.
@@ -2038,6 +2094,7 @@ def main():
         print("Scarico le quote per il confronto...")
         quote = scarica_quote({p["data"][:10] for p in previsioni},
                               {p["fixture_id"] for p in previsioni})
+        quote = ricorda_quote(quote, {p["fixture_id"] for p in previsioni})
         for p in previsioni:
             q = quote.get(p["fixture_id"])
             if not q:
