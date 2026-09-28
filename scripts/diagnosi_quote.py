@@ -53,11 +53,21 @@ def main():
     if not P.API_KEY:
         print("  Chiave API assente: serve il file ~/.previsioni_env")
         sys.exit(1)
-    if not os.path.exists(P.USCITA_JSON):
-        print(f"  {P.USCITA_JSON} non trovato: lancia prima previsioni.py")
+    # il file puo' stare nella cartella di lavoro o gia' spostato nel
+    # sito, a seconda di quale giro l'ha prodotto
+    sito = os.environ.get("SITO_DIR", "docs")
+    percorso = next((x for x in (P.USCITA_JSON,
+                                 os.path.join(sito, P.USCITA_JSON),
+                                 os.path.join("docs", P.USCITA_JSON))
+                     if os.path.exists(x)), None)
+    if not percorso:
+        print(f"  {P.USCITA_JSON} non trovato ne' qui ne' in {sito}/.")
+        print("  Lancialo dalla cartella del progetto, dopo un giro della")
+        print("  pipeline.")
         sys.exit(1)
+    print(f"  Leggo {percorso}\n")
 
-    with open(P.USCITA_JSON, encoding="utf-8") as f:
+    with open(percorso, encoding="utf-8") as f:
         previsioni = json.load(f).get("previsioni", [])
 
     con = [p for p in previsioni if p.get("mercato")]
