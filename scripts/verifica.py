@@ -198,9 +198,20 @@ def archivia(conn):
     cur.execute("SELECT fixture_id FROM archivio_previsioni")
     gia = {r[0] for r in cur.fetchall()}
     nuove = [p for p in previsioni if p["fixture_id"] not in gia]
+
+    # Una partita si archivia la prima volta che la vediamo, cioe' fino
+    # a quattro giorni prima: a quell'ora i bookmaker spesso non hanno
+    # ancora aperto le quote, e finora quella partita restava senza per
+    # sempre, fuori dal confronto col mercato. Ora le righe rimaste
+    # vuote si completano quando le quote arrivano.
+    cur.execute("SELECT fixture_id FROM archivio_previsioni WHERE q1 IS NULL")
+    vuote = {r[0] for r in cur.fetchall()}
+    da_completare = [p for p in previsioni if p["fixture_id"] in vuote]
+
     print(f"  gia' archiviate: {len(previsioni) - len(nuove)}")
     print(f"  da archiviare:   {len(nuove)}")
-    if not nuove:
+    print(f"  da completare con le quote: {len(da_completare)}")
+    if not nuove and not da_completare:
         return
 
     quote = {}
@@ -208,7 +219,9 @@ def archivia(conn):
     if API_KEY:
         print("Scarico le quote del momento...")
         chiamate = 0
-        for giorno in sorted({p["data"][:10] for p in nuove}):
+        # i giorni servono per entrambe: le nuove e quelle da completare
+        for giorno in sorted({p["data"][:10]
+                              for p in nuove + da_completare}):
             pagina = 1
             while chiamate < MAX_CHIAMATE:
                 risposta, paging = chiamata("odds", {"date": giorno, "page": pagina})
@@ -242,7 +255,7 @@ def archivia(conn):
         salvate = dict(conn.execute("SELECT fixture_id, dati FROM quote_note"))
     except sqlite3.OperationalError:
         salvate = {}
-    for p in nuove:
+    for p in nuove + da_completare:
         fid = p["fixture_id"]
         if fid in quote and fid in altre:
             continue
@@ -254,9 +267,9 @@ def archivia(conn):
         except ValueError:
             continue
         if fid not in quote and all(k in d for k in ("1", "X", "2")):
-            quote[fid] = {"1": d["1"], "X": d["X"], "2": d["2"],
-                          "margine": d.get("margine", 0),
-                          "bookmaker": d.get("bookmaker", 0)}
+            # stessa forma di quote_1x2: una tupla, non un dizionario
+            quote[fid] = (d["1"], d["X"], d["2"],
+                          d.get("margine", 0), d.get("bookmaker", 0))
             recuperate += 1
         if fid not in altre and ("over25" in d or "gol_gol" in d):
             altre[fid] = d
@@ -285,8 +298,30 @@ def archivia(conn):
               q[3] if q else None, q[4] if q else None, adesso,
               a.get("over25"), a.get("gol_gol"),
               a.get("margine_ou25"), a.get("margine_gg")))
+    # le righe archiviate prima che le quote esistessero si completano
+    # adesso, senza toccare la previsione: quella resta quella di allora
+    completate = 0
+    for p in da_completare:
+        q = quote.get(p["fixture_id"])
+        if not q:
+            continue
+        a = altre.get(p["fixture_id"]) or {}
+        cur.execute("""
+            UPDATE archivio_previsioni
+            SET q1=?, qx=?, q2=?, margine=?, n_bookmaker=?,
+                q_over25=COALESCE(?, q_over25), q_gol=COALESCE(?, q_gol),
+                margine_ou=COALESCE(?, margine_ou),
+                margine_gg=COALESCE(?, margine_gg)
+            WHERE fixture_id=? AND q1 IS NULL
+        """, (q[0], q[1], q[2], q[3], q[4],
+              a.get("over25"), a.get("gol_gol"),
+              a.get("margine_ou25"), a.get("margine_gg"),
+              p["fixture_id"]))
+        completate += cur.rowcount
     conn.commit()
     print(f"\nArchiviate {len(nuove)} previsioni.")
+    if completate:
+        print(f"Completate con le quote {completate} gia' archiviate senza.")
     cur.execute("SELECT COUNT(*), COUNT(q1) FROM archivio_previsioni")
     tot, con_quote = cur.fetchone()
     print(f"Archivio: {tot} previsioni, {con_quote} con quote")
