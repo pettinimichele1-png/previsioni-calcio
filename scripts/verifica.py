@@ -232,6 +232,37 @@ def archivia(conn):
     else:
         print("API_FOOTBALL_KEY assente: archivio senza quote.")
 
+    # L'API toglie le quote quando la partita si avvicina al calcio
+    # d'inizio. Qui pesa piu' che altrove: una partita si archivia una
+    # volta sola, quindi se in quel momento le quote sono gia' sparite
+    # resta fuori dal confronto col mercato per sempre. Si recuperano
+    # le ultime viste da previsioni.py, che gira ogni mezz'ora.
+    recuperate = 0
+    try:
+        salvate = dict(conn.execute("SELECT fixture_id, dati FROM quote_note"))
+    except sqlite3.OperationalError:
+        salvate = {}
+    for p in nuove:
+        fid = p["fixture_id"]
+        if fid in quote and fid in altre:
+            continue
+        grezzo = salvate.get(fid)
+        if not grezzo:
+            continue
+        try:
+            d = json.loads(grezzo)
+        except ValueError:
+            continue
+        if fid not in quote and all(k in d for k in ("1", "X", "2")):
+            quote[fid] = {"1": d["1"], "X": d["X"], "2": d["2"],
+                          "margine": d.get("margine", 0),
+                          "bookmaker": d.get("bookmaker", 0)}
+            recuperate += 1
+        if fid not in altre and ("over25" in d or "gol_gol" in d):
+            altre[fid] = d
+    if recuperate:
+        print(f"  quote recuperate dall'archivio: {recuperate}")
+
     adesso = datetime.now(timezone.utc).isoformat()
     for p in nuove:
         m = p["mercati"]
