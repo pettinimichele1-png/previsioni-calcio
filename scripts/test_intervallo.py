@@ -8,16 +8,15 @@ che succede nel secondo tempo, possiamo confrontarla con le quote live
 dei bookmaker, come facciamo prima della partita.
 
 Il punto di partenza sono i gol attesi ricavati dalle quote di Pinnacle
-(come in quote_giuste.py). Due modi di prevedere il secondo tempo:
+(come in quote_giuste.py): al secondo tempo spetta la sua parte, e in
+piu' si impara dai dati come cambia il ritmo secondo il risultato
+dell'intervallo (chi e' sotto spinge, chi e' avanti si copre).
 
-  SEMPLICE    il secondo tempo vale la sua parte dei gol attesi della
-              partita, qualunque sia il risultato del primo tempo.
-  CON IL      in piu' si impara dai dati come cambia il ritmo: chi e'
-  RISULTATO   sotto spinge, chi e' avanti si copre, e un primo tempo con
-              piu' gol del previsto dice che la partita e' piu' aperta.
-
-I due modi si imparano sulle stagioni fino al 2022/23 e si provano su
-quelle dopo, mai viste. Per ogni mercato che si gioca all'intervallo
+Dal 2023/24 in molti campionati si recupera di piu' a fine partita, e il
+secondo tempo potrebbe pesare piu' di prima. Per questo si confrontano
+due modelli: uno imparato fino al 2022/23 (VECCHIO) e uno imparato sul
+2023/24 (RECENTE), provati entrambi sulle stagioni dal 2024/25, che
+nessuno dei due ha visto. Per ogni mercato che si gioca all'intervallo
 (esito finale, Under/Over, gol nel secondo tempo, Gol/NoGol...) si
 confronta la probabilita' prevista con quello che e' successo.
 
@@ -25,7 +24,8 @@ Quello che questo test NON puo' dire: se i bookmaker all'intervallo
 pagano piu' del giusto. Le quote live storiche non esistono gratis: per
 quello servira' la prova sulla carta, come per valore.py.
 
-Salva la correzione in stato/intervallo.json, per usarla dal vivo.
+Salva il modello imparato su tutte le stagioni dal 2023/24 in
+stato/intervallo.json, per usarlo dal vivo.
 
 Uso, dalla cartella del progetto (usa i file di test_valore.py):
     python3 scripts/test_intervallo.py
@@ -41,7 +41,6 @@ import quote_giuste as Q
 import test_derivati as D
 import test_valore as V
 
-ULTIMA_STAGIONE_STUDIO = "2223"
 N = 10
 FASCE = [(0.0, 0.10), (0.10, 0.20), (0.20, 0.35), (0.35, 0.50),
          (0.50, 0.65), (0.65, 0.80), (0.80, 0.90), (0.90, 1.0001)]
@@ -155,6 +154,34 @@ def perdita(righe):
     return [-(math.log(max(p, 1e-12)) if y else math.log(max(1 - p, 1e-12))) for p, y in righe]
 
 
+def adatta(gruppo):
+    """Quota del primo tempo e cambi di ritmo, imparati su un gruppo di partite."""
+    s_c = sum(p["htc"] for p in gruppo) / max(1, sum(p["gc"] for p in gruppo))
+    s_f = sum(p["hta"] for p in gruppo) / max(1, sum(p["ga"] for p in gruppo))
+    oss = []
+    for p in gruppo:
+        ritmo = (p["htc"] + p["hta"]) - (p["lc"] * s_c + p["lf"] * s_f)
+        oss.append((p["gc"] - p["htc"], math.log(p["lc"] * (1 - s_c)),
+                    {stato_di(p["htc"] - p["hta"]): 1.0, 10: ritmo}))
+        oss.append((p["ga"] - p["hta"], math.log(p["lf"] * (1 - s_f)),
+                    {5 + stato_di(p["hta"] - p["htc"]): 1.0, 10: ritmo}))
+    # parametri: 0-4 stato della casa, 5-9 stato dell'ospite, 10 ritmo del primo tempo
+    return {"s_c": s_c, "s_f": s_f, "theta": poisson_glm(oss, 11)}
+
+
+def attesi_st(p, mod):
+    """I gol attesi del secondo tempo, dato come si e' arrivati all'intervallo."""
+    t, s_c, s_f = mod["theta"], mod["s_c"], mod["s_f"]
+    ritmo = (p["htc"] + p["hta"]) - (p["lc"] * s_c + p["lf"] * s_f)
+    a = p["lc"] * (1 - s_c) * math.exp(t[stato_di(p["htc"] - p["hta"])] + t[10] * ritmo)
+    b = p["lf"] * (1 - s_f) * math.exp(t[5 + stato_di(p["hta"] - p["htc"])] + t[10] * ritmo)
+    return a, b
+
+
+def nome_stagione(s):
+    return f"20{s[:2]}/{s[2:]}"
+
+
 def main():
     print("=" * 88)
     print("1. DATI")
@@ -167,13 +194,7 @@ def main():
             continue
         p["htc"], p["hta"] = htc, hta
         partite.append(p)
-    studio = [p for p in partite if p["stagione"] <= ULTIMA_STAGIONE_STUDIO]
-    prova = [p for p in partite if p["stagione"] > ULTIMA_STAGIONE_STUDIO]
     print(f"  partite con quote di Pinnacle e risultato del primo tempo: {len(partite)}")
-    print(f"  per imparare (fino al 2022/23): {len(studio)}   per provare (dal 2023/24): {len(prova)}")
-    if len(studio) < 2000 or len(prova) < 1000:
-        print("  Troppo poche partite: lancia prima test_valore.py, che scarica i file.")
-        return
 
     # gol attesi dalle quote, con la stessa memoria di calibra_mercati.py
     percorso = os.path.join(V.CARTELLA, "gol_attesi.json")
@@ -201,97 +222,95 @@ def main():
         except OSError:
             pass
 
-    # quanta parte dei gol cade nel primo tempo, per la casa e per l'ospite
-    s_c = sum(p["htc"] for p in studio) / max(1, sum(p["gc"] for p in studio))
-    s_f = sum(p["hta"] for p in studio) / max(1, sum(p["ga"] for p in studio))
-    print(f"  gol nel primo tempo: casa {s_c:.1%}, ospite {s_f:.1%} del totale")
+    print("\n  Stagione per stagione: dal 2023/24 in molti campionati si recupera di piu'")
+    print("  a fine partita. Se il secondo tempo pesa di piu', qui si vede.\n")
+    print(f"    {'stagione':<10}{'partite':>8}{'gol a partita':>15}{'nel 1T':>9}{'nel 2T':>9}")
+    for st in sorted({p["stagione"] for p in partite}):
+        g = [p for p in partite if p["stagione"] == st]
+        tot = sum(p["gc"] + p["ga"] for p in g)
+        pt = sum(p["htc"] + p["hta"] for p in g)
+        print(f"    {nome_stagione(st):<10}{len(g):>8}{tot / len(g):>15.2f}"
+              f"{pt / max(1, tot):>9.1%}{1 - pt / max(1, tot):>9.1%}")
+
+    vecchie = [p for p in partite if p["stagione"] <= "2223"]
+    recente = [p for p in partite if p["stagione"] == "2324"]
+    prova = [p for p in partite if p["stagione"] >= "2425"]
+    print(f"\n  Due modelli, provati entrambi sulle stagioni dal 2024/25 ({len(prova)} partite):")
+    print(f"    VECCHIO  imparato fino al 2022/23 ({len(vecchie)} partite)")
+    print(f"    RECENTE  imparato sul 2023/24 ({len(recente)} partite)")
+    if len(vecchie) < 2000 or len(recente) < 1000 or len(prova) < 1000:
+        print("  Troppo poche partite: lancia prima test_valore.py, che scarica i file.")
+        return
+    mod_v, mod_r = adatta(vecchie), adatta(recente)
 
     # ---------------------------------------------------------------
     print("\n" + "=" * 88)
     print("2. COME CAMBIA IL RITMO NEL SECONDO TEMPO")
     print("=" * 88)
-    # parametri: 0-4 stato della casa, 5-9 stato dell'ospite, 10 ritmo del primo tempo
-    def osservazioni(gruppo):
-        oss = []
-        for p in gruppo:
-            atteso_pt = p["lc"] * s_c + p["lf"] * s_f
-            ritmo = (p["htc"] + p["hta"]) - atteso_pt
-            oss.append((p["gc"] - p["htc"], math.log(p["lc"] * (1 - s_c)),
-                        {stato_di(p["htc"] - p["hta"]): 1.0, 10: ritmo}))
-            oss.append((p["ga"] - p["hta"], math.log(p["lf"] * (1 - s_f)),
-                        {5 + stato_di(p["hta"] - p["htc"]): 1.0, 10: ritmo}))
-        return oss
-
-    theta = poisson_glm(osservazioni(studio), 11)
-    print("  Gol del secondo tempo rispetto a quelli attesi dalle quote, per")
-    print("  come si arriva all'intervallo:\n")
-    print(f"    {'':<16}{'casa':>10}{'ospite':>10}")
+    print("  Gol del secondo tempo rispetto alla parte di gol attesi dalle quote,")
+    print("  per come si arriva all'intervallo:\n")
+    print(f"    {'':<16}{'casa':>18}{'ospite':>18}")
+    print(f"    {'':<16}{'vecchio  recente':>18}{'vecchio  recente':>18}")
+    tv, tr = mod_v["theta"], mod_r["theta"]
     for i, nome in enumerate(STATI):
-        print(f"    {nome:<16}{math.exp(theta[i]) - 1:>+10.0%}{math.exp(theta[5 + i]) - 1:>+10.0%}")
-    print(f"\n  Ogni gol in piu' del previsto nel primo tempo cambia il ritmo del secondo "
-          f"di {math.exp(theta[10]) - 1:+.0%}.")
-
-    def attesi_st(p, con_risultato):
-        a, b = p["lc"] * (1 - s_c), p["lf"] * (1 - s_f)
-        if not con_risultato:
-            return a, b
-        ritmo = (p["htc"] + p["hta"]) - (p["lc"] * s_c + p["lf"] * s_f)
-        a *= math.exp(theta[stato_di(p["htc"] - p["hta"])] + theta[10] * ritmo)
-        b *= math.exp(theta[5 + stato_di(p["hta"] - p["htc"])] + theta[10] * ritmo)
-        return a, b
+        print(f"    {nome:<16}{math.exp(tv[i]) - 1:>+10.0%}{math.exp(tr[i]) - 1:>+8.0%}"
+              f"{math.exp(tv[5 + i]) - 1:>+10.0%}{math.exp(tr[5 + i]) - 1:>+8.0%}")
+    print(f"\n  Gol nel primo tempo: vecchio {mod_v['s_c']:.1%} (casa) {mod_v['s_f']:.1%} (ospite),"
+          f" recente {mod_r['s_c']:.1%} {mod_r['s_f']:.1%}.")
+    print(f"  Ogni gol in piu' del previsto nel primo tempo cambia il ritmo del secondo di "
+          f"{math.exp(tv[10]) - 1:+.0%} (vecchio), {math.exp(tr[10]) - 1:+.0%} (recente).")
 
     # ---------------------------------------------------------------
     print("\n" + "=" * 88)
-    print("3. PREVISTO CONTRO REALE, SULLE STAGIONI MAI VISTE")
+    print("3. PREVISTO CONTRO REALE, DAL 2024/25 (MAI VISTO DA NESSUNO DEI DUE)")
     print("=" * 88)
-    print("  Per ogni mercato giocabile all'intervallo: se il previsto torna col reale in")
-    print("  ogni fascia di probabilita' (il dettaglio compare solo dove non torna), e se")
-    print("  tenere conto del risultato migliora la previsione. Contano solo i casi ancora")
-    print("  aperti (probabilita' fra 2% e 98%).\n")
-    righe = {nome: {"semplice": [], "risultato": []} for nome, _ in MERCATI}
+    print("  Per ogni mercato giocabile all'intervallo: se col modello RECENTE il previsto")
+    print("  torna col reale in ogni fascia (il dettaglio compare solo dove non torna), e")
+    print("  come va rispetto al VECCHIO. Solo casi ancora aperti (fra 2% e 98%).\n")
+    righe = {nome: {"v": [], "r": []} for nome, _ in MERCATI}
     per_pt = {}
     for p in prova:
         sc, sf = p["gc"] - p["htc"], p["ga"] - p["hta"]
         reale = {nome: regola(p["gc"], p["ga"], sc, sf) for nome, regola in MERCATI}
-        pr_s = probabilita(p["htc"], p["hta"], *attesi_st(p, False))
-        pr_r = probabilita(p["htc"], p["hta"], *attesi_st(p, True))
+        pr_v = probabilita(p["htc"], p["hta"], *attesi_st(p, mod_v))
+        pr_r = probabilita(p["htc"], p["hta"], *attesi_st(p, mod_r))
         for nome, _ in MERCATI:
-            # gli stessi casi per i due modi, cosi' il confronto e' alla pari
+            # gli stessi casi per i due modelli, cosi' il confronto e' alla pari
             if 0.02 <= pr_r[nome] <= 0.98:
-                righe[nome]["semplice"].append((pr_s[nome], reale[nome]))
-                righe[nome]["risultato"].append((pr_r[nome], reale[nome]))
+                righe[nome]["v"].append((pr_v[nome], reale[nome]))
+                righe[nome]["r"].append((pr_r[nome], reale[nome]))
         per_pt.setdefault(f"{p['htc']}-{p['hta']}", []).append((pr_r, reale))
 
     affidabili, da_correggere = [], []
     for nome, _ in MERCATI:
-        t_s, ok_s = tabella(righe[nome]["semplice"])
-        t_r, ok_r = tabella(righe[nome]["risultato"])
-        d = [a - b for a, b in zip(perdita(righe[nome]["semplice"]), perdita(righe[nome]["risultato"]))]
+        t_v, ok_v = tabella(righe[nome]["v"])
+        t_r, ok_r = tabella(righe[nome]["r"])
+        d = [a - b for a, b in zip(perdita(righe[nome]["v"]), perdita(righe[nome]["r"]))]
         m = sum(d) / len(d) if d else 0.0
         es = math.sqrt(sum((x - m) ** 2 for x in d) / max(1, len(d) - 1) / max(1, len(d))) if d else 0.0
-        verdetto = "AFFIDABILE" if ok_r else "DA CORREGGERE"
         (affidabili if ok_r else da_correggere).append(nome)
-        print(f"  {nome:<32} {verdetto}   col risultato "
-              f"{'meglio' if m > 2 * es else ('peggio' if m < -2 * es else 'uguale')} "
-              f"del semplice ({m * 1000:+.1f} millesimi)")
-        # il dettaglio per fasce solo dove qualcosa non torna
+        confronto = "meglio" if m > 2 * es else ("peggio" if m < -2 * es else "uguale")
+        print(f"  {nome:<32} {'AFFIDABILE' if ok_r else 'DA CORREGGERE':<14} recente {confronto} "
+              f"del vecchio ({m * 1000:+.1f} millesimi), che era "
+              f"{'affidabile' if ok_v else 'da correggere'}")
         if not ok_r:
             for lo, hi, n, prev, reale, ok in t_r:
-                s_prev = next((x[3] for x in t_s if x[0] == lo), None)
+                v_prev = next((x[3] for x in t_v if x[0] == lo), None)
                 print(f"      {lo:>4.0%}-{min(hi, 1):>4.0%} {n:>6}   previsto {prev:>6.1%}"
-                      + (f" (semplice {s_prev:>5.1%})" if s_prev is not None else " " * 19)
+                      + (f" (vecchio {v_prev:>5.1%})" if v_prev is not None else " " * 18)
                       + f"   reale {reale:>6.1%}  {'ok' if ok else '!! ' + format(reale - prev, '+.1%')}")
 
     # ---------------------------------------------------------------
+    print("\n" + "=" * 88)
+    print("4. I RISULTATI DEL PRIMO TEMPO PIU' FREQUENTI (modello recente)")
     print("=" * 88)
-    print("4. I RISULTATI DEL PRIMO TEMPO PIU' FREQUENTI")
-    print("=" * 88)
-    print("  Probabilita' prevista col risultato (media) contro quello che e' successo.\n")
+    print("  Probabilita' prevista (media) contro quello che e' successo.\n")
     print(f"    {'intervallo':<11}{'partite':>8}   {'gol nel 2T':>18}   {'1 finale':>18}   {'X finale':>18}")
     for pt in ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2"]:
         g = per_pt.get(pt, [])
-        if len(g) < 200:
+        if len(g) < 150:
             continue
+
         def coppia(nome):
             prev = sum(x[0][nome] for x in g) / len(g)
             reale = sum(1 for x in g if x[1][nome]) / len(g)
@@ -301,25 +320,28 @@ def main():
     print("    (previsto / reale)")
 
     # ---------------------------------------------------------------
+    # per l'uso dal vivo: il modello imparato su tutte le stagioni recenti
+    finale = adatta([p for p in partite if p["stagione"] >= "2324"])
     os.makedirs("stato", exist_ok=True)
     with open(USCITA, "w", encoding="utf-8") as f:
-        json.dump({"quota_pt_casa": round(s_c, 4), "quota_pt_ospite": round(s_f, 4),
-                   "stato_casa": [round(x, 5) for x in theta[:5]],
-                   "stato_ospite": [round(x, 5) for x in theta[5:10]],
-                   "ritmo": round(theta[10], 5), "stati": STATI,
+        json.dump({"stagioni": "dal 2023/24",
+                   "quota_pt_casa": round(finale["s_c"], 4), "quota_pt_ospite": round(finale["s_f"], 4),
+                   "stato_casa": [round(x, 5) for x in finale["theta"][:5]],
+                   "stato_ospite": [round(x, 5) for x in finale["theta"][5:10]],
+                   "ritmo": round(finale["theta"][10], 5), "stati": STATI,
                    "affidabili": affidabili, "da_correggere": da_correggere}, f,
                   ensure_ascii=False, indent=1)
 
     print("\n" + "=" * 88)
     print("5. VERDETTO")
     print("=" * 88)
-    print(f"  Mercati dell'intervallo che sappiamo prezzare bene: {len(affidabili)} su {len(MERCATI)}")
+    print(f"  Mercati dell'intervallo che il modello recente prezza bene: {len(affidabili)} su {len(MERCATI)}")
     for n in affidabili:
         print(f"    + {n}")
     for n in da_correggere:
         print(f"    - {n}")
-    print(f"\n  Salvato {USCITA}. Resta da vedere, sulla carta, se i bookmaker all'intervallo")
-    print("  pagano piu' di questi prezzi: questo test non lo puo' dire.")
+    print(f"\n  Salvato {USCITA} (imparato su tutte le stagioni dal 2023/24). Resta da vedere,")
+    print("  sulla carta, se i bookmaker all'intervallo pagano piu' di questi prezzi.")
     print("=" * 88)
 
 
