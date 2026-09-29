@@ -185,11 +185,94 @@ def leggi():
 #  la strategia
 # ---------------------------------------------------------------
 
-def giusto(quote):
-    """Probabilita' senza margine: il prezzo giusto secondo quelle quote."""
+# ---------------------------------------------------------------
+#  come si toglie il margine
+#
+#  Il bookmaker non spalma il suo margine in parti uguali: ne carica
+#  di piu' sulle quote alte (le sfavorite), perche' chi ci scommette
+#  sopra e' meno attento al prezzo. Toglierlo in proporzione, come
+#  facevo nella prima versione di questo test, sopravvaluta le
+#  sfavorite: del 3% circa a quota 7, del 5% a quota 10. E' esattamente
+#  la zona dove il test trovava i suoi "vantaggi".
+#
+#  Qui ci sono tre metodi, e sono i dati a scegliere il piu' onesto:
+#  si guarda quale da' probabilita' che corrispondono meglio a quello
+#  che e' successo davvero su decine di migliaia di partite.
+# ---------------------------------------------------------------
+
+def giusto_proporzionale(quote):
+    """Margine tolto in parti uguali. Semplice, ma gonfia le sfavorite."""
     grezze = {k: 1.0 / q for k, q in quote.items()}
     s = sum(grezze.values())
     return {k: v / s for k, v in grezze.items()}
+
+
+def giusto_potenza(quote):
+    """
+    Si cerca l'esponente k per cui le probabilita' implicite elevate
+    alla k sommano a uno: cosi' il margine pesa di piu' sulle quote
+    alte. E' il metodo che in letteratura si comporta meglio.
+    """
+    grezze = {k: 1.0 / q for k, q in quote.items()}
+    lo, hi = 1.0, 4.0
+    for _ in range(45):
+        e = (lo + hi) / 2
+        if sum(v ** e for v in grezze.values()) > 1.0:
+            lo = e
+        else:
+            hi = e
+    e = (lo + hi) / 2
+    p = {k: v ** e for k, v in grezze.items()}
+    s = sum(p.values())
+    return {k: v / s for k, v in p.items()}
+
+
+def giusto_shin(quote):
+    """
+    Metodo di Shin: immagina che una parte delle puntate venga da chi
+    sa qualcosa in piu', e che il bookmaker si difenda caricando le
+    quote alte. Anche questo sposta margine sulle sfavorite.
+    """
+    pi = {k: 1.0 / q for k, q in quote.items()}
+    s = sum(pi.values())
+
+    def prob(z):
+        return {k: (math.sqrt(z * z + 4 * (1 - z) * v * v / s) - z) / (2 * (1 - z))
+                for k, v in pi.items()}
+    lo, hi = 0.0, 0.5
+    for _ in range(45):
+        z = (lo + hi) / 2
+        if sum(prob(z).values()) > 1.0:
+            lo = z
+        else:
+            hi = z
+    p = prob((lo + hi) / 2)
+    t = sum(p.values())
+    return {k: v / t for k, v in p.items()}
+
+
+METODI = {"proporzionale": giusto_proporzionale,
+          "potenza": giusto_potenza,
+          "Shin": giusto_shin}
+METODO = "potenza"          # scelto dai dati in main(), questo e' il valore di partenza
+RIFERIMENTI = ("PS", "PS_C", "Avg", "PS_OU", "PS_OUC")
+
+
+def prepara(partite):
+    """
+    Il prezzo giusto di ogni partita si calcola una volta sola per ogni
+    metodo, invece che a ogni giro: con 40.000 partite fa la differenza.
+    """
+    for p in partite:
+        p["giusto"] = {}
+        for rif in RIFERIMENTI:
+            if rif in p:
+                for nome, f in METODI.items():
+                    p["giusto"][(rif, nome)] = f(p[rif])
+
+
+def giusto(p, rif, metodo=None):
+    return p["giusto"].get((rif, metodo or METODO))
 
 
 def giocate(partite, libro, riferimento, soglia, mercato="1X2"):
@@ -202,12 +285,12 @@ def giocate(partite, libro, riferimento, soglia, mercato="1X2"):
     out, scartate = [], 0
     for p in partite:
         q_lib = p.get(libro + suf)
-        q_rif = p.get(riferimento + suf)
-        if not q_lib or not q_rif:
+        prob = giusto(p, riferimento + suf)
+        if not q_lib or not prob:
             continue
-        prob = giusto(q_rif)
-        chiusura = p.get("PS_C" if mercato == "1X2" else "PS_OUC")
-        prob_c = giusto(chiusura) if chiusura else None
+        rif_c = "PS_C" if mercato == "1X2" else "PS_OUC"
+        prob_c = giusto(p, rif_c)
+        prob_c_prop = giusto(p, rif_c, "proporzionale")
         for k, quota in q_lib.items():
             vantaggio = quota * prob[k] - 1.0
             if vantaggio < soglia:
@@ -226,6 +309,7 @@ def giocate(partite, libro, riferimento, soglia, mercato="1X2"):
                 "vantaggio": vantaggio, "vinta": vinta,
                 "ritorno": (quota - 1.0) if vinta else -1.0,
                 "clv": (quota * prob_c[k] - 1.0) if prob_c else None,
+                "clv_prop": (quota * prob_c_prop[k] - 1.0) if prob_c_prop else None,
             })
     return out, scartate
 
@@ -318,6 +402,7 @@ def main():
         print("  Nessun dato letto. Se il server non raggiunge football-data.co.uk")
         print("  il test non puo' partire.")
         return
+    global METODO
     stagioni = sorted({p["stagione"] for p in partite})
     print(f"  partite lette: {len(partite)} in {len(stagioni)} stagioni")
     print(f"  con quote di Pinnacle: {sum(1 for p in partite if 'PS' in p)}")
@@ -325,13 +410,68 @@ def main():
     presenti = [l for l in LIBRI if sum(1 for p in partite if l in p) > 500]
     print("  bookmaker con dati sufficienti: " +
           ", ".join(LIBRI[l] for l in presenti))
+    print("\n  Quote di Pinnacle per stagione (servono per scegliere le giocate):")
+    for st in stagioni:
+        g = [p for p in partite if p["stagione"] == st]
+        con = sum(1 for p in g if "PS" in p) / max(len(g), 1)
+        print(f"    20{st[:2]}/{st[2:]}   {len(g):>5} partite   Pinnacle nel {con:>4.0%}")
+    print("  Calcolo i prezzi giusti...", flush=True)
+    prepara(partite)
 
-    # ---- 1. Pinnacle e' davvero il piu' preciso? --------------------
+    # ---- 1. come si toglie il margine -----------------------------
     print("\n" + "=" * 96)
-    print("1. IL RIFERIMENTO REGGE? QUANTO SBAGLIA OGNI BOOKMAKER")
+    print("1. PRIMA DI TUTTO: QUAL E' IL PREZZO GIUSTO?")
     print("=" * 96)
-    print("  Log loss sull'esito, piu' basso e' meglio. Se Pinnacle non fosse")
-    print("  il piu' preciso, tutto il resto del test non avrebbe senso.\n")
+    print("  Per ogni fascia di quota di Pinnacle alla chiusura: quanto spesso")
+    print("  l'esito e' uscito davvero, e quanto diceva ciascun metodo. Il metodo")
+    print("  giusto e' quello che sulle quote alte si avvicina di piu' alla realta'.\n")
+    righe = []
+    for p in partite:
+        if "PS_C" not in p:
+            continue
+        for k, q in p["PS_C"].items():
+            righe.append((q, p["esito"] == k,
+                          {m: p["giusto"][("PS_C", m)][k] for m in METODI}))
+    print(f"  {'quota':<14} {'esiti':>7} {'realta':>8}  " +
+          "  ".join(f"{m:>13}" for m in METODI))
+    for lo, hi in ((1.0, 1.5), (1.5, 2.2), (2.2, 3.5), (3.5, 6.0),
+                   (6.0, 10.0), (10.0, 99.0)):
+        g = [r for r in righe if lo <= r[0] < hi]
+        if not g:
+            continue
+        reale = sum(1 for r in g if r[1]) / len(g)
+        et = f"{lo:.1f} - {hi:.1f}" if hi < 99 else f"sopra {lo:.0f}"
+        celle = []
+        for m in METODI:
+            prev = sum(r[2][m] for r in g) / len(g)
+            celle.append(f"{prev:>6.2%} ({prev / reale - 1:+.0%})" if reale else f"{prev:>6.2%}")
+        print(f"  {et:<14} {len(g):>7} {reale:>8.2%}  " + "  ".join(f"{c:>13}" for c in celle))
+    print("\n  Fra parentesi: di quanto ogni metodo sbaglia rispetto alla realta'.")
+
+    # Si sceglie guardando solo le quote da 3.5 in su, perche' e' li' che
+    # i tre metodi si separano ed e' li' che cadono quasi tutte le
+    # giocate. Il punteggio misura quanto le vittorie previste si
+    # discostano da quelle vere, fascia per fascia: piu' basso e' meglio.
+    punteggi = {}
+    for m in METODI:
+        tot = 0.0
+        for lo, hi in ((3.5, 6.0), (6.0, 10.0), (10.0, 99.0)):
+            g = [r for r in righe if lo <= r[0] < hi]
+            if not g:
+                continue
+            attese = sum(r[2][m] for r in g)
+            vere = sum(1 for r in g if r[1])
+            tot += (vere - attese) ** 2 / max(attese, 1e-9)
+        punteggi[m] = tot
+    METODO = min(punteggi, key=punteggi.get)
+    print("\n  Quanto ogni metodo si allontana dalla realta' sulle quote alte")
+    print("  (piu' basso e' meglio; sotto 6 circa la differenza e' nel rumore):")
+    for m, v in punteggi.items():
+        print(f"    {m:<14} {v:>8.1f}" + ("   <- il piu' onesto, usato da qui in poi"
+                                          if m == METODO else ""))
+
+    # ---- 1b. il riferimento regge? ---------------------------------
+    print("\n  Quanto sbaglia ogni bookmaker, con il metodo scelto:")
     comuni = [p for p in partite if "PS" in p and "B365" in p]
     for pref, nome in (("PS", "Pinnacle"), ("PS_C", "Pinnacle alla chiusura"),
                        ("Avg", "media del mercato"), ("B365", "bet365"),
@@ -339,10 +479,40 @@ def main():
         g = [p for p in comuni if pref in p]
         if len(g) < 500:
             continue
-        ll = sum(-math.log(giusto(p[pref])[p["esito"]]) for p in g) / len(g)
-        print(f"  {nome:<26} {ll:.4f}   su {len(g)} partite")
+        f = METODI[METODO]
+        ll = sum(-math.log(f(p[pref])[p["esito"]]) for p in g) / len(g)
+        print(f"    {nome:<26} {ll:.4f}   su {len(g)} partite")
 
     n_st = len(stagioni)
+
+    # ---- 1c. la misura e' affidabile? -------------------------------
+    print("\n" + "=" * 96)
+    print("1c. IL CLV DICE LA VERITA'? CONTROLLO SUL CAMPIONE PIU' GRANDE")
+    print("=" * 96)
+    print("  Sulle giocate alla quota migliore del mondo, soglia 2%: il CLV dice")
+    print("  quanto si dovrebbe guadagnare, il ritorno quanto si e' guadagnato")
+    print("  davvero. Se la misura e' onesta, il CLV cade dentro la fascia del")
+    print("  ritorno. Se ne resta fuori, la misura inganna.\n")
+    big, _ = giocate(partite, "Max", "PS", 0.02)
+    print(f"  {'quota':<14} {'giocate':>8}  {'ritorno reale':<26} "
+          f"{'CLV ' + METODO:>16} {'CLV proporz.':>14}")
+    for lo, hi in ((1.0, 2.2), (2.2, 3.5), (3.5, 6.0), (6.0, 99.0)):
+        g = [x for x in big if lo <= x["quota"] < hi]
+        if len(g) < 30:
+            continue
+        rit, ic = media_ic([x["ritorno"] for x in g])
+        c_best = [x["clv"] for x in g if x["clv"] is not None]
+        c_prop = [x["clv_prop"] for x in g if x["clv_prop"] is not None]
+        mb = sum(c_best) / len(c_best) if c_best else float("nan")
+        mp = sum(c_prop) / len(c_prop) if c_prop else float("nan")
+        et = f"{lo:.1f} - {hi:.1f}" if hi < 99 else f"sopra {lo:.0f}"
+        def dentro(v):
+            return ic and ic[0] <= v <= ic[1]
+        print(f"  {et:<14} {len(g):>8}  {fmt_ic(rit, ic):<26} "
+              f"{mb:>+14.1%} {'ok' if dentro(mb) else '!!':<2}"
+              f"{mp:>+12.1%} {'ok' if dentro(mp) else '!!':<2}")
+    print("\n  'ok' = il CLV e' compatibile con quello che e' successo davvero.")
+    print("  '!!' = incompatibile: quella misura, in quella fascia, inganna.")
 
     # ---- 2. la regola principale, 1X2 -----------------------------
     print("\n" + "=" * 96)
@@ -436,6 +606,19 @@ def main():
     print("9. VERDETTO")
     print("=" * 96)
     rec = [x for x in tutte if x["stagione"] in RECENTI]
+    print(f"  Metodo per il prezzo giusto: {METODO}\n")
+    for nome_m, merc in (("esito finale", "1X2"), ("Over/Under 2.5", "OU")):
+        g = [x for x in giocate(partite, "B365", "PS", 0.02, merc)[0]
+             if x["stagione"] in RECENTI]
+        if not g:
+            print(f"  {nome_m:<16} nessuna occasione")
+            continue
+        r, ic_r1 = media_ic([x["ritorno"] for x in g])
+        cv = [x["clv"] for x in g if x["clv"] is not None]
+        c, ic_c1 = media_ic(cv) if cv else (float("nan"), None)
+        print(f"  {nome_m:<16} {len(g):>4} giocate  ritorno {fmt_ic(r, ic_r1):<26}"
+              f" CLV {fmt_ic(c, ic_c1) if cv else '–'}")
+    print()
     # Il CLV di una singola giocata varia poco, quindi bastano poche
     # giocate per leggerlo: il ritorno invece ne vorrebbe migliaia.
     if len(rec) < 10:
