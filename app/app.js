@@ -1,20 +1,23 @@
 /* Previsioni - logica dell'app.
  * Legge app.json, prodotto ogni mezz'ora dal sistema sul server, e
  * costruisce le cinque schermate: palinsesto, dettaglio, giocate,
- * risultati esatti, verifica.
+ * risultati esatti, verifica. Dentro Giocate, la scheda Valore legge
+ * valore.json, scritto sul server da valore.py.
  */
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "13";
+  var VERSIONE_APP = "15";
 
   var stato = {
     dati: null,
     fuoriLinea: false,
     giorno: "tutti",
     lega: "tutte",
-    scheda: "alta",
+    scheda: "valore",
     aperta: false,
+    valore: null,              // valore.json: giocate di valore e prova sulla carta
+    valoreAperte: false,       // elenco delle ultime chiuse, aperto o chiuso
     mercati: {},               // quali gruppi di mercati sono aperti
     elenco: "corso",           // mie giocate: in corso o concluse
     giocataAperta: null,
@@ -407,20 +410,26 @@
   // "vantaggio stimato" sul mercato, e la verifica ha dimostrato che
   // quelle giocate perdevano (-14,6% per puntata su 466 casi).
   var SCHEDE = [
+    { id: "valore", nome: "Valore", testo: "Solo dove un bookmaker paga più di quanto l'esito vale secondo Pinnacle. Gioca solo se sul tuo sito trovi almeno la quota minima." },
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
     { id: "miste", nome: "Miste", testo: "Schedine attorno a quota 5, 10 e 17, solo con esiti sopra il 30%." }
   ];
 
-  function vistaGiocate() {
-    var g = stato.dati.giocate || {};
-    var fatte = g.generato ? "Proposte di oggi, fatte alle " + oraDi(data(g.generato)) : "";
-    var html = testa("Giocate", fatte) + '<div class="filtri"><div class="riga-chip nascosto-scroll">' +
+  function chipSchede() {
+    return '<div class="filtri"><div class="riga-chip nascosto-scroll">' +
       SCHEDE.map(function (s) {
         return '<button class="chip' + (stato.scheda === s.id ? " attivo" : "") + '" data-scheda="' + s.id + '">' + s.nome + "</button>";
-      }).join("") + "</div></div>" + avvisoFuoriLinea() + '<div class="corpo">';
+      }).join("") + "</div></div>";
+  }
+
+  function vistaGiocate() {
     var scheda = SCHEDE.filter(function (s) { return s.id === stato.scheda; })[0];
-    if (!scheda) { stato.scheda = "alta"; scheda = SCHEDE[0]; }
+    if (!scheda) { stato.scheda = "valore"; scheda = SCHEDE[0]; }
+    if (stato.scheda === "valore") return vistaValore();
+    var g = stato.dati.giocate || {};
+    var fatte = g.generato ? "Proposte di oggi, fatte alle " + oraDi(data(g.generato)) : "";
+    var html = testa("Giocate", fatte) + chipSchede() + avvisoFuoriLinea() + '<div class="corpo">';
     html += '<div class="nota">' + scheda.testo + "</div>";
 
     var carte = g[stato.scheda] || [];
@@ -455,6 +464,140 @@
     return html + '<p class="nota-piccola">Le proposte si fanno una volta al mattino e non cambiano durante la giornata, anche se le previsioni si aggiornano. Nessuna di queste proposte ha un guadagno dimostrato: la verifica mostra che il mercato è più preciso del modello. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
   }
 
+
+  // ---------------------------------------------------------------
+  //  VALORE: si gioca solo dove un bookmaker paga piu' del giusto
+  // ---------------------------------------------------------------
+  // I dati arrivano da valore.json, che valore.py scrive sul server a
+  // ogni giro. Il prezzo giusto e' la quota di Pinnacle senza margine;
+  // per i mercati dei tempi che Pinnacle non quota e' ricavato dalle sue
+  // quote finali ("stimata"). Per ora e' una prova sulla carta.
+  var FAMIGLIE_VALORE = [
+    ["esito e doppia chance", "Esito e doppia chance"], ["Under/Over", "Under / Over"],
+    ["Gol/NoGol", "Gol / NoGol"], ["primo e secondo tempo", "Primo e secondo tempo"]
+  ];
+  var VERDETTI_VALORE = {
+    presto: ["Ancora presto", "Il verdetto arriva dopo {min} giocate confrontate con l'ultima quota di Pinnacle: ora sono {n}. Fino ad allora solo sulla carta."],
+    vero: ["Il vantaggio è vero", "Le quote prese battono quelle finali di Pinnacle in modo dimostrato. Si può passare ai soldi veri: puntata fissa, solo alla quota minima o sopra."],
+    no: ["Nessun vantaggio", "Le quote prese non battono quelle finali di Pinnacle: con questi bookmaker il metodo non funziona."],
+    incerto: ["Non ancora chiaro", "I numeri non dicono ancora né sì né no: si continua sulla carta."]
+  };
+
+  function pctSegno(v, dec) {
+    if (v == null || isNaN(v)) return "–";
+    var s = Math.abs(v * 100).toFixed(dec == null ? 1 : dec).replace(".", ",");
+    return (v > 0 ? "+" : v < 0 ? "−" : "") + s + "%";
+  }
+
+  function cartaValore(r) {
+    var d = data(r.data);
+    var lega = nomeLega(r.campionato);
+    var chiusa = r.esito === "vinta" || r.esito === "persa" || r.esito === "annullata";
+    var sx = chiusa
+      ? '<div class="etichette"><span class="esito-badge ' + r.esito + '">' + r.esito.toUpperCase() + '</span><span class="lega">' +
+        oraDi(d) + " · " + esc(lega.nome) + "</span></div>"
+      : "<span>" + oraDi(d) + " · " + bandiera(lega.paese) + " " + esc(lega.nome) + "</span>";
+    return '<article class="giocata carta"><div class="giocata-testa">' + sx +
+      '<div class="quota"><small>minima</small><b>' + quota(r.minima) + "</b></div></div>" +
+      '<div class="evento"><div class="sx"><b>' + esc(r.nome) + "</b><small>" + esc(r.partita) +
+      (r.risultato ? " · finita " + esc(r.risultato) : "") + '</small></div><div class="dx2"><span class="esito">' +
+      quota(r.quota) + "</span><small>" + esc(r.book) + (r.commissione ? " exchange" : "") + "</small></div></div>" +
+      '<div class="piede"><span>vantaggio sul prezzo giusto (' + quota(r.giusta) + (r.stimata ? ", stimato" : "") +
+      ")</span><b>" + pctSegno(r.vantaggio, 0) + "</b></div></article>";
+  }
+
+  function cartaSchedinaValore(s) {
+    var html = '<article class="giocata carta"><div class="giocata-testa"><span>Schedina del giorno · ' + esc(s.book) +
+      '</span><div class="quota"><small>quota</small><b>' + quota(s.quota) + "</b></div></div>";
+    (s.voci || []).forEach(function (v) {
+      var fatto = v.esito === "vinta" ? " ✓" : v.esito === "persa" ? " ✕" : "";
+      html += '<div class="evento"><div class="sx"><b>' + esc(v.nome) + "</b><small>" + esc(v.partita) +
+        '</small></div><div class="dx2"><span class="esito">' + quota(v.quota) + fatto + "</span></div></div>";
+    });
+    var esito = s.esito === "vinta" ? "Vinta" : s.esito === "persa" ? "Persa" : null;
+    return html + '<div class="piede' + (s.prob < 0.35 ? " rischio" : "") + '"><span>' +
+      (esito ? esito + " · " : "") + "probabilità che esca tutto · vantaggio " + pctSegno(s.prob * s.quota - 1, 0) +
+      "</span><b>" + pct(s.prob) + "</b></div></article>";
+  }
+
+  function riquadroProva(v) {
+    var b = v.bilancio || {};
+    var s = b.singole || { n: 0 };
+    var clv = b.clv || { n: 0 };
+    var ver = VERDETTI_VALORE[b.verdetto] || VERDETTI_VALORE.presto;
+    var prova = v.prova && v.prova.giorno <= v.prova.di ? "Prova sulla carta · giorno " + v.prova.giorno + " di " + v.prova.di : "Prova sulla carta";
+    var html = '<div class="riquadro carta banca-carta"><div><span class="etichetta">' + prova + '</span><div class="verdetto" style="margin-top:4px">' +
+      ver[0] + "</div></div>" +
+      '<div class="tre"><div><b>' + (s.n || 0) + "</b><span>giocate chiuse" + (s.n ? " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") : "") + "</span></div>" +
+      '<div><b class="' + (s.n ? (s.rendimento >= 0 ? "verde" : "arancio") : "") + '">' + (s.n ? pctSegno(s.rendimento) : "–") + "</b><span>rendimento</span></div>" +
+      '<div><b class="' + (clv.n ? (clv.media >= 0 ? "verde" : "arancio") : "") + '">' + (clv.n ? pctSegno(clv.media) : "–") + "</b><span>contro Pinnacle a fine mercato</span></div></div>";
+    if (s.n) {
+      html += '<div class="tabella"><span class="ti">Mercato</span><span class="ti dx">Gioc.</span><span class="ti dx">Vinte</span><span class="ti dx">Rend.</span>';
+      FAMIGLIE_VALORE.forEach(function (f) {
+        var c = (b.famiglie || {})[f[0]];
+        if (!c || !c.n) return;
+        html += '<span class="c nome">' + f[1] + '</span><span class="c dx">' + c.n + '</span><span class="c dx">' + c.vinte +
+          '</span><span class="c dx ' + (c.rendimento >= 0 ? "verde" : "") + '">' + pctSegno(c.rendimento, 0) + "</span>";
+      });
+      var sc = b.schedine || { n: 0 };
+      if (sc.n) {
+        html += '<span class="c nome">Schedine del giorno</span><span class="c dx">' + sc.n + '</span><span class="c dx">' + sc.vinte +
+          '</span><span class="c dx ' + (sc.rendimento >= 0 ? "verde" : "") + '">' + pctSegno(sc.rendimento, 0) + "</span>";
+      }
+      html += "</div>";
+    }
+    var puntata = v.puntata || 10;
+    var frase = ver[1].replace("{min}", b.min_verdetto || 100).replace("{n}", clv.n || 0);
+    if (s.n) frase = "Sulla carta, a " + euro(puntata) + " a giocata: " + euro(s.utile * puntata, true) + ". " + frase;
+    return html + '<span class="nota" style="padding:0">' + esc(frase) + "</span></div>";
+  }
+
+  function vistaValore() {
+    var v = stato.valore;
+    var sotto = "";
+    if (v && v.generato) {
+      var dg = data(v.generato);
+      sotto = "Valore · " + (chiaveGiorno(dg) === chiaveGiorno(new Date()) ? "aggiornato alle " + oraDi(dg)
+        : "ultimo aggiornamento " + dataBreve(dg) + " " + oraDi(dg));
+    }
+    var html = testa("Giocate", sotto) + chipSchede() + avvisoFuoriLinea() + '<div class="corpo">' +
+      '<div class="nota">' + SCHEDE[0].testo + "</div>";
+    if (!v) {
+      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La scheda si riempie appena valore.py gira sul server.</div></div>';
+    }
+
+    var oggi = v.oggi || [];
+    html += '<div class="gruppo-testa"><h2>Oggi</h2><span>' + (oggi.length === 1 ? "1 giocata" : oggi.length + " giocate") + "</span></div>";
+    if (!oggi.length) {
+      html += '<div class="vuoto"><h3>Nessuna giocata</h3>Per ora nessun bookmaker paga più del giusto: oggi si salta. Il server ricontrolla più volte durante il giorno.</div>';
+    }
+    oggi.forEach(function (r) { html += cartaValore(r); });
+    if (v.schedina) html += cartaSchedinaValore(v.schedina);
+
+    html += '<h2 class="sezione" style="padding-top:10px">Come sta andando</h2>' + riquadroProva(v);
+
+    var ultime = v.ultime || [];
+    if (ultime.length) {
+      html += '<div class="carta apribile' + (stato.valoreAperte ? " aperta" : "") + '"><button data-valore-aperte="1" aria-expanded="' + stato.valoreAperte + '">' +
+        '<span><span class="t1">Ultime chiuse</span><span class="t2">' + ultime.length + (ultime.length === 1 ? " giocata" : " giocate") +
+        '</span></span><span class="bottone">' + (stato.valoreAperte ? "Chiudi" : "Apri") + "</span></button>";
+      if (stato.valoreAperte) {
+        html += '<div class="dentro">';
+        ultime.forEach(function (r) {
+          var vinta = r.esito === "vinta", persa = r.esito === "persa";
+          html += '<div class="riga-evento"><span class="segno' + (persa ? " no" : "") + '"' + (!vinta && !persa ? ' style="background:var(--grigio-forte)"' : "") + ">" +
+            (vinta ? "✓" : persa ? "✕" : "–") + '</span><span class="nome">' + esc(r.nome) +
+            '<br><small style="font-size:11px;font-weight:500;color:var(--testo3)">' + esc(r.partita) + " · " + dataBreve(data(r.data)) + "</small></span>" +
+            '<span class="es">' + quota(r.quota) + '</span><span class="rs">' + esc((r.risultato || "").split(" ")[0]) + "</span></div>";
+        });
+        html += "</div>";
+      }
+      html += "</div>";
+    }
+
+    return html + '<p class="nota-piccola">Il prezzo giusto è la quota di Pinnacle senza il suo margine; sui mercati dei tempi che Pinnacle non quota è stimato dalle sue quote finali, e lì si chiede più vantaggio. Le quote dei bookmaker arrivano dai siti internazionali e possono essere vecchie di qualche ora: sul sito italiano conta solo la quota minima. "Contro Pinnacle a fine mercato" dice quanto le quote prese battono l\'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p></div>';
+  }
+
   // ---------------------------------------------------------------
   //  RISULTATI ESATTI
   // ---------------------------------------------------------------
@@ -477,7 +620,7 @@
   // ---------------------------------------------------------------
   //  VERIFICA
   // ---------------------------------------------------------------
-  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", esatti: "Risultati esatti" };
 
   function vistaVerifica() {
     var v = stato.dati.verifica;
@@ -519,7 +662,7 @@
         '<div><b class="verde">' + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["singole", "alta", "valore", "sistemi", "miste"].forEach(function (k) {
+      ["singole", "alta", "valore", "sistemi", "miste", "esatti"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx verde">' +
@@ -1220,6 +1363,11 @@
       html = vistaDettaglio(decodeURIComponent(h.slice(10)));
     } else if (h === "#/giocate") {
       vista = "giocate"; html = vistaGiocate();
+    } else if (h === "#/valore") {
+      // arriva dalla notifica del mattino: apre Giocate sulla scheda Valore
+      stato.scheda = "valore";
+      if (history.replaceState) history.replaceState(null, "", "#/giocate");
+      vista = "giocate"; html = vistaGiocate();
     } else if (h === "#/esatti") {
       vista = "esatti"; html = vistaEsatti();
     } else if (h === "#/verifica") {
@@ -1244,6 +1392,10 @@
     else if (el.hasAttribute("data-lega")) { stato.lega = el.getAttribute("data-lega"); disegna(); }
     else if (el.hasAttribute("data-scheda")) { stato.scheda = el.getAttribute("data-scheda"); disegna(); }
     else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; disegna(); }
+    else if (el.hasAttribute("data-valore-aperte")) {
+      stato.valoreAperte = !stato.valoreAperte;
+      var yv = window.scrollY; disegna(); window.scrollTo(0, yv);
+    }
     else if (el.hasAttribute("data-mercato")) {
       var g = el.getAttribute("data-mercato");
       stato.mercati[g] = !stato.mercati[g];
@@ -1335,7 +1487,26 @@
   // ---------------------------------------------------------------
   //  dati
   // ---------------------------------------------------------------
+  // valore.json si scarica a parte: se manca o non arriva, il resto
+  // dell'app funziona lo stesso
+  function caricaValore() {
+    return fetch("valore.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { stato.valore = d; })
+      .catch(function () {
+        if (typeof caches === "undefined") return;
+        return caches.match("valore.json").then(function (r) {
+          if (r) return r.json().then(function (d) { stato.valore = d; });
+        });
+      })
+      .then(function () {
+        if (stato.dati && (location.hash === "#/giocate" || location.hash === "#/valore") && stato.scheda === "valore") disegna();
+      })
+      .catch(function () {});
+  }
+
   function carica() {
+    caricaValore();
     return fetch("app.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) { stato.dati = d; stato.fuoriLinea = false; disegna(); })
