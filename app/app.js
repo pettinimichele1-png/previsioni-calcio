@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "15";
+  var VERSIONE_APP = "16";
 
   var stato = {
     dati: null,
@@ -474,7 +474,8 @@
   // quote finali ("stimata"). Per ora e' una prova sulla carta.
   var FAMIGLIE_VALORE = [
     ["esito e doppia chance", "Esito e doppia chance"], ["Under/Over", "Under / Over"],
-    ["Gol/NoGol", "Gol / NoGol"], ["primo e secondo tempo", "Primo e secondo tempo"]
+    ["Gol/NoGol", "Gol / NoGol"], ["primo e secondo tempo", "Primo e secondo tempo"],
+    ["all'intervallo", "All'intervallo"]
   ];
   var VERDETTI_VALORE = {
     presto: ["Ancora presto", "Il verdetto arriva dopo {min} giocate confrontate con l'ultima quota di Pinnacle: ora sono {n}. Fino ad allora solo sulla carta."],
@@ -595,7 +596,7 @@
       html += "</div>";
     }
 
-    return html + '<p class="nota-piccola">Il prezzo giusto è la quota di Pinnacle senza il suo margine; sui mercati dei tempi che Pinnacle non quota è stimato dalle sue quote finali, e lì si chiede più vantaggio. Le quote dei bookmaker arrivano dai siti internazionali e possono essere vecchie di qualche ora: sul sito italiano conta solo la quota minima. "Contro Pinnacle a fine mercato" dice quanto le quote prese battono l\'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p></div>';
+    return html + '<p class="nota-piccola">Il prezzo giusto è la quota di Pinnacle senza il suo margine; sui mercati dei tempi che Pinnacle non quota è stimato dalle sue quote finali, e lì si chiede più vantaggio. Le giocate all\'intervallo confrontano Bet365 live con il nostro prezzo, che parte dalle quote di Pinnacle del mattino e dal risultato del primo tempo: arrivano con una notifica, e vanno giocate prima che ricominci la partita. Le quote dei bookmaker arrivano dai siti internazionali e possono essere vecchie di qualche ora: sul sito italiano conta solo la quota minima. "Contro Pinnacle a fine mercato" dice quanto le quote prese battono l\'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p></div>';
   }
 
   // ---------------------------------------------------------------

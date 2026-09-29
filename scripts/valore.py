@@ -28,6 +28,7 @@ Uso, dalla cartella del progetto:
     python3 scripts/valore.py              le giocate di adesso
     python3 scripts/valore.py bilancio     come sta andando la prova
     python3 scripts/valore.py mercati      (controllo) i mercati che l'API passa
+    python3 scripts/valore.py intervallo   le partite all'intervallo (da cron)
 
 Per farlo girare da solo, una riga in crontab (crontab -e):
     20 * * * * cd ~/previsioni-calcio/previsioni-calcio && . ~/.previsioni_env && python3 scripts/valore.py auto >> ~/valore.log 2>&1
@@ -35,6 +36,20 @@ Parte ogni ora ma lavora solo alle 7, 10, 13, 16, 18 e 20 ora italiana.
 Al primo giro del mattino chiude le giocate di ieri, sceglie quelle di
 oggi e manda la notifica al telefono; i giri dopo aggiornano le quote
 di Pinnacle, che servono per il CLV.
+
+ALL'INTERVALLO
+Ogni 5 minuti "intervallo" guarda quali partite di oggi sono alla pausa.
+Il prezzo giusto del secondo tempo viene dai gol attesi delle quote di
+Pinnacle del mattino e dal risultato del primo tempo, col modello di
+test_intervallo.py (stato/intervallo.json): chi e' sotto spinge, chi e'
+avanti si copre. Si confronta con le quote live dell'API, che vengono da
+Bet365. Se Bet365 paga almeno il 5% sopra il giusto arriva subito una
+notifica e la giocata si registra sulla carta, come le altre. Le partite
+con un'espulsione nel primo tempo si saltano: il modello non la conosce.
+Seconda riga di crontab:
+    */5 * * * * cd ~/previsioni-calcio/previsioni-calcio && . ~/.previsioni_env && python3 scripts/valore.py intervallo >> ~/valore_intervallo.log 2>&1
+Quando nessuna delle nostre partite puo' essere alla pausa non fa niente e
+non chiama l'API; se no costa due o tre chiamate.
 
 Primo e secondo tempo: dove Pinnacle quota il mercato vale la sua quota;
 dove no (secondo tempo, Gol nei tempi, tempo con piu' gol...) il prezzo
@@ -47,6 +62,7 @@ Variabili facoltative: VANTAGGIO_MIN (0.03), VANTAGGIO_MIN_RICAVATI
 (0.05), PUNTATA (10 euro a giocata, solo per contare il bilancio in euro).
 """
 
+import fcntl
 import json
 import math
 import os
@@ -294,22 +310,32 @@ def chiave_tempi(m, esito):
     return k + tempo if k else None
 
 
-def ricavate(pin, cal):
-    """Le probabilita' giuste, corrette, di tutti i mercati dei tempi,
-    ricavate dall'esito e dall'Over/Under di Pinnacle. {} se non si puo'."""
-    if Q is None or not cal:
-        return {}
+def gol_pinnacle(pin):
+    """I gol attesi di casa e ospite che riproducono le quote di Pinnacle su
+    esito e Over/Under (2.5, o la linea piu' vicina). None se non si puo'."""
+    if Q is None:
+        return None
     mw, ou = pin.get("match winner") or {}, pin.get("goals over/under") or {}
     if not all(k in mw for k in ("home", "draw", "away")):
-        return {}
+        return None
     for linea in ("2.5", "3.5", "1.5"):
         if f"over {linea}" in ou and f"under {linea}" in ou:
             break
     else:
-        return {}
+        return None
     f = potenza({k: mw[k] for k in ("home", "draw", "away")})
     fo = potenza({"o": ou[f"over {linea}"], "u": ou[f"under {linea}"]})["o"]
-    grezze, _ = Q.tutte(f["home"], f["draw"], f["away"], fo, linea=float(linea),
+    lc, lf, _ = Q.gol_attesi(f["home"], f["away"], fo, float(linea))
+    return {"lc": lc, "lf": lf, "p": (f["home"], f["draw"], f["away"]), "po": fo,
+            "linea": float(linea)}
+
+
+def ricavate(gp, cal):
+    """Le probabilita' giuste, corrette, di tutti i mercati dei tempi,
+    ricavate dall'esito e dall'Over/Under di Pinnacle. {} se non si puo'."""
+    if Q is None or not cal or not gp:
+        return {}
+    grezze, _ = Q.tutte(*gp["p"], gp["po"], gol=(gp["lc"], gp["lf"]), linea=gp["linea"],
                         quota_pt=cal.get("quota_primo_tempo"))
     prob = Q.correggi(grezze, cal)
     return {k: prob[k] for k in Q.TEMPI
@@ -328,15 +354,16 @@ def valuta(libri, m, esito, p, soglia):
 
 def candidate(voce, cal=None):
     """
-    Il prezzo giusto di ogni esito e le giocate di valore di una
-    partita. (None, {}, []) se Pinnacle non la quota.
+    Il prezzo giusto di ogni esito, le giocate di valore e i gol attesi
+    di una partita. (None, {}, [], None) se Pinnacle non la quota.
     """
     libri = leggi_quote(voce)
     pin = libri.get("Pinnacle")
     if not pin:
-        return None, {}, []
+        return None, {}, [], None
     g = giuste(pin)
-    rp = ricavate(pin, cal)
+    gp = gol_pinnacle(pin)
+    rp = ricavate(gp, cal)
     trovate = []
     # mercati dei tempi che Pinnacle non quota: prezzo ricavato
     visti = set()
@@ -374,7 +401,7 @@ def candidate(voce, cal=None):
             "vantaggio": p * quota_netta(q, ITALIANI[libro]) - 1,
             "minima": math.ceil((1 + VANTAGGIO_MIN) / p * 100 - 1e-9) / 100,
             "soglia": VANTAGGIO_MIN, "pagano": pagano})
-    return g, rp, trovate
+    return g, rp, trovate, gp
 
 
 # ---------------------------------------------------------------
@@ -406,6 +433,8 @@ def nome_giocata(r, casa="Casa", fuori="Ospite", breve=False):
 
 
 def verifica(r, gc, ga, htc, hta):
+    if r.get("fonte") == "intervallo":
+        return avvenuto_pausa(r["mercato"], gc, ga, htc, hta) if htc is not None else None
     if r.get("chiave"):
         return Q.esito(r["chiave"], gc, ga, htc, hta) if Q is not None else None
     return avvenuto(r["mercato"], r["scelta"], gc, ga, htc, hta)
@@ -436,6 +465,8 @@ def sul_tempo(r):
 
 
 def famiglia(r):
+    if r.get("fonte") == "intervallo":
+        return "all'intervallo"
     if sul_tempo(r):
         return "primo e secondo tempo"
     tipo = MERCATI[r["mercato"]][1]
@@ -541,6 +572,7 @@ def giro(notifica=False):
     in_attesa = {r["fixture_id"] for r in registro if r["tipo"] == "singola"
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
     giocate, senza_pinnacle, guasto = [], 0, False
+    gol_oggi = {}
     for fid in sorted(set(palinsesto) | in_attesa):
         try:
             dati = chiama("odds", {"fixture": fid})
@@ -557,10 +589,17 @@ def giro(notifica=False):
         voci = dati.get("response") or []
         if not voci:
             continue
-        g, rp, trovate = candidate(voci[0], cal)
+        g, rp, trovate, gp = candidate(voci[0], cal)
         if g is None:
             senza_pinnacle += fid in palinsesto
             continue
+        if gp and fid in palinsesto:
+            info = palinsesto[fid]
+            gol_oggi[str(fid)] = {"lc": round(gp["lc"], 4), "lf": round(gp["lf"], 4),
+                                  "data": info["data"], "casa": info.get("casa", "?"),
+                                  "fuori": info.get("fuori", "?"),
+                                  "campionato": info.get("campionato", ""),
+                                  "aggiornato": adesso.isoformat(timespec="minutes")}
         # il prezzo giusto piu' recente, per il CLV delle giocate gia' fatte
         for r in registro:
             if r["tipo"] != "singola" or r["fixture_id"] != fid or r["esito"] is not None:
@@ -619,6 +658,7 @@ def giro(notifica=False):
             registro.append(schedina)
 
     salva(FILE_REGISTRO, registro)
+    salva_gol(gol_oggi)
     stampa_giro(adesso, stato, giocate, schedina, nuove, senza_pinnacle, len(palinsesto), conta[0])
     if not cal:
         print("  Mercati dei tempi ricavati spenti: manca stato/calibrazione_mercati.json.")
@@ -706,7 +746,11 @@ def manda_notifica(giocate, schedina, ieri):
         testo = "Nessun bookmaker paga piu' del giusto: oggi si salta"
     if ieri:
         testo += f". {ieri}"
-    dati = {"titolo": titolo, "testo": testo + ".", "url": "./#/valore", "tag": "valore"}
+    return spedisci({"titolo": titolo, "testo": testo + ".", "url": "./#/valore", "tag": "valore"})
+
+
+def spedisci(dati):
+    """Manda una notifica ai telefoni iscritti, con le notifiche dell'app."""
     try:
         import notifiche as N
         if not os.path.exists(N.CHIAVE_PRIVATA):
@@ -730,7 +774,8 @@ def utile_singola(r):
     return -1.0 if r["esito"] == "persa" else 0.0
 
 
-FAMIGLIE = ("esito e doppia chance", "Under/Over", "Gol/NoGol", "primo e secondo tempo")
+FAMIGLIE = ("esito e doppia chance", "Under/Over", "Gol/NoGol", "primo e secondo tempo",
+            "all'intervallo")
 
 
 def utile_schedina(r):
@@ -815,6 +860,9 @@ def bilancio():
     else:
         print("  CLV: non ancora misurato. Serve che lo script giri piu' volte al giorno")
         print("  (con la riga di crontab), per vedere l'ultima quota di Pinnacle prima della partita.\n")
+    if st["famiglie"]["all'intervallo"]["n"]:
+        print("  All'intervallo non c'e' una quota di Pinnacle con cui misurare il CLV: li'")
+        print("  contano il rendimento e le vinte contro le attese, e servono piu' giocate.\n")
     print("  VERDETTO: " + {
         "presto": f"ancora presto. Servono almeno {MIN_VERDETTO} giocate con il CLV, ora {c['n']}.",
         "vero": "il vantaggio e' vero. Si puo' passare ai soldi veri, puntata fissa, solo alle\n"
@@ -848,7 +896,7 @@ def voce_app(r):
             "nome": r["nome"], "book": r["book"], "quota": r["quota"],
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
-            "esito": r["esito"], "risultato": r.get("risultato")}
+            "intervallo": r.get("ht"), "esito": r["esito"], "risultato": r.get("risultato")}
 
 
 def scrivi_app(registro, stato):
@@ -887,6 +935,278 @@ def scrivi_app(registro, stato):
         return f"valore.json non scritto ({e})"
 
 
+
+# ---------------------------------------------------------------
+#  all'intervallo: le quote live di Bet365 contro il nostro prezzo
+# ---------------------------------------------------------------
+
+FILE_GOL = os.path.join("stato", "valore_gol.json")
+FILE_INTERVALLO = os.path.join("stato", "intervallo.json")
+VANTAGGIO_MIN_INTERVALLO = float(os.environ.get("VANTAGGIO_MIN_INTERVALLO", "0.05"))
+VANTAGGIO_MAX_INTERVALLO = 0.25   # sopra, quasi sempre succede qualcosa che il modello non sa
+QUOTA_GIUSTA_INTERVALLO = (1.20, 6.00)
+LIBRO_LIVE = "Bet365 live"
+FINITE = ("FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO")
+
+# nostra chiave -> (nome, mercati di test_intervallo.py che devono risultare affidabili)
+MERCATI_PAUSA = {
+    "fin_1": ("1 finale", ["1 finale"]),
+    "fin_X": ("X finale", ["X finale"]),
+    "fin_2": ("2 finale", ["2 finale"]),
+    "fin_1X": ("1X finale", ["1 finale", "X finale"]),
+    "fin_X2": ("X2 finale", ["X finale", "2 finale"]),
+    "fin_12": ("12 finale", ["1 finale", "2 finale"]),
+    "fin_over15": ("Over 1.5 finale", ["Over 1.5 finale"]),
+    "fin_under15": ("Under 1.5 finale", ["Over 1.5 finale"]),
+    "fin_over25": ("Over 2.5 finale", ["Over 2.5 finale"]),
+    "fin_under25": ("Under 2.5 finale", ["Over 2.5 finale"]),
+    "fin_over35": ("Over 3.5 finale", ["Over 3.5 finale"]),
+    "fin_under35": ("Under 3.5 finale", ["Over 3.5 finale"]),
+    "fin_gol": ("Gol finale", ["Gol finale"]),
+    "fin_nogol": ("NoGol finale", ["Gol finale"]),
+    "st_1": ("1 secondo tempo", ["1 secondo tempo"]),
+    "st_X": ("X secondo tempo", ["X secondo tempo"]),
+    "st_2": ("2 secondo tempo", ["2 secondo tempo"]),
+    "st_casa_si": ("{casa} segna nel secondo tempo", ["Casa segna nel secondo tempo"]),
+    "st_casa_no": ("{casa} non segna nel secondo tempo", ["Casa segna nel secondo tempo"]),
+    "st_ospite_si": ("{fuori} segna nel secondo tempo", ["Ospite segna nel secondo tempo"]),
+    "st_ospite_no": ("{fuori} non segna nel secondo tempo", ["Ospite segna nel secondo tempo"]),
+}
+
+
+def salva_gol(nuovi):
+    """I gol attesi di Pinnacle delle partite di oggi, per l'intervallo.
+    Si tengono solo quelli di ieri e dopo."""
+    tutti = carica(FILE_GOL, {})
+    tutti.update(nuovi)
+    limite = datetime.now(timezone.utc) - timedelta(days=1)
+    tenuti = {}
+    for fid, g in tutti.items():
+        try:
+            if leggi_data(g["data"]) >= limite:
+                tenuti[fid] = g
+        except (KeyError, TypeError, ValueError):
+            pass
+    salva(FILE_GOL, tenuti)
+
+
+def chiave_live(nome, valore):
+    """La nostra chiave per una quota live dell'API (nomi di Bet365)."""
+    b, v = norm(nome), norm(valore)
+    if b == "fulltime result":
+        return {"home": "fin_1", "draw": "fin_X", "away": "fin_2"}.get(v)
+    if b == "double chance":
+        return {"home or draw": "fin_1X", "draw or home": "fin_1X", "away or draw": "fin_X2",
+                "draw or away": "fin_X2", "home or away": "fin_12", "away or home": "fin_12"}.get(v)
+    if b == "match goals":
+        parti = v.split()
+        if len(parti) == 2 and parti[0] in ("over", "under") and parti[1] in ("1.5", "2.5", "3.5"):
+            return f"fin_{parti[0]}{parti[1].replace('.', '')}"
+        return None
+    if b == "both teams to score":
+        return {"yes": "fin_gol", "no": "fin_nogol"}.get(v)
+    if b == "to win 2nd half":
+        return {"home": "st_1", "draw": "st_X", "away": "st_2"}.get(v)
+    if b == "home team score a goal (2nd half)":
+        return {"yes": "st_casa_si", "no": "st_casa_no"}.get(v)
+    if b == "away team score a goal (2nd half)":
+        return {"yes": "st_ospite_si", "no": "st_ospite_no"}.get(v)
+    return None
+
+
+def leggi_live(voce):
+    """{nostra chiave: quota} dalle quote live di una partita, senza le sospese."""
+    quote = {}
+    for m in voce.get("odds") or []:
+        for v in m.get("values") or []:
+            if v.get("suspended"):
+                continue
+            testo = str(v.get("value") or "")
+            h = v.get("handicap")
+            if h not in (None, "") and str(h) not in testo:
+                testo = f"{testo} {h}"
+            k = chiave_live(m.get("name"), testo)
+            if not k:
+                continue
+            try:
+                q = float(v.get("odd"))
+            except (TypeError, ValueError):
+                continue
+            if q > 1.0:
+                quote[k] = q
+    return quote
+
+
+def avvenuto_pausa(k, gc, ga, htc, hta):
+    """Se una giocata fatta all'intervallo e' vinta, dato il risultato."""
+    sc, sf = gc - htc, ga - hta
+    if k.startswith("fin_over"):
+        return gc + ga > int(k[8:]) / 10
+    if k.startswith("fin_under"):
+        return gc + ga < int(k[9:]) / 10
+    return {"fin_1": gc > ga, "fin_X": gc == ga, "fin_2": gc < ga,
+            "fin_1X": gc >= ga, "fin_X2": gc <= ga, "fin_12": gc != ga,
+            "fin_gol": gc > 0 and ga > 0, "fin_nogol": not (gc > 0 and ga > 0),
+            "st_1": sc > sf, "st_X": sc == sf, "st_2": sc < sf,
+            "st_casa_si": sc > 0, "st_casa_no": sc == 0,
+            "st_ospite_si": sf > 0, "st_ospite_no": sf == 0}.get(k)
+
+
+def prob_pausa(lc, lf, htc, hta, mod):
+    """Le probabilita' di tutti i mercati dell'intervallo: i gol attesi del
+    secondo tempo cambiano secondo come ci si e' arrivati."""
+    def stato(d):
+        return 0 if d <= -2 else 1 if d == -1 else 2 if d == 0 else 3 if d == 1 else 4
+    s_c, s_f = mod["quota_pt_casa"], mod["quota_pt_ospite"]
+    ritmo = (htc + hta) - (lc * s_c + lf * s_f)
+    a = lc * (1 - s_c) * math.exp(mod["stato_casa"][stato(htc - hta)] + mod["ritmo"] * ritmo)
+    b = lf * (1 - s_f) * math.exp(mod["stato_ospite"][stato(hta - htc)] + mod["ritmo"] * ritmo)
+    pa, pb = [math.exp(-a)], [math.exp(-b)]
+    for k in range(1, 10):
+        pa.append(pa[-1] * a / k)
+        pb.append(pb[-1] * b / k)
+    out = dict.fromkeys(MERCATI_PAUSA, 0.0)
+    for i, x in enumerate(pa):
+        for j, y in enumerate(pb):
+            for k in MERCATI_PAUSA:
+                if avvenuto_pausa(k, htc + i, hta + j, htc, hta):
+                    out[k] += x * y
+    tot = sum(pa) * sum(pb)
+    return {k: v / tot for k, v in out.items()}
+
+
+def rosso(eventi):
+    """Un'espulsione fra gli eventi della partita (rosso diretto o secondo giallo)."""
+    for e in eventi or []:
+        d = norm(e.get("detail"))
+        if norm(e.get("type")) == "card" and ("red" in d or "second yellow" in d):
+            return True
+    return False
+
+
+def intervallo():
+    """Da cron ogni 5 minuti: le partite di oggi alla pausa, contro Bet365 live."""
+    mod = carica(FILE_INTERVALLO, None)
+    gol = carica(FILE_GOL, {})
+    if not mod or not gol:
+        return
+    adesso = datetime.now(timezone.utc)
+    stato = carica(FILE_STATO, {})
+    fatte = {k: v for k, v in stato.get("intervallo_fatte", {}).items() if k in gol}
+    candidati = []
+    for fid, g in gol.items():
+        try:
+            minuti = (adesso - leggi_data(g["data"])).total_seconds() / 60
+        except (KeyError, TypeError, ValueError):
+            continue
+        if 40 <= minuti <= 85 and fid not in fatte:
+            candidati.append(fid)
+    if not candidati:
+        return        # nessuna partita puo' essere all'intervallo: niente chiamate
+
+    def scrivi(testo):
+        print(f"  {datetime.now(FUSO):%d/%m %H:%M}  {testo}")
+
+    try:
+        dati = chiama("fixtures", {"ids": "-".join(candidati[:20])})
+    except Exception as e:
+        scrivi(f"errore dall'API: {e}")
+        return
+    in_pausa = {}
+    for f in dati.get("response") or []:
+        fid = str((f.get("fixture") or {}).get("id"))
+        st = ((f.get("fixture") or {}).get("status") or {}).get("short")
+        if st in FINITE:
+            fatte[fid] = st
+        if st != "HT" or fid not in gol:
+            continue
+        ht = (f.get("score") or {}).get("halftime") or {}
+        gh, ga = ht.get("home"), ht.get("away")
+        if gh is None or ga is None:
+            gh, ga = (f.get("goals") or {}).get("home"), (f.get("goals") or {}).get("away")
+        if gh is None or ga is None:
+            continue
+        eventi = f.get("events")
+        if eventi is None:
+            try:
+                eventi = chiama("fixtures/events", {"fixture": fid, "type": "Card"}).get("response") or []
+            except Exception:
+                eventi = []
+        partita = f"{gol[fid]['casa']} - {gol[fid]['fuori']} {gh}-{ga}"
+        if rosso(eventi):
+            fatte[fid] = "espulsione"
+            scrivi(f"{partita}: espulsione nel primo tempo, la salto")
+            continue
+        in_pausa[fid] = (int(gh), int(ga))
+
+    if in_pausa:
+        try:
+            live = chiama("odds/live", {})
+        except Exception as e:
+            scrivi(f"errore dall'API (quote live): {e}")
+            live = {}
+        per_id = {str((v.get("fixture") or {}).get("id")): v for v in live.get("response") or []}
+        registro = carica(FILE_REGISTRO, [])
+        gia = {r["id"] for r in registro}
+        affidabili = set(mod.get("affidabili") or [])
+        nuove = []
+        for fid, (htc, hta) in in_pausa.items():
+            g = gol[fid]
+            partita = f"{g['casa']} - {g['fuori']}"
+            voce = per_id.get(fid)
+            if not voce:
+                scrivi(f"{partita} {htc}-{hta}: all'intervallo, ma senza quote live")
+                continue          # si riprova fra 5 minuti, finche' dura la pausa
+            if (voce.get("status") or {}).get("blocked"):
+                continue
+            quote = leggi_live(voce)
+            prob = prob_pausa(g["lc"], g["lf"], htc, hta, mod)
+            scelte = []
+            for k, q in quote.items():
+                nome, servono = MERCATI_PAUSA[k]
+                if not all(x in affidabili for x in servono):
+                    continue
+                p = prob[k]
+                if p <= 0 or not QUOTA_GIUSTA_INTERVALLO[0] <= 1 / p <= QUOTA_GIUSTA_INTERVALLO[1]:
+                    continue
+                v = p * q - 1
+                if VANTAGGIO_MIN_INTERVALLO <= v <= VANTAGGIO_MAX_INTERVALLO:
+                    scelte.append((v, k, q, p))
+            fatte[fid] = "vista"
+            if not scelte:
+                scrivi(f"{partita} {htc}-{hta}: nessuna giocata di valore ({len(quote)} quote confrontate)")
+                continue
+            v, k, q, p = max(scelte)
+            rid = f"{fid}|pausa|{k}"
+            if rid in gia:
+                continue
+            nome = MERCATI_PAUSA[k][0].format(casa=g["casa"], fuori=g["fuori"])
+            r = {"id": rid, "tipo": "singola", "fonte": "intervallo", "fixture_id": int(fid),
+                 "data": g["data"], "partita": partita, "campionato": g.get("campionato", ""),
+                 "mercato": k, "scelta": "", "chiave": None, "ht": f"{htc}-{hta}",
+                 "nome": f"{nome} (intervallo {htc}-{hta})", "book": LIBRO_LIVE, "quota": q,
+                 "commissione": 0, "giusta": round(1 / p, 3),
+                 "minima": math.ceil((1 + VANTAGGIO_MIN_INTERVALLO) / p * 100 - 1e-9) / 100,
+                 "vantaggio": round(v, 4), "prob": round(p, 4),
+                 "registrata": datetime.now(FUSO).isoformat(timespec="minutes"),
+                 "pinnacle_ultima": None, "esito": None}
+            registro.append(r)
+            nuove.append(r)
+            scrivi(f"{partita} {htc}-{hta}: {nome} a {q:.2f} su Bet365 (giusta {1 / p:.2f}, {v:+.1%})")
+        if nuove:
+            salva(FILE_REGISTRO, registro)
+            for r in nuove:
+                scrivi(spedisci({
+                    "titolo": f"Intervallo: {r['partita']} {r['ht']}",
+                    "testo": f"{r['nome'].split(' (intervallo')[0]} a {r['quota']:.2f} su Bet365, "
+                             f"giusta {r['giusta']:.2f} ({r['vantaggio']:+.0%}). Minima {r['minima']:.2f}. "
+                             "Prova sulla carta.",
+                    "url": "./#/valore", "tag": f"pausa-{r['fixture_id']}"}))
+            scrivi(scrivi_app(registro, stato))
+    stato["intervallo_fatte"] = fatte
+    salva(FILE_STATO, stato)
+
+
 # ---------------------------------------------------------------
 
 def mercati():
@@ -912,17 +1232,24 @@ def main():
         print("  Chiave API assente. Prima: source ~/.previsioni_env")
         sys.exit(1)
     comando = sys.argv[1] if len(sys.argv) > 1 else ""
-    if comando == "bilancio":
-        bilancio()
-    elif comando == "mercati":
-        mercati()
-    elif comando == "auto":
-        adesso = datetime.now(FUSO)
-        ultimo = carica(FILE_STATO, {}).get("ultimo_giro", "")
-        if adesso.hour in ORE_AUTO and not ultimo.startswith(adesso.strftime("%Y-%m-%dT%H")):
-            giro(notifica=True)
-    else:
-        giro()
+    # un giro alla volta: il giro del mattino e quello dell'intervallo
+    # possono partire insieme, e scrivono sugli stessi file
+    os.makedirs("stato", exist_ok=True)
+    with open(os.path.join("stato", "valore.lock"), "w") as lucchetto:
+        fcntl.flock(lucchetto, fcntl.LOCK_EX)
+        if comando == "bilancio":
+            bilancio()
+        elif comando == "mercati":
+            mercati()
+        elif comando == "intervallo":
+            intervallo()
+        elif comando == "auto":
+            adesso = datetime.now(FUSO)
+            ultimo = carica(FILE_STATO, {}).get("ultimo_giro", "")
+            if adesso.hour in ORE_AUTO and not ultimo.startswith(adesso.strftime("%Y-%m-%dT%H")):
+                giro(notifica=True)
+        else:
+            giro()
 
 
 if __name__ == "__main__":
