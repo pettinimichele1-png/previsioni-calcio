@@ -572,7 +572,7 @@ def giro(notifica=False):
     in_attesa = {r["fixture_id"] for r in registro if r["tipo"] == "singola"
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
     giocate, senza_pinnacle, guasto = [], 0, False
-    gol_oggi = {}
+    gol_oggi, tempi_oggi = {}, {}
     for fid in sorted(set(palinsesto) | in_attesa):
         try:
             dati = chiama("odds", {"fixture": fid})
@@ -600,6 +600,9 @@ def giro(notifica=False):
                                   "fuori": info.get("fuori", "?"),
                                   "campionato": info.get("campionato", ""),
                                   "aggiornato": adesso.isoformat(timespec="minutes")}
+        if rp and fid in palinsesto:
+            tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
+                                    "p": {k: round(v, 4) for k, v in rp.items()}}
         # il prezzo giusto piu' recente, per il CLV delle giocate gia' fatte
         for r in registro:
             if r["tipo"] != "singola" or r["fixture_id"] != fid or r["esito"] is not None:
@@ -659,6 +662,7 @@ def giro(notifica=False):
 
     salva(FILE_REGISTRO, registro)
     salva_gol(gol_oggi)
+    salva_gol(tempi_oggi, FILE_TEMPI)
     stampa_giro(adesso, stato, giocate, schedina, nuove, senza_pinnacle, len(palinsesto), conta[0])
     if not cal:
         print("  Mercati dei tempi ricavati spenti: manca stato/calibrazione_mercati.json.")
@@ -896,7 +900,8 @@ def voce_app(r):
             "nome": r["nome"], "book": r["book"], "quota": r["quota"],
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
-            "intervallo": r.get("ht"), "esito": r["esito"], "risultato": r.get("risultato")}
+            "intervallo": r.get("ht"), "registrata": r.get("registrata"),
+            "esito": r["esito"], "risultato": r.get("risultato")}
 
 
 def scrivi_app(registro, stato):
@@ -913,13 +918,16 @@ def scrivi_app(registro, stato):
         s = next((r for r in registro if r["id"] == f"schedina|{oggi.isoformat()}"), None)
         schedina = None
         if s:
-            voci = []
+            voci, inizi = [], []
             for v in s["voci"]:
                 r = singole.get(v["id"]) or {}
                 voci.append({"partita": r.get("partita", ""), "nome": r.get("nome", v.get("nome", "")),
                              "quota": v["quota"], "esito": r.get("esito")})
+                if r.get("data"):
+                    inizi.append(r["data"])
             schedina = {"book": s["book"], "quota": s["quota"], "prob": s["prob"],
-                        "esito": s["esito"], "voci": voci}
+                        "esito": s["esito"], "voci": voci,
+                        "prima": min(inizi, key=leggi_data) if inizi else s.get("data")}
         chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa", "annullata")),
                         key=lambda r: r["data"], reverse=True)[:20]
         salva(os.path.join(cartella, "valore.json"), {
@@ -929,7 +937,9 @@ def scrivi_app(registro, stato):
             "oggi": [voce_app(r) for r in di_oggi],
             "schedina": schedina,
             "bilancio": statistiche(registro),
-            "ultime": [voce_app(r) for r in chiuse]})
+            "ultime": [voce_app(r) for r in chiuse],
+            # le quote giuste di primo e secondo tempo, per la pagina di ogni partita
+            "tempi": {fid: t["p"] for fid, t in carica(FILE_TEMPI, {}).items()}})
         return "app aggiornata: " + os.path.join(cartella, "valore.json")
     except Exception as e:
         return f"valore.json non scritto ({e})"
@@ -941,6 +951,7 @@ def scrivi_app(registro, stato):
 # ---------------------------------------------------------------
 
 FILE_GOL = os.path.join("stato", "valore_gol.json")
+FILE_TEMPI = os.path.join("stato", "valore_tempi.json")
 FILE_INTERVALLO = os.path.join("stato", "intervallo.json")
 VANTAGGIO_MIN_INTERVALLO = float(os.environ.get("VANTAGGIO_MIN_INTERVALLO", "0.05"))
 VANTAGGIO_MAX_INTERVALLO = 0.25   # sopra, quasi sempre succede qualcosa che il modello non sa
@@ -974,10 +985,12 @@ MERCATI_PAUSA = {
 }
 
 
-def salva_gol(nuovi):
-    """I gol attesi di Pinnacle delle partite di oggi, per l'intervallo.
-    Si tengono solo quelli di ieri e dopo."""
-    tutti = carica(FILE_GOL, {})
+def salva_gol(nuovi, percorso=None):
+    """I gol attesi di Pinnacle delle partite di oggi, per l'intervallo (o,
+    con FILE_TEMPI, le probabilita' dei tempi per l'app). Si tengono solo
+    quelli di ieri e dopo."""
+    percorso = percorso or FILE_GOL
+    tutti = carica(percorso, {})
     tutti.update(nuovi)
     limite = datetime.now(timezone.utc) - timedelta(days=1)
     tenuti = {}
@@ -987,7 +1000,7 @@ def salva_gol(nuovi):
                 tenuti[fid] = g
         except (KeyError, TypeError, ValueError):
             pass
-    salva(FILE_GOL, tenuti)
+    salva(percorso, tenuti)
 
 
 def chiave_live(nome, valore):

@@ -355,3 +355,15 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .banca-carta .tre b { font-size: 26px; }
 .vb-scala { display: flex; justify-content: space-between; font-size: 10px; color: var(--testo3); margin-top: -4px; }
 .mia-testa .esito { white-space: nowrap; flex-shrink: 0; }
+
+/* ---------- valore: carte compatte ---------- */
+.val { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
+.val-riga { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-width: 0; }
+.val-partita { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; font-weight: 700; color: var(--testo2); }
+.val-testo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.val-min { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--testo3); white-space: nowrap; }
+.val-min b { font-family: var(--titolo); font-size: 22px; font-weight: 800; color: var(--lime); margin-left: 5px; }
+.val-giocata { font-size: 15px; font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.val-testo b { color: var(--testo); }
+.val-quota { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--testo2); white-space: nowrap; }
+.val.chiusa .val-min b { color: var(--testo2); }
