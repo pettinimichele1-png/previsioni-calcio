@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "18";
+  var VERSIONE_APP = "18.3";
 
   var stato = {
     dati: null,
@@ -102,6 +102,37 @@
   function nomeLega(campionato) {
     var parti = String(campionato || "").split(" - ");
     return { paese: parti.length > 1 ? parti[0] : "", nome: parti[parti.length - 1] };
+  }
+  // Bandierine: il paese arriva in inglese dall'API (es. "Czech-Republic").
+  // Inghilterra, Scozia e Galles hanno bandiere proprie, diverse dal Regno Unito.
+  var ISO = {
+    "italy": "IT", "spain": "ES", "germany": "DE", "france": "FR", "netherlands": "NL",
+    "portugal": "PT", "belgium": "BE", "turkey": "TR", "turkiye": "TR", "greece": "GR",
+    "austria": "AT", "switzerland": "CH", "denmark": "DK", "sweden": "SE", "norway": "NO",
+    "poland": "PL", "czech republic": "CZ", "czechia": "CZ", "croatia": "HR", "serbia": "RS",
+    "romania": "RO", "bulgaria": "BG", "ukraine": "UA", "israel": "IL", "finland": "FI",
+    "ireland": "IE", "northern ireland": "GB", "japan": "JP", "south korea": "KR",
+    "korea republic": "KR", "china": "CN", "saudi arabia": "SA", "qatar": "QA",
+    "united arab emirates": "AE", "brazil": "BR", "argentina": "AR", "colombia": "CO",
+    "chile": "CL", "peru": "PE", "ecuador": "EC", "uruguay": "UY", "paraguay": "PY",
+    "bolivia": "BO", "venezuela": "VE", "usa": "US", "united states": "US", "mexico": "MX",
+    "canada": "CA", "hungary": "HU", "slovakia": "SK", "slovenia": "SI", "cyprus": "CY",
+    "australia": "AU", "iceland": "IS", "russia": "RU", "egypt": "EG", "morocco": "MA",
+    "india": "IN", "iran": "IR", "kazakhstan": "KZ", "belarus": "BY", "lithuania": "LT",
+    "latvia": "LV", "estonia": "EE", "bosnia": "BA", "north macedonia": "MK", "albania": "AL",
+    "georgia": "GE", "armenia": "AM", "azerbaijan": "AZ", "moldova": "MD", "montenegro": "ME",
+    "wales": "#gbwls", "scotland": "#gbsct", "england": "#gbeng"
+  };
+  function bandiera(paese) {
+    var codice = ISO[String(paese || "").toLowerCase().replace(/[-_]/g, " ").trim()];
+    if (!codice) return "";
+    if (codice.charAt(0) === "#") {
+      var punti = [0x1F3F4];
+      codice.slice(1).split("").forEach(function (c) { punti.push(0xE0000 + c.charCodeAt(0)); });
+      punti.push(0xE007F);
+      return String.fromCodePoint.apply(null, punti);
+    }
+    return String.fromCodePoint(0x1F1E6 + codice.charCodeAt(0) - 65, 0x1F1E6 + codice.charCodeAt(1) - 65);
   }
   function trovaPartita(id) {
     var lista = (stato.dati && stato.dati.partite) || [];
@@ -465,8 +496,12 @@
       (perNome[n.nome] = perNome[n.nome] || {})[m.campionato] = true;
     });
     var leghe = Object.keys(conteggio).sort(function (a, b) { return conteggio[b] - conteggio[a]; });
+    // la bandiera del paese davanti al nome; senza bandiera, il paese
+    // scritto quando due campionati hanno lo stesso nome
     function etichettaLega(c) {
       var n = nomeLega(c);
+      var b = bandiera(n.paese);
+      if (b) return b + " " + n.nome;
       return perNome[n.nome] && Object.keys(perNome[n.nome]).length > 1 && n.paese ? n.nome + " · " + n.paese : n.nome;
     }
     if (stato.lega !== "tutte" && !conteggio[stato.lega]) stato.lega = "tutte";
@@ -605,17 +640,29 @@
         return '<div class="tessera' + (f.p[k] === max ? " primo" : "") + '"><small>' + k + "</small><b>" + pct(f.p[k]) + "</b>" +
           (f.mercato ? '<span class="eq">' + quota(1 / f.p[k]) + "</span>" : "") + "</div>";
       }).join("") + "</div>" + barra3(f.p);
-    if (f.mercato) {
-      html += '<span class="nota">Il nostro modello: ' + pct(m.p["1"]) + " · " + pct(m.p["X"]) + " · " + pct(m.p["2"]) + "</span>";
-      var scarto = Math.max.apply(null, ["1", "X", "2"].map(function (k) { return Math.abs(m.p[k] - f.p[k]); }));
-      if (scarto >= 0.15) {
-        html += '<div class="avviso">' + icona("avviso") + "<span>Il nostro modello si allontana molto dal mercato. Nei nostri test, in questi casi di solito sbaglia il modello.</span></div>";
-      }
-    }
     html += '<div class="doppie">' + ["1X", "12", "X2"].map(function (k) {
       return "<div><small>" + k + "</small><b>" + pct(f.dc[k]) + "</b>" + (f.mercato ? '<span class="eq">' + quota(1 / f.dc[k]) + "</span>" : "") + "</div>";
     }).join("") + "</div></section>";
-    return html;
+    return html + bloccoConfronto(m, f);
+  }
+
+  // il nostro modello contro il mercato, esito per esito, come nella
+  // versione 17: stesso mercato delle percentuali qui sopra
+  function bloccoConfronto(m, f) {
+    if (!f.mercato) return "";
+    var mk = m.mercato || {};
+    var fonte = f.nome.indexOf("Pinnacle") === 0 ? "Mercato: le quote di Pinnacle, margine già tolto."
+      : "Mercato: media di " + (mk.bookmaker || "più") + " bookmaker" + (mk.margine != null ? ", margine del " + pct(mk.margine, 1) : "") + " già tolto.";
+    var scarti = ["1", "X", "2"].map(function (k) { return m.p[k] - f.p[k]; });
+    var massimo = Math.max.apply(null, scarti.map(Math.abs));
+    return '<section class="blocco carta"><h2>Confronto con i bookmaker</h2><div class="confronto">' +
+      '<span class="ti"></span><span class="ti dx">NOI</span><span class="ti dx">MERCATO</span><span class="ti dx">SCARTO</span>' +
+      ["1", "X", "2"].map(function (k, i) {
+        return '<span class="v">' + k + '</span><span class="v dx">' + pct(m.p[k]) + '</span><span class="v dx fioco">' + pct(f.p[k]) +
+          '</span><span class="v dx ' + (Math.abs(scarti[i]) >= 0.005 ? "chiaro" : "fioco") + '">' + segno(scarti[i]) + "</span>";
+      }).join("") + '</div><span class="nota">' + fonte + "</span>" +
+      (massimo >= 0.15 ? '<div class="avviso">' + icona("avviso") + "<span>Divergenza forte. Nei nostri test, quando ci allontaniamo così dal mercato di solito sbagliamo noi.</span></div>" : "") +
+      "</section>";
   }
 
   function bloccoGol(m) {
@@ -788,7 +835,7 @@
     var lega = nomeLega(m.campionato);
     var etichettaForm = m.formazioni === "ufficiale" ? "Formazioni ufficiali" :
                         m.formazioni === "probabile" ? "Formazioni probabili" : "Formazioni non note";
-    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + esc(lega.nome) +
+    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + bandiera(lega.paese) + " " + esc(lega.nome) +
       (lega.paese ? " · " + esc(lega.paese) : "") + '</span><span class="badge' + (m.formazioni === "ufficiale" ? " uff" : "") + '">' +
       etichettaForm.toUpperCase() + '</span></div><h1 class="nomi"><span class="nome">' + esc(m.casa) +
       '</span><span class="contro">contro</span><span class="nome">' + esc(m.fuori) + "</span></h1>" +
