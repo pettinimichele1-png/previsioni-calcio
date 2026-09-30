@@ -1,15 +1,18 @@
 /* Previsioni - funzionamento offline.
  * L'interfaccia viene salvata e servita subito; i dati (app.json) si
  * chiedono sempre prima alla rete, e solo senza rete si usa l'ultima
- * copia salvata. Quando si cambiano i file dell'app si alza VERSIONE.
+ * copia salvata. Quando si cambiano i file dell'app si alza VERSIONE,
+ * e in index.html il numero dopo "?v=" di app.js e stile.css: cosi' il
+ * telefono non puo' tenersi la copia vecchia nella sua memoria.
  */
-const VERSIONE = "previsioni-18";
-const GUSCIO = ["./", "./index.html", "./stile.css", "./app.js",
+const VERSIONE = "previsioni-18.1";
+const GUSCIO = ["./", "./index.html", "./stile.css?v=18.1", "./app.js?v=18.1",
                 "./manifest.webmanifest", "./icona-180.png",
                 "./icona-192.png", "./icona-512.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSIONE).then((c) => c.addAll(GUSCIO)));
+  // "reload": i file si prendono dal server, mai dalla memoria del browser
+  e.waitUntil(caches.open(VERSIONE).then((c) => c.addAll(GUSCIO.map((u) => new Request(u, { cache: "reload" })))));
   self.skipWaiting();
 });
 
@@ -46,10 +49,11 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // l'interfaccia: prima la rete, cosi' un aggiornamento arriva subito;
-  // senza rete si usa la copia salvata
+  // l'interfaccia: prima la rete, cosi' un aggiornamento arriva subito, e
+  // sempre ricontrollata sul server ("no-cache"); senza rete la copia salvata
+  const richiesta = e.request.mode === "navigate" ? e.request : new Request(e.request, { cache: "no-cache" });
   e.respondWith(
-    fetch(e.request).then((r) => {
+    fetch(richiesta).then((r) => {
       if (r.ok) { const copia = r.clone(); caches.open(VERSIONE).then((c) => c.put(e.request, copia)); }
       return r;
     }).catch(() => caches.match(e.request))
