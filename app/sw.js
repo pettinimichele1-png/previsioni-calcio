@@ -3,7 +3,7 @@
  * chiedono sempre prima alla rete, e solo senza rete si usa l'ultima
  * copia salvata. Quando si cambiano i file dell'app si alza VERSIONE.
  */
-const VERSIONE = "previsioni-17";
+const VERSIONE = "previsioni-18";
 const GUSCIO = ["./", "./index.html", "./stile.css", "./app.js",
                 "./manifest.webmanifest", "./icona-180.png",
                 "./icona-192.png", "./icona-512.png"];
@@ -69,7 +69,7 @@ self.addEventListener("push", (e) => {
   }));
 });
 
-// toccando la notifica si apre la partita
+// toccando la notifica si apre la pagina giusta (la partita, o Oggi)
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const url = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;

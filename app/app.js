@@ -1,30 +1,30 @@
 /* Previsioni - logica dell'app.
  * Legge app.json, prodotto ogni mezz'ora dal sistema sul server, e
- * costruisce le cinque schermate: palinsesto, dettaglio, giocate,
- * risultati esatti, verifica. Dentro Giocate, la scheda Valore legge
- * valore.json, scritto sul server da valore.py.
+ * valore.json, scritto da valore.py. Quattro schermate nella barra in
+ * basso: Oggi (le giocate di valore da fare adesso), Partite (con la
+ * pagina di ogni partita), Giocate (le proposte del modello e i
+ * risultati esatti) e Risultati (la prova sulla carta e la verifica del
+ * modello).
  */
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "17";
+  var VERSIONE_APP = "18";
 
   var stato = {
     dati: null,
+    datiCaricati: false,       // il primo tentativo di scaricare app.json e' finito
     fuoriLinea: false,
-    giorno: "tutti",
-    lega: "tutte",
-    scheda: "valore",
-    aperta: false,
     valore: null,              // valore.json: giocate di valore e prova sulla carta
-    valoreAperte: false,       // elenco delle ultime chiuse, aperto o chiuso
-    valoreElenco: "giocare",   // giocate di oggi: da giocare, in corso, chiuse
-    mercati: {},               // quali gruppi di mercati sono aperti
-    elenco: "corso",           // mie giocate: in corso o concluse
-    giocataAperta: null,
-    impostazioni: false,
-    copia: false,
-    nuova: { fid: null, esito: null, quota: "", puntata: "", toccata: false, cerca: "" },
+    valoreCaricato: false,     // il primo tentativo di scaricarlo e' finito
+    giorno: "tutti",           // partite: giorno scelto
+    lega: "tutte",             // partite: campionato scelto
+    scheda: "alta",            // giocate: alta, sistemi, miste, esatti
+    risultati: "carta",        // risultati: carta o modello
+    aperta: false,             // il modello: schedine concluse ieri
+    oggiAperto: {},            // oggi: righe "in corso" e "chiuse" aperte
+    mercati: {},               // pagina della partita: gruppi di mercati aperti
+    grafico: null,             // risultati: i punti del grafico, per il dito
     notifiche: "sconosciuto"   // attive, spente, negate, installa, non-supportate
   };
 
@@ -42,6 +42,11 @@
     if (v == null || isNaN(v)) return "–";
     return (v * 100).toFixed(dec || 0).replace(".", ",") + "%";
   }
+  function pctSegno(v, dec) {
+    if (v == null || isNaN(v)) return "–";
+    var s = Math.abs(v * 100).toFixed(dec == null ? 1 : dec).replace(".", ",");
+    return (v > 0 ? "+" : v < 0 ? "−" : "") + s + "%";
+  }
   function quota(v, dec) {
     if (v == null || isNaN(v)) return "–";
     return Number(v).toFixed(dec == null ? 2 : dec);
@@ -49,6 +54,15 @@
   function segno(v) {
     var n = Math.round(v * 100);
     return (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n);
+  }
+  function euro(v, segnoSempre) {
+    if (v == null || isNaN(v)) return "–";
+    var s = Math.abs(v).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    var pre = v < -0.004 ? "−" : (segnoSempre && v > 0.004 ? "+" : "");
+    return pre + s + " €";
+  }
+  function euroTondo(v) {
+    return Math.round(v) === v ? v + " €" : euro(v);
   }
   function data(iso) { return new Date(iso); }
   function chiaveGiorno(d) {
@@ -66,6 +80,12 @@
     return GIORNI[d.getDay()] + " " + String(d.getDate()).padStart(2, "0") + "/" +
            String(d.getMonth() + 1).padStart(2, "0");
   }
+  function giornoCorto(d) { return d.getDate() + " " + MESI[d.getMonth()].slice(0, 3); }
+  function daChiave(chiave) {
+    var p = String(chiave).split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function ieri() { var d = new Date(); d.setDate(d.getDate() - 1); return chiaveGiorno(d); }
   function relativo(chiave) {
     var oggi = new Date();
     var domani = new Date(); domani.setDate(oggi.getDate() + 1);
@@ -74,8 +94,7 @@
     return null;
   }
   function titoloGiorno(chiave) {
-    var p = chiave.split("-");
-    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var d = daChiave(chiave);
     var base = GIORNI_LUNGHI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
     var r = relativo(chiave);
     return r ? r + " · " + base.toLowerCase() : base;
@@ -84,52 +103,36 @@
     var parti = String(campionato || "").split(" - ");
     return { paese: parti.length > 1 ? parti[0] : "", nome: parti[parti.length - 1] };
   }
-
-  // Bandierine: il paese arriva in inglese dall'API (es. "Czech-Republic").
-  // Inghilterra, Scozia e Galles hanno bandiere proprie, diverse dal Regno Unito.
-  var ISO = {
-    "italy": "IT", "spain": "ES", "germany": "DE", "france": "FR", "netherlands": "NL",
-    "portugal": "PT", "belgium": "BE", "turkey": "TR", "turkiye": "TR", "greece": "GR",
-    "austria": "AT", "switzerland": "CH", "denmark": "DK", "sweden": "SE", "norway": "NO",
-    "poland": "PL", "czech republic": "CZ", "czechia": "CZ", "croatia": "HR", "serbia": "RS",
-    "romania": "RO", "bulgaria": "BG", "ukraine": "UA", "israel": "IL", "finland": "FI",
-    "ireland": "IE", "northern ireland": "GB", "japan": "JP", "south korea": "KR",
-    "korea republic": "KR", "china": "CN", "saudi arabia": "SA", "qatar": "QA",
-    "united arab emirates": "AE", "brazil": "BR", "argentina": "AR", "colombia": "CO",
-    "chile": "CL", "peru": "PE", "ecuador": "EC", "uruguay": "UY", "paraguay": "PY",
-    "bolivia": "BO", "venezuela": "VE", "usa": "US", "united states": "US", "mexico": "MX",
-    "canada": "CA", "hungary": "HU", "slovakia": "SK", "slovenia": "SI", "cyprus": "CY",
-    "australia": "AU", "iceland": "IS", "russia": "RU", "egypt": "EG", "morocco": "MA",
-    "india": "IN", "iran": "IR", "kazakhstan": "KZ", "belarus": "BY", "lithuania": "LT",
-    "latvia": "LV", "estonia": "EE", "bosnia": "BA", "north macedonia": "MK", "albania": "AL",
-    "georgia": "GE", "armenia": "AM", "azerbaijan": "AZ", "moldova": "MD", "montenegro": "ME",
-    "wales": "#gbwls", "scotland": "#gbsct", "england": "#gbeng"
-  };
-  function bandiera(paese) {
-    var codice = ISO[String(paese || "").toLowerCase().replace(/[-_]/g, " ").trim()];
-    if (!codice) return "";
-    if (codice.charAt(0) === "#") {
-      var punti = [0x1F3F4];
-      codice.slice(1).split("").forEach(function (c) { punti.push(0xE0000 + c.charCodeAt(0)); });
-      punti.push(0xE007F);
-      return String.fromCodePoint.apply(null, punti);
-    }
-    return String.fromCodePoint(0x1F1E6 + codice.charCodeAt(0) - 65, 0x1F1E6 + codice.charCodeAt(1) - 65);
-  }
   function trovaPartita(id) {
     var lista = (stato.dati && stato.dati.partite) || [];
     for (var i = 0; i < lista.length; i++) if (String(lista[i].id) === String(id)) return lista[i];
     return null;
   }
+  function contaGiocate(n) { return n === 1 ? "1 giocata" : n + " giocate"; }
 
   // ---------------------------------------------------------------
   //  pezzi grafici ricorrenti
   // ---------------------------------------------------------------
-  function testa(titolo, sotto, destra) {
-    return '<header class="testa"><div class="testa-riga"><div class="testa-testi">' +
-           '<div class="marchio">Previsioni</div>' +
-           '<h1 class="titolo">' + esc(titolo) + '</h1>' +
-           (sotto ? '<div class="sottotitolo">' + sotto + '</div>' : "") + "</div>" +
+  var PERCORSI = {
+    destra: '<path d="M9.5 6l6 6-6 6"></path>',
+    sinistra: '<path d="M15 5l-7 7 7 7"></path>',
+    giu: '<path d="M6 9.5l6 6 6-6"></path>',
+    su: '<path d="M6 14.5l6-6 6 6"></path>',
+    orologio: '<circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path>',
+    info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.5M12 7.9v.2"></path>',
+    vinta: '<path d="M5 12.5l4.5 4.5L19 7.5"></path>',
+    persa: '<path d="M7 7l10 10M17 7L7 17"></path>',
+    avviso: '<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17.5v.5"></path>'
+  };
+  function icona(nome, cls) {
+    return '<svg class="ic' + (cls ? " " + cls : "") + '" viewBox="0 0 24 24" aria-hidden="true">' + PERCORSI[nome] + "</svg>";
+  }
+
+  function testa(titolo, sotto, destra, grande) {
+    return '<header class="testa' + (grande ? " grande" : "") + '"><div class="testa-riga"><div class="testa-testi">' +
+           (grande ? '<div class="marchio">Previsioni</div>' : "") +
+           '<h1 class="titolo">' + esc(titolo) + "</h1>" +
+           (sotto ? '<div class="sottotitolo">' + sotto + "</div>" : "") + "</div>" +
            (destra || "") + "</div></header>";
   }
   function campana() {
@@ -143,6 +146,12 @@
     return stato.fuoriLinea
       ? '<div class="fuori-linea">Sei senza rete: stai vedendo gli ultimi dati salvati.</div>' : "";
   }
+  function senzaDati() {
+    if (!stato.datiCaricati) return '<div class="caricamento">Caricamento…</div>';
+    return '<div class="vuoto"><h3>Nessun dato</h3>Non riesco a scaricare le previsioni. Controlla la connessione e riprova.' +
+           '<br><button data-ricarica="1">Riprova</button></div>';
+  }
+  // tre segmenti grigi: il piu' probabile chiaro, gli altri piu' scuri
   function barra3(p) {
     var v = [p["1"], p["X"], p["2"]];
     var ord = v.slice().sort(function (a, b) { return b - a; });
@@ -156,10 +165,282 @@
     if (formazioni === "probabile") return '<span class="badge">PROB</span>';
     return "";
   }
-  var ICONA_AVVISO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>';
+  // due esiti opposti con la barra: il piu' probabile in chiaro. Con le
+  // quote giuste accanto quando le percentuali vengono dal mercato.
+  function coppia(nA, a, nB, b, conQuote) {
+    var pari = Math.abs(a - b) < 0.02, vinceA = a >= b;
+    function lato(nome, p, vince) {
+      return '<span class="' + (vince && !pari ? "vince" : "") + '">' + esc(nome) + " <b>" + pct(p) + "</b>" +
+        (conQuote ? ' <span class="fioco">' + quota(1 / p) + "</span>" : "") + "</span>";
+    }
+    return '<div class="coppia"><div class="coppia-testi">' + lato(nA, a, vinceA) + lato(nB, b, !vinceA) + "</div>" +
+      '<div class="barra2"><div class="' + (pari ? "pari" : (vinceA ? "forte" : "")) + '" style="width:' + (a * 100).toFixed(1) + '%"></div>' +
+      '<div class="' + (pari ? "pari" : (!vinceA ? "forte" : "")) + '" style="width:' + (b * 100).toFixed(1) + '%"></div></div></div>';
+  }
+  // riquadri con percentuale e quota: il piu' probabile bordato di bianco
+  function tessere(voci, conQuote) {
+    var massimo = Math.max.apply(null, voci.map(function (x) { return x.p; }));
+    return '<div class="griglia3">' + voci.map(function (x) {
+      return '<div class="tessera piccola' + (x.p === massimo ? " primo" : "") + '"' + (x.lungo ? ' title="' + esc(x.lungo) + '"' : "") + ">" +
+        "<small>" + esc(x.n) + "</small><b>" + pct(x.p) + "</b>" +
+        (conQuote ? '<span class="eq">' + quota(1 / x.p) + "</span>" : "") + "</div>";
+    }).join("") + "</div>";
+  }
 
   // ---------------------------------------------------------------
-  //  PALINSESTO
+  //  GIOCATE DI VALORE (valore.json)
+  // ---------------------------------------------------------------
+  // In che momento e' una giocata di oggi: si puo' ancora fare, e' in
+  // corso, o e' chiusa. Quelle nate all'intervallo si possono fare solo
+  // durante la pausa, cioe' per un quarto d'ora.
+  function momentoValore(r) {
+    if (r.esito === "vinta" || r.esito === "persa" || r.esito === "annullata") return "chiuse";
+    var ora = Date.now();
+    if (r.intervallo) {
+      var nata = r.registrata ? data(r.registrata).getTime() : 0;
+      return ora - nata < 15 * 60000 ? "giocare" : "corso";
+    }
+    return data(r.data).getTime() > ora ? "giocare" : "corso";
+  }
+  function momentoSchedina(s) {
+    if (s.esito === "vinta" || s.esito === "persa" || s.esito === "annullata") return "chiuse";
+    return s.prima && data(s.prima).getTime() > Date.now() ? "giocare" : "corso";
+  }
+  function nomeValore(r) { return String(r.nome || "").replace(/ \(intervallo [^)]*\)$/, ""); }
+  function libroValore(r) { return esc(r.book) + (r.commissione ? " exchange" : ""); }
+  function puntata() { return (stato.valore && stato.valore.puntata) || 10; }
+  function utileValore(r) {
+    if (r.esito === "vinta") return (1 + (r.quota - 1) * (1 - (r.commissione || 0)) - 1) * puntata();
+    if (r.esito === "persa") return -puntata();
+    return 0;
+  }
+  function utileSchedina(s) {
+    if (s.esito === "vinta") return (s.quota - 1) * puntata();
+    if (s.esito === "persa") return -puntata();
+    return 0;
+  }
+  function minutiPausa(r) {
+    var resto = 15 - (Date.now() - data(r.registrata || 0).getTime()) / 60000;
+    return Math.max(1, Math.ceil(resto));
+  }
+  function linkPartita(fid) {
+    return fid != null && trovaPartita(fid) ? "#/partita/" + encodeURIComponent(fid) : null;
+  }
+  // prima quelle all'intervallo, che scadono; poi le altre in ordine di orario
+  function ordineDaFare(a, b) {
+    if (!!a.intervallo !== !!b.intervallo) return a.intervallo ? -1 : 1;
+    if (a.intervallo) return String(a.registrata).localeCompare(String(b.registrata));
+    return data(a.data) - data(b.data);
+  }
+  function daFareOggi() {
+    var v = stato.valore;
+    return ((v && v.oggi) || []).filter(function (r) { return momentoValore(r) === "giocare"; });
+  }
+  var FAMIGLIE_VALORE = [
+    ["esito e doppia chance", "Esito e doppia chance"], ["Under/Over", "Under / Over"],
+    ["Gol/NoGol", "Gol / NoGol"], ["primo e secondo tempo", "Primo e secondo tempo"],
+    ["all'intervallo", "All'intervallo"]
+  ];
+  var VERDETTI_VALORE = {
+    presto: ["Ancora presto", "Il verdetto arriva dopo {min} giocate confrontate con l'ultima quota di Pinnacle: ora sono {n}. Fino ad allora solo sulla carta."],
+    vero: ["Il vantaggio è vero", "Le quote prese battono quelle finali di Pinnacle in modo dimostrato. Si può passare ai soldi veri: puntata fissa, solo alla quota minima o sopra."],
+    no: ["Nessun vantaggio", "Le quote prese non battono quelle finali di Pinnacle: con questi bookmaker il metodo non funziona."],
+    incerto: ["Non ancora chiaro", "I numeri non dicono ancora né sì né no: si continua sulla carta."]
+  };
+  function etichettaProva(v) {
+    return v.prova && v.prova.giorno <= v.prova.di
+      ? "Prova sulla carta · giorno " + v.prova.giorno + " di " + v.prova.di : "Prova sulla carta";
+  }
+
+  // una giocata da fare: partita, giocata e bookmaker a sinistra, quota
+  // minima a destra. Quelle all'intervallo hanno in piu' il tempo che resta.
+  function cartaValore(r) {
+    var href = linkPartita(r.fixture_id);
+    var tag = href ? "a" : "div";
+    var pausa = !!r.intervallo;
+    var html = "<" + tag + ' class="val carta' + (pausa ? " pausa" : "") + '"' + (href ? ' href="' + href + '"' : "") + ">";
+    if (pausa) {
+      html += '<div class="val-testa"><span class="tag-live">Intervallo ' + esc(r.intervallo) + "</span>" +
+        '<span class="val-partita">' + esc(r.partita) + "</span>" +
+        '<span class="val-conto">' + icona("orologio") + "ancora " + minutiPausa(r) + " min</span></div>";
+    }
+    html += '<div class="val-corpo"><div class="val-sx">';
+    if (!pausa) {
+      html += '<div class="val-riga1"><b class="val-ora">' + oraDi(data(r.data)) + '</b><span class="val-partita">' + esc(r.partita) + "</span></div>";
+    }
+    html += '<span class="val-nome">' + esc(nomeValore(r)) + "</span>" +
+      '<span class="val-libro">' + libroValore(r) + " " + quota(r.quota) + ' · <b class="lime">' + pctSegno(r.vantaggio, 0) + "</b></span></div>" +
+      '<div class="val-dx"><span class="val-etich">Minima</span><b class="val-min">' + quota(r.minima) + "</b>" +
+      '<span class="val-giusto">giusto ' + quota(r.giusta) + "</span></div>" +
+      (href ? icona("destra", "freccia") : "") + "</div></" + tag + ">";
+    return html;
+  }
+
+  function orarioVoce(v) {
+    var oggi = (stato.valore && stato.valore.oggi) || [];
+    for (var i = 0; i < oggi.length; i++) {
+      if (oggi[i].partita === v.partita && oggi[i].nome === v.nome) return oraDi(data(oggi[i].data));
+    }
+    return "";
+  }
+  function cartaSchedina(s) {
+    var html = '<article class="schedina carta">';
+    (s.voci || []).forEach(function (v) {
+      var ora = orarioVoce(v);
+      var fatto = v.esito === "vinta" ? icona("vinta", "turchese") : v.esito === "persa" ? icona("persa", "arancio") : "";
+      html += '<div class="sch-voce"><div class="sch-sx"><b>' + esc(v.nome) + "</b><small>" + esc(v.partita) +
+        (ora ? " · " + ora : "") + '</small></div><span class="sch-q">' + fatto + quota(v.quota) + "</span></div>";
+    });
+    var esito = s.esito === "vinta" ? "Vinta · " : s.esito === "persa" ? "Persa · " : "";
+    return html + '<div class="sch-piede"><span>' + esito + "Esce " + Math.round(s.prob * 100) + " volte su 100 · vantaggio " +
+      '<b class="lime">' + pctSegno(s.prob * s.quota - 1, 0) + '</b></span><span class="sch-tot"><small>quota</small><b>' +
+      quota(s.quota) + "</b></span></div></article>";
+  }
+
+  // una riga compatta: in corso (con l'orario) o chiusa (con l'esito e i soldi)
+  function rigaGiocata(r, chiusa, conData) {
+    var segnoR, dx;
+    if (chiusa) {
+      segnoR = r.esito === "vinta" ? '<span class="tondo vinta">' + icona("vinta") + "</span>"
+        : r.esito === "persa" ? '<span class="tondo persa">' + icona("persa") + "</span>"
+        : '<span class="tondo nulla">–</span>';
+      var u = utileValore(r);
+      dx = '<div class="rg-dx"><b class="' + (u > 0 ? "turchese" : u < 0 ? "arancio" : "fioco") + '">' +
+        (r.esito === "annullata" ? "annullata" : euro(u, true)) + "</b><small>quota " + quota(r.quota) + "</small></div>";
+    } else {
+      segnoR = '<span class="tondo attesa">' + icona("orologio") + "</span>";
+      dx = '<div class="rg-dx"><small>' + (r.intervallo ? "dall'intervallo" : "dalle " + oraDi(data(r.data))) + "</small></div>";
+    }
+    var sotto = esc(r.partita);
+    if (chiusa) {
+      if (r.risultato) sotto += " · finita " + esc(String(r.risultato).split(" ")[0]);
+      if (conData) sotto += " · " + giornoCorto(data(r.data));
+    } else {
+      sotto += " · " + libroValore(r) + " " + quota(r.quota);
+    }
+    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>' + esc(nomeValore(r)) + "</b><small>" + sotto + "</small></div>" + dx + "</div>";
+  }
+  function rigaSchedina(s, chiusa) {
+    var segnoR, dx;
+    if (chiusa) {
+      segnoR = s.esito === "vinta" ? '<span class="tondo vinta">' + icona("vinta") + "</span>"
+        : s.esito === "persa" ? '<span class="tondo persa">' + icona("persa") + "</span>" : '<span class="tondo nulla">–</span>';
+      var u = utileSchedina(s);
+      dx = '<div class="rg-dx"><b class="' + (u > 0 ? "turchese" : u < 0 ? "arancio" : "fioco") + '">' +
+        (s.esito === "annullata" ? "annullata" : euro(u, true)) + "</b><small>quota " + quota(s.quota) + "</small></div>";
+    } else {
+      segnoR = '<span class="tondo attesa">' + icona("orologio") + "</span>";
+      dx = '<div class="rg-dx"><small>quota ' + quota(s.quota) + "</small></div>";
+    }
+    var n = (s.voci || []).length;
+    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>Schedina del giorno</b><small>' + n +
+      (n === 1 ? " partita" : " partite") + " · " + esc(s.book) + "</small></div>" + dx + "</div>";
+  }
+
+  // ---------------------------------------------------------------
+  //  OGGI
+  // ---------------------------------------------------------------
+  function riepilogoProva(v) {
+    var s = ((v.bilancio || {}).singole) || { n: 0 };
+    var p = puntata(), num = "0,00 €", cls = "";
+    if (s.n) {
+      var u = s.utile * p;
+      num = euro(u, true);
+      cls = u > 0.004 ? "turchese" : u < -0.004 ? "arancio" : "";
+    }
+    var sotto = s.n
+      ? contaGiocate(s.n).replace("giocata", "giocata chiusa").replace("giocate", "giocate chiuse") + " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") + " · " + euroTondo(p) + " a giocata"
+      : "Ancora nessuna giocata chiusa · " + euroTondo(p) + " a giocata";
+    return '<a class="riepilogo carta" href="#/risultati"><div class="riep-testi"><span class="etichetta">' + etichettaProva(v) +
+      '</span><span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span></div>" +
+      icona("destra", "freccia") + "</a>";
+  }
+
+  function notaOggi() {
+    return '<p class="nota-info">' + icona("info") + "<span>Gioca solo se sul tuo sito trovi almeno la quota minima: le quote qui " +
+      "possono essere vecchie di qualche ora. Quelle all'intervallo vanno fatte prima che ricominci la partita.</span></p>";
+  }
+
+  function rigaApri(chiave, titolo, destra, dentro) {
+    var aperta = !!stato.oggiAperto[chiave];
+    return '<button class="riga-apri" data-apri-oggi="' + chiave + '" aria-expanded="' + aperta + '">' +
+      '<span class="ra-t1">' + titolo + '</span><span class="ra-dx">' + destra + icona(aperta ? "su" : "giu") + "</span></button>" +
+      (aperta ? '<div class="righe-dentro">' + dentro + "</div>" : "");
+  }
+
+  function vistaOggi() {
+    var v = stato.valore;
+    var oggi = new Date();
+    var sotto = GIORNI_LUNGHI[oggi.getDay()] + " " + oggi.getDate() + " " + MESI[oggi.getMonth()];
+    if (v && v.generato) {
+      var dg = data(v.generato);
+      sotto += " · " + (chiaveGiorno(dg) === chiaveGiorno(oggi) ? "aggiornato alle " + oraDi(dg)
+        : "ultimo aggiornamento " + dataBreve(dg) + " " + oraDi(dg));
+    }
+    var html = testa("Oggi", sotto, campana(), true) + avvisoFuoriLinea() + '<div class="corpo">';
+    if (!v) {
+      if (!stato.valoreCaricato) return html + '<div class="caricamento">Caricamento…</div></div>';
+      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La pagina si riempie appena valore.py gira sul server.</div>' + notaOggi() + "</div>";
+    }
+
+    html += riepilogoProva(v);
+
+    var lista = v.oggi || [];
+    var gruppi = { giocare: [], corso: [], chiuse: [] };
+    lista.forEach(function (r) { gruppi[momentoValore(r)].push(r); });
+    gruppi.giocare.sort(ordineDaFare);
+    var s = v.schedina, ms = s ? momentoSchedina(s) : null;
+
+    html += '<section class="gruppo"><div class="gruppo-testa"><h2>Da giocare adesso</h2><span>' +
+      contaGiocate(gruppi.giocare.length) + "</span></div>";
+    if (!gruppi.giocare.length) {
+      html += '<div class="vuoto piccolo">' + (lista.length
+        ? "Adesso niente da giocare: le giocate di oggi sono già partite."
+        : "Per ora nessun bookmaker paga più del giusto: oggi si salta. Il server ricontrolla più volte durante il giorno, e ogni 5 minuti durante gli intervalli.") + "</div>";
+    }
+    gruppi.giocare.forEach(function (r) { html += cartaValore(r); });
+    html += "</section>";
+
+    if (s && ms === "giocare") {
+      html += '<section class="gruppo"><div class="gruppo-testa"><h2>Schedina del giorno</h2><span>tutta su ' +
+        esc(s.book) + "</span></div>" + cartaSchedina(s) + "</section>";
+    }
+
+    // in corso e chiuse: due righe che si aprono, cosi' la pagina resta corta
+    var righe = "";
+    var corso = gruppi.corso.slice().sort(function (a, b) { return data(a.data) - data(b.data); });
+    var nCorso = corso.length + (s && ms === "corso" ? 1 : 0);
+    if (nCorso) {
+      var dentro = corso.map(function (r) { return rigaGiocata(r, false); }).join("") +
+        (s && ms === "corso" ? rigaSchedina(s, false) : "");
+      righe += rigaApri("corso", "In corso", String(nCorso), dentro);
+    }
+    var chiuse = gruppi.chiuse.slice().sort(function (a, b) { return data(b.data) - data(a.data); });
+    var quando = "oggi", schChiusa = s && ms === "chiuse" ? s : null;
+    if (!chiuse.length && !schChiusa) {
+      quando = "ieri";
+      var giornoPrima = ieri();
+      chiuse = (v.ultime || []).filter(function (r) { return chiaveGiorno(data(r.data)) === giornoPrima; });
+    }
+    if (chiuse.length || schChiusa) {
+      var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
+      var vinte = decise.filter(function (r) { return r.esito === "vinta"; }).length;
+      var totale = decise.length, soldi = 0;
+      chiuse.forEach(function (r) { soldi += utileValore(r); });
+      if (schChiusa && schChiusa.esito !== "annullata") {
+        totale += 1; vinte += schChiusa.esito === "vinta" ? 1 : 0; soldi += utileSchedina(schChiusa);
+      }
+      var destra = vinte + " su " + totale + ' · <b class="' + (soldi > 0.004 ? "turchese" : soldi < -0.004 ? "arancio" : "") + '">' + euro(soldi, true) + "</b>";
+      var dentroC = chiuse.map(function (r) { return rigaGiocata(r, true); }).join("") + (schChiusa ? rigaSchedina(schChiusa, true) : "");
+      righe += rigaApri("chiuse", "Chiuse " + quando, destra, dentroC);
+    }
+    if (righe) html += '<div class="elenco-righe carta">' + righe + "</div>";
+
+    return html + notaOggi() + "</div>";
+  }
+
+  // ---------------------------------------------------------------
+  //  PARTITE
   // ---------------------------------------------------------------
   function vistaPartite() {
     var tutte = stato.dati.partite || [];
@@ -186,9 +467,7 @@
     var leghe = Object.keys(conteggio).sort(function (a, b) { return conteggio[b] - conteggio[a]; });
     function etichettaLega(c) {
       var n = nomeLega(c);
-      var b = bandiera(n.paese);
-      if (b) return b + " " + n.nome;
-      return Object.keys(perNome[n.nome]).length > 1 ? n.nome + " · " + n.paese : n.nome;
+      return perNome[n.nome] && Object.keys(perNome[n.nome]).length > 1 && n.paese ? n.nome + " · " + n.paese : n.nome;
     }
     if (stato.lega !== "tutte" && !conteggio[stato.lega]) stato.lega = "tutte";
 
@@ -205,24 +484,27 @@
       g.partite.push(m);
     });
 
+    // le partite con una giocata di valore da fare adesso
+    var conValore = {};
+    daFareOggi().forEach(function (r) { if (r.fixture_id != null) conValore[String(r.fixture_id)] = true; });
+
     var agg = stato.dati.generato ? oraDi(data(stato.dati.generato)) : "";
     var n = filtrate.length;
-    var html = testa("Palinsesto", "Aggiornato alle " + agg + " · " + n + (n === 1 ? " partita" : " partite"), campana());
+    var html = testa("Partite", "Aggiornato alle " + agg + " · " + n + (n === 1 ? " partita" : " partite"), campana());
 
     html += '<div class="filtri"><div class="riga-chip nascosto-scroll">';
     html += '<button class="chip-giorno' + (stato.giorno === "tutti" ? " attivo" : "") +
-            '" data-giorno="tutti"><span class="su">Tutti</span><span class="giu">' + giorni.length + ' gg</span></button>';
+            '" data-giorno="tutti"><span class="su">Tutti</span><span class="giu">' + giorni.length + " gg</span></button>";
     giorni.forEach(function (k) {
-      var p = k.split("-");
-      var d = new Date(+p[0], +p[1] - 1, +p[2]);
-      var su = relativo(k) === "Oggi" ? "Oggi" : (relativo(k) === "Domani" ? "Domani" : GIORNI[d.getDay()]);
+      var d = daChiave(k);
+      var r = relativo(k);
       html += '<button class="chip-giorno' + (stato.giorno === k ? " attivo" : "") + '" data-giorno="' + k +
-              '"><span class="su">' + su + '</span><span class="giu">' + d.getDate() + "</span></button>";
+              '"><span class="su">' + (r || GIORNI[d.getDay()]) + '</span><span class="giu">' + d.getDate() + "</span></button>";
     });
     html += '</div><div class="riga-chip nascosto-scroll">';
-    html += '<button class="chip' + (stato.lega === "tutte" ? " attivo" : "") + '" data-lega="tutte">Tutti</button>';
+    html += '<button class="chip leggero' + (stato.lega === "tutte" ? " attivo" : "") + '" data-lega="tutte">Tutti</button>';
     leghe.forEach(function (c) {
-      html += '<button class="chip' + (stato.lega === c ? " attivo" : "") + '" data-lega="' + esc(c) + '">' +
+      html += '<button class="chip leggero' + (stato.lega === c ? " attivo" : "") + '" data-lega="' + esc(c) + '">' +
               esc(etichettaLega(c)) + "</button>";
     });
     html += "</div></div>" + avvisoFuoriLinea() + '<div class="corpo">';
@@ -230,20 +512,25 @@
     if (!filtrate.length) {
       html += '<div class="vuoto"><h3>Nessuna partita</h3>Con questi filtri non ci sono partite in programma.' +
               '<br><button data-azzera="1">Mostra tutto</button></div>';
+    } else {
+      html += '<p class="nota">Percentuali dalle quote dei bookmaker, senza il loro margine. Dove non ci sono quote, quelle del nostro modello.</p>';
     }
     gruppi.forEach(function (g) {
       html += '<section class="gruppo"><div class="gruppo-testa"><h2>' + esc(titoloGiorno(g.k)) + "</h2><span>" +
               g.partite.length + (g.partite.length === 1 ? " partita" : " partite") + "</span></div>";
       g.partite.forEach(function (m) {
         var d = data(m.data);
-        var max = Math.max(m.p["1"], m.p["X"], m.p["2"]);
+        var mk = m.mercato && m.mercato["1"] != null ? m.mercato : null;
+        var p = mk || m.p;
+        var max = Math.max(p["1"], p["X"], p["2"]);
         html += '<a class="partita carta" href="#/partita/' + encodeURIComponent(m.id) + '">' +
-          '<div class="riga"><div class="ora"><b>' + oraDi(d) + "</b><span>" + dataBreve(d) + "</span></div>" +
-          '<div class="etichette"><span class="lega">' + bandiera(nomeLega(m.campionato).paese) + " " + esc(nomeLega(m.campionato).nome) + "</span>" + badge(m.formazioni) + "</div></div>" +
+          '<div class="riga"><div class="ora"><b>' + oraDi(d) + "</b><span>" + esc(etichettaLega(m.campionato)) + "</span></div>" +
+          '<div class="etichette">' + badge(m.formazioni) + (mk ? "" : '<span class="badge">MODELLO</span>') +
+          (conValore[String(m.id)] ? '<span class="tag-valore">VALORE</span>' : "") + "</div></div>" +
           '<div class="riga"><div class="squadre"><span>' + esc(m.casa) + "</span><span>" + esc(m.fuori) + "</span></div>" +
           '<div class="pillole">' + ["1", "X", "2"].map(function (k) {
-            return '<div class="pillola' + (m.p[k] === max ? " forte" : "") + '"><small>' + k + "</small><b>" + pct(m.p[k]) + "</b></div>";
-          }).join("") + "</div></div>" + barra3(m.p) + "</a>";
+            return '<div class="pillola' + (p[k] === max ? " forte" : "") + '"><small>' + k + "</small><b>" + pct(p[k]) + "</b></div>";
+          }).join("") + "</div></div>" + barra3(p) + "</a>";
       });
       html += "</section>";
     });
@@ -251,1249 +538,577 @@
   }
 
   // ---------------------------------------------------------------
-  //  DETTAGLIO PARTITA
+  //  PAGINA DELLA PARTITA
   // ---------------------------------------------------------------
-  function soglia(etichettaA, a, etichettaB, b) {
-    var vinceA = a >= b;
-    return '<div class="soglia"><div class="testi">' +
-      '<span class="' + (vinceA ? "vince" : "") + '">' + etichettaA + " <b>" + pct(a) + "</b></span>" +
-      '<span class="' + (!vinceA ? "vince" : "") + '">' + etichettaB + " <b>" + pct(b) + "</b></span></div>" +
-      '<div class="barra2"><div class="' + (Math.abs(a - b) < 0.02 ? "pari" : (vinceA ? "forte" : "")) + '" style="width:' + (a * 100).toFixed(1) + '%"></div>' +
-      '<div class="' + (Math.abs(a - b) < 0.02 ? "pari" : (!vinceA ? "forte" : "")) + '" style="width:' + (b * 100).toFixed(1) + '%"></div></div></div>';
+  function finaleDi(m) {
+    var f = stato.valore && stato.valore.finale;
+    return f ? f[String(m.id)] || null : null;
+  }
+  // da dove vengono le percentuali dell'esito: Pinnacle (partite di oggi),
+  // altrimenti la media dei bookmaker, altrimenti il nostro modello
+  function fonteEsito(m) {
+    var f = finaleDi(m);
+    if (f && f["1"] != null && f["X"] != null && f["2"] != null) {
+      return { p: { "1": f["1"], X: f["X"], "2": f["2"] },
+               dc: { "1X": f["1X"] != null ? f["1X"] : f["1"] + f["X"],
+                     "12": f["12"] != null ? f["12"] : f["1"] + f["2"],
+                     "X2": f["X2"] != null ? f["X2"] : f["X"] + f["2"] },
+               nome: "Pinnacle, senza margine", mercato: true };
+    }
+    var mk = m.mercato;
+    if (mk && mk["1"] != null) {
+      return { p: { "1": mk["1"], X: mk["X"], "2": mk["2"] },
+               dc: { "1X": mk["1"] + mk["X"], "12": mk["1"] + mk["2"], "X2": mk["X"] + mk["2"] },
+               nome: mk.bookmaker ? "media di " + mk.bookmaker + " bookmaker" : "media dei bookmaker", mercato: true };
+    }
+    return { p: m.p, dc: m.dc, nome: "dal nostro modello", mercato: false };
+  }
+  function fonteGol(m) {
+    var f = finaleDi(m);
+    if (f && f.over25 != null && f.under25 != null) {
+      var righe = [["Over 1.5", "over15", "Under 1.5", "under15"], ["Over 2.5", "over25", "Under 2.5", "under25"],
+                   ["Over 3.5", "over35", "Under 3.5", "under35"]]
+        .filter(function (r) { return f[r[1]] != null && f[r[3]] != null; })
+        .map(function (r) { return [r[0], f[r[1]], r[2], f[r[3]]]; });
+      return { righe: righe, gg: f.gol_gol != null && f.no_gol != null ? ["Gol", f.gol_gol, "NoGol", f.no_gol] : null,
+               nome: "Pinnacle, senza margine", quote: true };
+    }
+    return { righe: [["Over 1.5", m.gol.over15, "Under 1.5", m.gol.under15], ["Over 2.5", m.gol.over25, "Under 2.5", m.gol.under25],
+                     ["Over 3.5", m.gol.over35, "Under 3.5", m.gol.under35]],
+             gg: ["Gol", m.gg.gol, "NoGol", m.gg.nogol], nome: "dal nostro modello", quote: false };
   }
 
-  // Il contenuto di un gruppo di mercati, disegnato come il resto
-  // della scheda: le barre a due teste della sezione Gol per gli esiti
-  // che vanno a coppie, i riquadri dei risultati esatti per gli altri.
-  function corpoMercati(g) {
-    if (g.f === "coppie") {
-      var barre = "";
-      for (var i = 0; i + 1 < g.v.length; i += 2) {
-        barre += soglia(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p);
+  // le giocate di valore di questa partita, se ce ne sono da fare adesso
+  function bloccoValore(m) {
+    var v = stato.valore;
+    var mie = ((v && v.oggi) || []).filter(function (r) {
+      return String(r.fixture_id) === String(m.id) && momentoValore(r) === "giocare";
+    });
+    if (!mie.length) return "";
+    var html = '<section class="blocco carta valore-blocco"><h2>' + (mie.length === 1 ? "Giocata di valore" : "Giocate di valore") + "</h2>";
+    mie.forEach(function (r) {
+      html += '<div class="vb"><div class="vb-testa"><span class="vb-nome">' + esc(nomeValore(r)) + '</span><span class="tag-valore grande">' +
+        pctSegno(r.vantaggio, 0) + "</span></div>" +
+        (r.intervallo ? '<span class="vb-pausa">Intervallo ' + esc(r.intervallo) + " · ancora " + minutiPausa(r) + " min</span>" : "") +
+        '<div class="griglia3"><div class="vb-num"><small>' + libroValore(r) + "</small><b>" + quota(r.quota) + "</b></div>" +
+        '<div class="vb-num"><small>Giusto</small><b class="fioco">' + quota(r.giusta) + "</b></div>" +
+        '<div class="vb-num minima"><small>Minima</small><b class="lime">' + quota(r.minima) + "</b></div></div></div>";
+    });
+    return html + '<span class="nota">Gioca solo se sul tuo sito trovi almeno la quota minima.</span></section>';
+  }
+
+  function bloccoEsito(m) {
+    var f = fonteEsito(m);
+    var max = Math.max(f.p["1"], f.p["X"], f.p["2"]);
+    var html = '<section class="blocco carta"><div class="blocco-testa"><h2>Esito finale</h2><span>' + esc(f.nome) + "</span></div>" +
+      '<div class="griglia3">' + ["1", "X", "2"].map(function (k) {
+        return '<div class="tessera' + (f.p[k] === max ? " primo" : "") + '"><small>' + k + "</small><b>" + pct(f.p[k]) + "</b>" +
+          (f.mercato ? '<span class="eq">' + quota(1 / f.p[k]) + "</span>" : "") + "</div>";
+      }).join("") + "</div>" + barra3(f.p);
+    if (f.mercato) {
+      html += '<span class="nota">Il nostro modello: ' + pct(m.p["1"]) + " · " + pct(m.p["X"]) + " · " + pct(m.p["2"]) + "</span>";
+      var scarto = Math.max.apply(null, ["1", "X", "2"].map(function (k) { return Math.abs(m.p[k] - f.p[k]); }));
+      if (scarto >= 0.15) {
+        html += '<div class="avviso">' + icona("avviso") + "<span>Il nostro modello si allontana molto dal mercato. Nei nostri test, in questi casi di solito sbaglia il modello.</span></div>";
       }
-      return '<div class="coppie">' + barre + "</div>";
     }
-    var massimo = Math.max.apply(null, g.v.map(function (x) { return x.p; }));
-    return '<div class="griglia3">' + g.v.map(function (x) {
-      return '<div class="ris-tessera mercato' + (x.p === massimo ? " primo" : "") +
-        '" title="' + esc(x.lungo) + '"><b>' + esc(x.n) + "</b><small>" +
-        pct(x.p) + "</small><span class=\"eq\">" + quota(1 / x.p) + "</span></div>";
-    }).join("") + "</div>";
+    html += '<div class="doppie">' + ["1X", "12", "X2"].map(function (k) {
+      return "<div><small>" + k + "</small><b>" + pct(f.dc[k]) + "</b>" + (f.mercato ? '<span class="eq">' + quota(1 / f.dc[k]) + "</span>" : "") + "</div>";
+    }).join("") + "</div></section>";
+    return html;
   }
 
+  function bloccoGol(m) {
+    var f = fonteGol(m);
+    var html = '<section class="blocco carta"><div class="blocco-testa"><h2>Gol</h2><span>' + esc(f.nome) + "</span></div>";
+    f.righe.forEach(function (r) { html += coppia(r[0], r[1], r[2], r[3], f.quote); });
+    if (f.gg) html += '<div class="separato">' + coppia(f.gg[0], f.gg[1], f.gg[2], f.gg[3], f.quote) + "</div>";
+    return html + "</section>";
+  }
 
-  // ---------------------------------------------------------------
-  //  PRIMO E SECONDO TEMPO nella pagina della partita
-  // ---------------------------------------------------------------
-  // Le quote giuste arrivano da valore.json (valore.py): ricavate dalle
-  // quote di Pinnacle e corrette su 35.000 partite. Ci sono solo per le
-  // partite del giorno con le quote di Pinnacle.
+  // PRIMO E SECONDO TEMPO: le quote giuste arrivano da valore.json,
+  // ricavate dalle quote di Pinnacle e corrette su 35.000 partite. Ci
+  // sono solo per le partite del giorno con le quote di Pinnacle.
   function gruppiTempi(p, m) {
-    function coppia(n1, k, n2) {
-      return p[k] == null ? [] : [{ n: n1, lungo: n1, p: p[k] }, { n: n2, lungo: n2, p: 1 - p[k] }];
+    function coppiaT(n1, k, n2) {
+      return p[k] == null ? [] : [{ n: n1, p: p[k] }, { n: n2, p: 1 - p[k] }];
     }
-    function tessere(elenco) {
+    function tess(elenco) {
       return elenco.filter(function (x) { return p[x[1]] != null; })
-        .map(function (x) { return { n: x[0], lungo: x[0], p: p[x[1]] }; });
+        .map(function (x) { return { n: x[0], p: p[x[1]] }; });
     }
     function tempo(suf, titolo) {
       return [
-        { chiave: "tempi-esito" + suf, t: "Esito " + titolo, f: "tessere",
-          v: tessere([["1", "1" + suf], ["X", "X" + suf], ["2", "2" + suf],
-                      ["1X", "1X" + suf], ["12", "12" + suf], ["X2", "X2" + suf]]) },
-        { chiave: "tempi-gol" + suf, t: "Gol " + titolo, f: "coppie",
-          v: [].concat(coppia("Over 0.5", "over05" + suf, "Under 0.5"),
-                       coppia("Over 1.5", "over15" + suf, "Under 1.5"),
-                       coppia("Over 2.5", "over25" + suf, "Under 2.5"),
-                       coppia("Gol", "gol_gol" + suf, "NoGol"),
-                       coppia(m.casa + " segna", "casa_segna" + suf, "Non segna"),
-                       coppia(m.fuori + " segna", "fuori_segna" + suf, "Non segna")) }
+        { t: "Esito " + titolo, f: "tessere",
+          v: tess([["1", "1" + suf], ["X", "X" + suf], ["2", "2" + suf],
+                   ["1X", "1X" + suf], ["12", "12" + suf], ["X2", "X2" + suf]]) },
+        { t: "Gol " + titolo, f: "coppie",
+          v: [].concat(coppiaT("Over 0.5", "over05" + suf, "Under 0.5"),
+                       coppiaT("Over 1.5", "over15" + suf, "Under 1.5"),
+                       coppiaT("Over 2.5", "over25" + suf, "Under 2.5"),
+                       coppiaT("Gol", "gol_gol" + suf, "NoGol"),
+                       coppiaT(m.casa + " segna", "casa_segna" + suf, "Non segna"),
+                       coppiaT(m.fuori + " segna", "fuori_segna" + suf, "Non segna")) }
       ];
     }
-    return tempo("_pt", "primo tempo").concat(tempo("_st", "secondo tempo")).concat([
-      { chiave: "tempi-entrambi", t: "Gol in tutti e due i tempi", f: "coppie",
-        v: [].concat(coppia("Gol in entrambi", "gol_entrambi_tempi", "No"),
-                     coppia(m.casa + " in entrambi", "casa_segna_entrambi", "No"),
-                     coppia(m.fuori + " in entrambi", "fuori_segna_entrambi", "No")) },
-      { chiave: "tempi-piu", t: "Tempo con più gol", f: "tessere",
-        v: tessere([["1° tempo", "pt_piu_gol"], ["Pari", "tempi_pari_gol"], ["2° tempo", "st_piu_gol"]]) }
-    ]).filter(function (g) { return g.v.length; });
+    return [
+      { chiave: "tempi-primo", t: "Primo tempo", sotto: "Esito e gol", gruppi: tempo("_pt", "primo tempo") },
+      { chiave: "tempi-secondo", t: "Secondo tempo", sotto: "Esito e gol", gruppi: tempo("_st", "secondo tempo") },
+      { chiave: "tempi-due", t: "Tra i due tempi", sotto: "Gol in entrambi, tempo con più gol", gruppi: [
+        { t: "Gol in tutti e due i tempi", f: "coppie",
+          v: [].concat(coppiaT("Gol in entrambi", "gol_entrambi_tempi", "No"),
+                       coppiaT(m.casa + " in entrambi", "casa_segna_entrambi", "No"),
+                       coppiaT(m.fuori + " in entrambi", "fuori_segna_entrambi", "No")) },
+        { t: "Tempo con più gol", f: "tessere",
+          v: tess([["1° tempo", "pt_piu_gol"], ["Pari", "tempi_pari_gol"], ["2° tempo", "st_piu_gol"]]) }] }
+    ].map(function (r) {
+      r.gruppi = r.gruppi.filter(function (g) { return g.v.length; });
+      return r;
+    }).filter(function (r) { return r.gruppi.length; });
   }
 
-  // come soglia(), ma con la quota giusta accanto a ogni percentuale
-  function sogliaQuote(nA, a, nB, b) {
-    var vinceA = a >= b, pari = Math.abs(a - b) < 0.02;
-    return '<div class="soglia"><div class="testi">' +
-      '<span class="' + (vinceA ? "vince" : "") + '">' + esc(nA) + " <b>" + pct(a) + '</b> <span class="fioco">' + quota(1 / a) + "</span></span>" +
-      '<span class="' + (!vinceA ? "vince" : "") + '">' + esc(nB) + " <b>" + pct(b) + '</b> <span class="fioco">' + quota(1 / b) + "</span></span></div>" +
-      '<div class="barra2"><div class="' + (pari ? "pari" : (vinceA ? "forte" : "")) + '" style="width:' + (a * 100).toFixed(1) + '%"></div>' +
-      '<div class="' + (pari ? "pari" : (!vinceA ? "forte" : "")) + '" style="width:' + (b * 100).toFixed(1) + '%"></div></div></div>';
+  function corpoGruppo(g, conQuote) {
+    if (g.f === "coppie") {
+      var html = "";
+      for (var i = 0; i + 1 < g.v.length; i += 2) html += coppia(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p, conQuote);
+      return '<div class="coppie">' + html + "</div>";
+    }
+    return tessere(g.v, true);
   }
-  function corpoTempi(g) {
-    if (g.f !== "coppie") return corpoMercati(g);
-    var barre = "";
-    for (var i = 0; i + 1 < g.v.length; i += 2) barre += sogliaQuote(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p);
-    return '<div class="coppie">' + barre + "</div>";
+
+  // una lista di righe che si aprono una per volta; ogni riga puo'
+  // contenere piu' gruppi, ciascuno con il suo titoletto
+  function listaApri(righe, conQuote) {
+    var html = '<div class="carta lista-apri">';
+    righe.forEach(function (r) {
+      var aperta = !!stato.mercati[r.chiave];
+      var n = r.gruppi.reduce(function (s, g) { return s + g.v.length; }, 0);
+      html += '<button class="riga-apri" data-mercato="' + esc(r.chiave) + '" aria-expanded="' + aperta + '">' +
+        '<span class="ra-testi"><span class="ra-t1">' + esc(r.t) + '</span><span class="ra-t2">' + esc(r.sotto) +
+        (r.senzaConta ? "" : " · " + n + (n === 1 ? " esito" : " esiti")) + "</span></span>" + icona(aperta ? "su" : "giu") + "</button>";
+      if (aperta) {
+        html += '<div class="ra-dentro">' + r.gruppi.map(function (g) {
+          return (r.gruppi.length > 1 || g.titoletto ? '<span class="sotto-t">' + esc(g.t) + "</span>" : "") + corpoGruppo(g, conQuote);
+        }).join("") + "</div>";
+      }
+    });
+    return html + "</div>";
   }
 
   function bloccoTempi(m) {
     var p = stato.valore && stato.valore.tempi && stato.valore.tempi[String(m.id)];
     if (!p) return "";
-    var gruppi = gruppiTempi(p, m);
-    if (!gruppi.length) return "";
-    var html = '<section class="blocco elenco"><h2>Primo e secondo tempo</h2>';
-    gruppi.forEach(function (g) {
-      var aperto = !!stato.mercati[g.chiave];
-      html += '<div class="carta apribile mercati' + (aperto ? " aperta" : "") +
-        '"><button data-mercato="' + esc(g.chiave) + '" aria-expanded="' + aperto + '">' +
-        '<span><span class="t1">' + esc(g.t) + '</span><span class="t2">' + g.v.length + ' esiti</span></span>' +
-        '<span class="bottone">' + (aperto ? "Chiudi" : "Apri") + "</span></button>";
-      if (aperto) html += '<div class="dentro">' + corpoTempi(g) + "</div>";
-      html += "</div>";
-    });
-    return html + '<div class="nota">Qui le probabilità non sono del nostro modello: vengono dalle quote di Pinnacle, corrette su 35.000 partite. Accanto a ogni percentuale c\'è la quota giusta: conviene giocare solo se il tuo bookmaker paga almeno il 5% in più.</div></section>';
+    var righe = gruppiTempi(p, m);
+    if (!righe.length) return "";
+    return '<section class="blocco elenco"><h2>Primo e secondo tempo</h2>' + listaApri(righe, true) +
+      '<p class="nota">Dalle quote di Pinnacle, corrette su 35.000 partite. Accanto a ogni percentuale c\'è la quota giusta: ' +
+      "conviene solo se il bookmaker paga almeno il 5% in più.</p></section>";
+  }
+
+  // gli altri mercati del nostro modello, raccolti in poche righe
+  var RIGHE_ALTRI = [
+    { t: "Multigol", sotto: "Totale e di squadra", da: ["Multigol", "Multigol di squadra"] },
+    { t: "Gol delle squadre", sotto: "Segna, Over e Under di ciascuna", da: ["Gol di {casa}", "Gol di {fuori}"] },
+    { t: "Combinazioni", sotto: "Esito con Under/Over, Gol, Multigol", da: ["Combinazioni"] },
+    { t: "Handicap e altri totali", sotto: "Scarto, Over 4.5, pari e dispari", da: ["Scarto e handicap", "Altri totali"] }
+  ];
+  function bloccoAltri(m) {
+    var righe = [];
+    if (m.esatti && m.esatti.length) {
+      righe.push({ chiave: "altri-esatti", t: "Risultati esatti", sotto: m.esatti.length === 1 ? "Il più probabile" : "I " + m.esatti.length + " più probabili",
+                   senzaConta: true,
+                   gruppi: [{ t: "Risultati esatti", f: "tessere", v: m.esatti.map(function (e) { return { n: e.r, p: e.p }; }) }] });
+    }
+    var vocab = (stato.dati && stato.dati.mercati) || [];
+    if (m.altri && m.altri.length && vocab.length) {
+      var gruppi = {};
+      vocab.forEach(function (g, i) {
+        var valori = m.altri[i] || [];
+        var gr = {
+          t: g.t.replace("{casa}", m.casa).replace("{fuori}", m.fuori), f: g.f,
+          v: g.n.map(function (nome, j) {
+            return { n: nome, lungo: (g.lunghi || [])[j] || nome, p: (valori[j] || 0) / 1000 };
+          })
+        };
+        // nei riquadri gli esiti sotto lo 0,5% si tolgono; nelle coppie
+        // no, altrimenti si scompagnano e la barra non torna
+        if (gr.f !== "coppie") gr.v = gr.v.filter(function (x) { return x.p > 0; });
+        gruppi[g.t] = gr;
+      });
+      var usati = {};
+      RIGHE_ALTRI.forEach(function (r) {
+        var dentro = r.da.map(function (t) { usati[t] = true; return gruppi[t]; })
+          .filter(function (g) { return g && g.v.length; });
+        if (dentro.length) righe.push({ chiave: "altri-" + r.t, t: r.t, sotto: r.sotto, gruppi: dentro });
+      });
+      // un gruppo nuovo, che qui non e' previsto, ha una riga sua
+      vocab.forEach(function (g) {
+        if (!usati[g.t] && gruppi[g.t] && gruppi[g.t].v.length) {
+          righe.push({ chiave: "altri-" + g.t, t: gruppi[g.t].t, sotto: "Dal nostro modello", gruppi: [gruppi[g.t]] });
+        }
+      });
+    }
+    if (!righe.length) return "";
+    return '<section class="blocco elenco"><h2>Altri mercati</h2>' + listaApri(righe, true) +
+      '<p class="nota">Dal nostro modello. Il numero piccolo è la quota equa, cioè il rovescio della percentuale: non è un consiglio di gioco.</p></section>';
+  }
+
+  function bloccoFiducia(m) {
+    var etichettaForm = m.formazioni === "ufficiale" ? "Formazioni ufficiali" :
+                        m.formazioni === "probabile" ? "Formazioni probabili" : "Formazioni non note";
+    var etichetta = m.affidabilita_etichetta || "bassa";
+    var storia = m.storia || [];
+    var html = '<section class="blocco carta"><h2>Quanto fidarsi del nostro modello</h2>' +
+      '<div class="indice"><div class="testi"><span>Affidabilità <span class="tag">' + esc(etichetta.toUpperCase()) +
+      '</span></span><span class="num">' + Math.round(m.affidabilita || 0) + "<small>/100</small></span></div>" +
+      '<div class="traccia"><div style="width:' + Math.max(0, Math.min(100, m.affidabilita || 0)) + '%"></div></div>' +
+      '<span class="spiega">Storico di ' + esc(storia[0] == null ? "–" : storia[0]) + " e " + esc(storia[1] == null ? "–" : storia[1]) +
+      " partite · " + etichettaForm.toLowerCase() + "</span></div>";
+    // prima e dopo le formazioni ufficiali: la notifica porta qui
+    if (m.prima && m.formazioni === "ufficiale") {
+      html += '<div class="confronto"><span class="ti"></span><span class="ti dx">STIMATE</span><span class="ti dx">UFFICIALI</span><span class="ti dx">SCARTO</span>' +
+        ["1", "X", "2"].map(function (k) {
+          var s = m.p[k] - m.prima[k];
+          return '<span class="v">' + k + '</span><span class="v dx fioco">' + pct(m.prima[k]) + '</span><span class="v dx">' + pct(m.p[k]) +
+                 '</span><span class="v dx ' + (Math.abs(s) >= 0.005 ? "chiaro" : "fioco") + '">' + segno(s) + "</span>";
+        }).join("") + "</div>";
+    }
+    if (m.attesi && m.attesi[0] != null) {
+      html += '<div class="attesi"><span>Gol attesi</span><b>' + quota(m.attesi[0]) + ' <span class="fioco">–</span> ' + quota(m.attesi[1]) + "</b></div>";
+    }
+    return html + "</section>";
   }
 
   function vistaDettaglio(id) {
     var m = trovaPartita(id);
-    var indietro = '<a class="indietro" href="#/"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Palinsesto</a>';
+    var indietro = '<a class="indietro" href="#/partite">' + icona("sinistra") + "Partite</a>";
     if (!m) return indietro + '<div class="vuoto"><h3>Partita non trovata</h3>Potrebbe essere già stata giocata.</div>';
 
     var d = data(m.data);
     var lega = nomeLega(m.campionato);
-    var max = Math.max(m.p["1"], m.p["X"], m.p["2"]);
     var etichettaForm = m.formazioni === "ufficiale" ? "Formazioni ufficiali" :
                         m.formazioni === "probabile" ? "Formazioni probabili" : "Formazioni non note";
-    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + bandiera(lega.paese) + " " + esc(lega.nome) +
+    var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + esc(lega.nome) +
       (lega.paese ? " · " + esc(lega.paese) : "") + '</span><span class="badge' + (m.formazioni === "ufficiale" ? " uff" : "") + '">' +
-      etichettaForm.toUpperCase() + '</span></div><div class="nomi"><div class="nome">' + esc(m.casa) +
-      '</div><div class="contro">contro</div><div class="nome">' + esc(m.fuori) + '</div></div>' +
+      etichettaForm.toUpperCase() + '</span></div><h1 class="nomi"><span class="nome">' + esc(m.casa) +
+      '</span><span class="contro">contro</span><span class="nome">' + esc(m.fuori) + "</span></h1>" +
       '<div class="quando">' + GIORNI_LUNGHI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " · <b>" + oraDi(d) + "</b></div></div>";
 
-    // esito finale e doppia chance
-    html += '<section class="blocco carta"><h2>Esito finale</h2><div class="griglia3">' +
-      ["1", "X", "2"].map(function (k) {
-        return '<div class="tessera' + (m.p[k] === max ? " forte" : "") + '"><small>' + k + "</small><b>" + pct(m.p[k]) + "</b></div>";
-      }).join("") + "</div>" + barra3(m.p) + '<div class="doppie">' +
-      ["1X", "12", "X2"].map(function (k) { return "<div><small>" + k + "</small><b>" + pct(m.dc[k]) + "</b></div>"; }).join("") +
-      "</div></section>";
-
-    // gol
-    html += '<section class="blocco carta"><h2>Gol</h2>' +
-      soglia("Over 1.5", m.gol.over15, "Under 1.5", m.gol.under15) +
-      soglia("Over 2.5", m.gol.over25, "Under 2.5", m.gol.under25) +
-      soglia("Over 3.5", m.gol.over35, "Under 3.5", m.gol.under35) +
-      '<div style="padding-top:12px;border-top:1px solid var(--linea)">' + soglia("Gol", m.gg.gol, "NoGol", m.gg.nogol) + "</div></section>";
-
-    // risultati esatti
-    if (m.esatti && m.esatti.length) {
-      html += '<section class="blocco carta"><h2>Risultati più probabili</h2><div class="griglia3">' +
-        m.esatti.map(function (e, i) {
-          return '<div class="ris-tessera' + (i === 0 ? " primo" : "") + '"><b>' + esc(e.r) + "</b><small>" + pct(e.p) + "</small></div>";
-        }).join("") + "</div></section>";
-    }
-
-    // tutti gli altri mercati giocabili, un gruppo per volta.
-    // I nomi stanno nel vocabolario in cima ad app.json; qui dentro la
-    // partita ci sono solo i numeri, nello stesso ordine.
-    var vocab = (stato.dati && stato.dati.mercati) || [];
-    if (m.altri && m.altri.length && vocab.length) {
-      var righe = vocab.map(function (g, i) {
-        var valori = m.altri[i] || [];
-        return {
-          chiave: g.t,
-          t: g.t.replace("{casa}", m.casa).replace("{fuori}", m.fuori),
-          f: g.f,
-          v: g.n.map(function (nome, j) {
-            return { n: nome, lungo: (g.lunghi || [])[j] || nome,
-                     p: (valori[j] || 0) / 1000 };
-          })
-        };
-      }).map(function (g) {
-        // nelle tessere gli esiti sotto lo 0,5% si tolgono; nelle coppie
-        // no, altrimenti si scompagnano e la barra non torna
-        if (g.f !== "coppie") g.v = g.v.filter(function (x) { return x.p > 0; });
-        return g;
-      }).filter(function (g) { return g.v.length; });
-
-      var totale = righe.reduce(function (n, g) { return n + g.v.length; }, 0);
-      html += '<section class="blocco elenco"><h2>Altri mercati · ' + totale + '</h2>';
-      righe.forEach(function (g) {
-        var apertoG = !!stato.mercati[g.chiave];
-        html += '<div class="carta apribile mercati' + (apertoG ? " aperta" : "") +
-          '"><button data-mercato="' + esc(g.chiave) + '" aria-expanded="' + apertoG + '">' +
-          '<span><span class="t1">' + esc(g.t) + '</span><span class="t2">' +
-          g.v.length + ' esiti</span></span><span class="bottone">' +
-          (apertoG ? "Chiudi" : "Apri") + "</span></button>";
-        if (apertoG) html += '<div class="dentro">' + corpoMercati(g) + "</div>";
-        html += "</div>";
-      });
-      html += '<div class="nota">Il numero piccolo sotto la percentuale è la quota equa: ' +
-        'è solo il rovescio della percentuale, non un consiglio di gioco.</div></section>';
-    }
-
-    // primo e secondo tempo, dalle quote di Pinnacle
-    html += bloccoTempi(m);
-
-    // prima e dopo le formazioni ufficiali
-    if (m.prima && m.formazioni === "ufficiale") {
-      html += '<section class="blocco carta"><h2>Prima e dopo le formazioni</h2><div class="confronto">' +
-        '<span class="ti"></span><span class="ti dx">STIMATE</span><span class="ti dx">UFFICIALI</span><span class="ti dx">SCARTO</span>' +
-        ["1", "X", "2"].map(function (k) {
-          var s = m.p[k] - m.prima[k];
-          return '<span class="v">' + k + '</span><span class="v dx fioco">' + pct(m.prima[k]) + '</span><span class="v dx">' + pct(m.p[k]) +
-                 '</span><span class="v dx ' + (s > 0 ? "piu" : s < 0 ? "meno" : "fioco") + '">' + segno(s) + "</span>";
-        }).join("") + "</div></section>";
-    }
-
-    // confronto con il mercato
-    if (m.mercato) {
-      var scarti = ["1", "X", "2"].map(function (k) { return m.p[k] - m.mercato[k]; });
-      var massimo = Math.max.apply(null, scarti.map(Math.abs));
-      html += '<section class="blocco carta"><h2>Confronto con i bookmaker</h2><div class="confronto">' +
-        '<span class="ti"></span><span class="ti dx">NOI</span><span class="ti dx">MERCATO</span><span class="ti dx">SCARTO</span>' +
-        ["1", "X", "2"].map(function (k, i) {
-          return '<span class="v">' + k + '</span><span class="v dx">' + pct(m.p[k]) + '</span><span class="v dx fioco">' + pct(m.mercato[k]) +
-                 '</span><span class="v dx ' + (scarti[i] > 0 ? "piu" : scarti[i] < 0 ? "meno" : "fioco") + '">' + segno(scarti[i]) + "</span>";
-        }).join("") + "</div>" +
-        '<div class="nota" style="padding:0">Media di ' + esc(m.mercato.bookmaker || "–") + " bookmaker, margine del " +
-        pct(m.mercato.margine, 1) + " già tolto</div>" +
-        (massimo >= 0.15 ? '<div class="avviso">' + ICONA_AVVISO + "<span>Divergenza forte. Nei nostri test, quando ci allontaniamo così dal mercato di solito sbagliamo noi.</span></div>" : "") +
-        "</section>";
-    }
-
-    // quanto fidarsi
-    var etichetta = m.affidabilita_etichetta || "bassa";
-    html += '<section class="blocco carta"><h2>Quanto fidarsi</h2>' +
-      '<div class="indice"><div class="testi"><span>Affidabilità <span class="tag ' + esc(etichetta) + '">' + esc(etichetta.toUpperCase()) +
-      '</span></span><span class="num">' + Math.round(m.affidabilita || 0) + "<small>/100</small></span></div>" +
-      '<div class="traccia"><div style="width:' + (m.affidabilita || 0) + '%"></div></div>' +
-      '<span class="spiega">Storico di ' + esc(m.storia[0]) + " e " + esc(m.storia[1]) + " partite · " + etichettaForm.toLowerCase() + "</span></div>" +
-      '<div class="indice"><div class="testi"><span>Nettezza</span><span class="num">' + Math.round(m.nettezza || 0) + "<small>/100</small></span></div>" +
-      '<div class="traccia"><div class="spento" style="width:' + (m.nettezza || 0) + '%"></div></div>' +
-      '<span class="spiega">Quanto il pronostico è sbilanciato</span></div>' +
-      '<div class="attesi"><span>Gol attesi</span><b>' + quota(m.attesi[0]) + ' <span class="fioco">–</span> ' + quota(m.attesi[1]) + "</b></div></section>";
-
-    if (d.getTime() > Date.now()) {
-      html += '<div style="padding:0 16px 4px"><a class="bottone-grande" href="#/nuova/' + encodeURIComponent(m.id) + '">+ Registra una giocata</a></div>';
-    }
-    return html + '<p class="nota-piccola" style="text-align:center;padding:12px 24px 24px">Sono probabilità, non certezze: un esito al 60% non si verifica quattro volte su dieci.</p>';
+    html += bloccoValore(m) + bloccoEsito(m) + bloccoGol(m) + bloccoTempi(m) + bloccoAltri(m) + bloccoFiducia(m);
+    return html + '<p class="nota-piccola centro">Sono probabilità, non certezze: un esito al 60% non si verifica quattro volte su dieci.</p>';
   }
 
   // ---------------------------------------------------------------
-  //  GIOCATE
+  //  GIOCATE: le proposte del modello e i risultati esatti
   // ---------------------------------------------------------------
-  // Singole consigliate e Valore sono state tolte: si basavano sul
-  // "vantaggio stimato" sul mercato, e la verifica ha dimostrato che
-  // quelle giocate perdevano (-14,6% per puntata su 466 casi).
   var SCHEDE = [
-    { id: "valore", nome: "Valore", testo: "Solo dove un bookmaker paga più di quanto l'esito vale secondo Pinnacle. Gioca solo se sul tuo sito trovi almeno la quota minima." },
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
-    { id: "miste", nome: "Miste", testo: "Schedine attorno a quota 5, 10 e 17, solo con esiti sopra il 30%." }
+    { id: "miste", nome: "Miste", testo: "Schedine attorno a quota 5, 10 e 17, solo con esiti sopra il 30%." },
+    { id: "esatti", nome: "Esatti", testo: "I cinque risultati esatti più probabili di tutto il palinsesto." }
   ];
 
-  function chipSchede() {
-    return '<div class="filtri"><div class="riga-chip nascosto-scroll">' +
-      SCHEDE.map(function (s) {
-        return '<button class="chip' + (stato.scheda === s.id ? " attivo" : "") + '" data-scheda="' + s.id + '">' + s.nome + "</button>";
-      }).join("") + "</div></div>";
-  }
-
-  function vistaGiocate() {
-    var scheda = SCHEDE.filter(function (s) { return s.id === stato.scheda; })[0];
-    if (!scheda) { stato.scheda = "valore"; scheda = SCHEDE[0]; }
-    if (stato.scheda === "valore") return vistaValore();
-    var g = stato.dati.giocate || {};
-    var fatte = g.generato ? "Proposte di oggi, fatte alle " + oraDi(data(g.generato)) : "";
-    var html = testa("Giocate", fatte) + chipSchede() + avvisoFuoriLinea() + '<div class="corpo">';
-    html += '<div class="nota">' + scheda.testo + "</div>";
-
-    var carte = g[stato.scheda] || [];
-    if (!carte.length) {
-      var spiega = (g.note || {})[stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
-      html += '<div class="vuoto"><h3>Nessuna proposta</h3>' + esc(spiega) + "</div>";
-    }
-
-    carte.forEach(function (c) {
-      var sistema = stato.scheda === "sistemi";
-      var q = sistema ? quota(c.quota, 1) + "–" + quota(c.quota_max, 0) : quota(c.quota);
-      var titolo = sistema && c.combinazioni ? c.titolo + " · " + c.combinazioni + " combinazioni" : c.titolo;
-      html += '<article class="giocata carta"><div class="giocata-testa"><span>' + esc(titolo) +
-        '</span><div class="quota"><small>quota</small><b>' + q + "</b></div></div>";
-      c.eventi.forEach(function (e) {
-        html += '<div class="evento"><div class="sx"><b>' + esc(e.partita) + "</b><small>" + esc(e.info) +
-          '</small></div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
-          (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + "</small></div></div>";
-      });
-      var piede, valore;
-      if (stato.scheda === "singole") {
-        piede = "noi " + pct(c.prob) + " · mercato " + pct(c.mercato) + " · vantaggio stimato";
-        valore = (c.vantaggio >= 0 ? "+" : "−") + Math.abs(Math.round((c.vantaggio || 0) * 100)) + "%";
-      } else if (sistema) {
-        piede = "probabilità di vincere almeno una combinazione"; valore = pct(c.prob);
-      } else {
-        piede = "probabilità che esca tutto"; valore = pct(c.prob);
-      }
-      html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + valore + "</b></div></article>";
-    });
-
-    return html + '<p class="nota-piccola">Le proposte si fanno una volta al mattino e non cambiano durante la giornata, anche se le previsioni si aggiornano. Nessuna di queste proposte ha un guadagno dimostrato: la verifica mostra che il mercato è più preciso del modello. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, 22% su una tripla.</p></div>';
-  }
-
-
-  // ---------------------------------------------------------------
-  //  VALORE: si gioca solo dove un bookmaker paga piu' del giusto
-  // ---------------------------------------------------------------
-  // I dati arrivano da valore.json, che valore.py scrive sul server a
-  // ogni giro. Il prezzo giusto e' la quota di Pinnacle senza margine;
-  // per i mercati dei tempi che Pinnacle non quota e' ricavato dalle sue
-  // quote finali ("stimata"). Per ora e' una prova sulla carta.
-  var FAMIGLIE_VALORE = [
-    ["esito e doppia chance", "Esito e doppia chance"], ["Under/Over", "Under / Over"],
-    ["Gol/NoGol", "Gol / NoGol"], ["primo e secondo tempo", "Primo e secondo tempo"],
-    ["all'intervallo", "All'intervallo"]
-  ];
-  var VERDETTI_VALORE = {
-    presto: ["Ancora presto", "Il verdetto arriva dopo {min} giocate confrontate con l'ultima quota di Pinnacle: ora sono {n}. Fino ad allora solo sulla carta."],
-    vero: ["Il vantaggio è vero", "Le quote prese battono quelle finali di Pinnacle in modo dimostrato. Si può passare ai soldi veri: puntata fissa, solo alla quota minima o sopra."],
-    no: ["Nessun vantaggio", "Le quote prese non battono quelle finali di Pinnacle: con questi bookmaker il metodo non funziona."],
-    incerto: ["Non ancora chiaro", "I numeri non dicono ancora né sì né no: si continua sulla carta."]
-  };
-
-  function pctSegno(v, dec) {
-    if (v == null || isNaN(v)) return "–";
-    var s = Math.abs(v * 100).toFixed(dec == null ? 1 : dec).replace(".", ",");
-    return (v > 0 ? "+" : v < 0 ? "−" : "") + s + "%";
-  }
-
-  // In che momento e' una giocata di oggi: si puo' ancora fare, e' in
-  // corso, o e' chiusa. Quelle nate all'intervallo si possono fare solo
-  // durante la pausa, cioe' per un quarto d'ora.
-  function momentoValore(r) {
-    if (r.esito === "vinta" || r.esito === "persa" || r.esito === "annullata") return "chiuse";
-    var ora = Date.now();
-    if (r.intervallo) {
-      var nata = r.registrata ? data(r.registrata).getTime() : 0;
-      return ora - nata < 15 * 60000 ? "giocare" : "corso";
-    }
-    return data(r.data).getTime() > ora ? "giocare" : "corso";
-  }
-  function momentoSchedina(s) {
-    if (s.esito === "vinta" || s.esito === "persa" || s.esito === "annullata") return "chiuse";
-    return s.prima && data(s.prima).getTime() > Date.now() ? "giocare" : "corso";
-  }
-
-  // una giocata in due righe: partita e quota minima, poi giocata e prezzo
-  function cartaValore(r) {
-    var d = data(r.data);
-    var chiusa = momentoValore(r) === "chiuse";
-    var nome = String(r.nome || "").replace(/ \(intervallo [^)]*\)$/, "");
-    var quando = r.intervallo ? "Intervallo " + esc(r.intervallo) : oraDi(d);
-    if (chiusa) quando = r.risultato ? "<b>" + esc(String(r.risultato).split(" ")[0]) + "</b>" : oraDi(d);
-    var badge = chiusa ? '<span class="esito-badge ' + esc(r.esito) + '">' + esc(r.esito.toUpperCase()) + "</span>" : "";
-    return '<article class="val carta' + (chiusa ? " chiusa" : "") + '">' +
-      '<div class="val-riga"><span class="val-partita">' + badge + '<span class="val-testo">' + quando + " · " +
-      esc(r.partita) + '</span></span><span class="val-min">minima<b>' + quota(r.minima) + "</b></span></div>" +
-      '<div class="val-riga"><span class="val-giocata">' + esc(nome) + '</span><span class="val-quota">' +
-      esc(r.book) + (r.commissione ? " exchange" : "") + " " + quota(r.quota) + ' · <b class="verde">' +
-      pctSegno(r.vantaggio, 0) + "</b></span></div></article>";
-  }
-
-  function cartaSchedinaValore(s) {
-    var html = '<article class="giocata carta"><div class="giocata-testa"><span>Schedina del giorno · ' + esc(s.book) +
-      '</span><div class="quota"><small>quota</small><b>' + quota(s.quota) + "</b></div></div>";
-    (s.voci || []).forEach(function (v) {
-      var fatto = v.esito === "vinta" ? " ✓" : v.esito === "persa" ? " ✕" : "";
-      html += '<div class="evento"><div class="sx"><b>' + esc(v.nome) + "</b><small>" + esc(v.partita) +
-        '</small></div><div class="dx2"><span class="esito">' + quota(v.quota) + fatto + "</span></div></div>";
-    });
-    var esito = s.esito === "vinta" ? "Vinta" : s.esito === "persa" ? "Persa" : null;
-    return html + '<div class="piede' + (s.prob < 0.35 ? " rischio" : "") + '"><span>' +
-      (esito ? esito + " · " : "") + "probabilità che esca tutto · vantaggio " + pctSegno(s.prob * s.quota - 1, 0) +
-      "</span><b>" + pct(s.prob) + "</b></div></article>";
-  }
-
-  function riquadroProva(v) {
-    var b = v.bilancio || {};
-    var s = b.singole || { n: 0 };
-    var clv = b.clv || { n: 0 };
-    var ver = VERDETTI_VALORE[b.verdetto] || VERDETTI_VALORE.presto;
-    var prova = v.prova && v.prova.giorno <= v.prova.di ? "Prova sulla carta · giorno " + v.prova.giorno + " di " + v.prova.di : "Prova sulla carta";
-    var html = '<div class="riquadro carta banca-carta"><div><span class="etichetta">' + prova + '</span><div class="verdetto" style="margin-top:4px">' +
-      ver[0] + "</div></div>" +
-      '<div class="tre"><div><b>' + (s.n || 0) + "</b><span>giocate chiuse" + (s.n ? " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") : "") + "</span></div>" +
-      '<div><b class="' + (s.n ? (s.rendimento >= 0 ? "verde" : "arancio") : "") + '">' + (s.n ? pctSegno(s.rendimento) : "–") + "</b><span>rendimento</span></div>" +
-      '<div><b class="' + (clv.n ? (clv.media >= 0 ? "verde" : "arancio") : "") + '">' + (clv.n ? pctSegno(clv.media) : "–") + "</b><span>contro Pinnacle a fine mercato</span></div></div>";
-    if (s.n) {
-      html += '<div class="tabella"><span class="ti">Mercato</span><span class="ti dx">Gioc.</span><span class="ti dx">Vinte</span><span class="ti dx">Rend.</span>';
-      FAMIGLIE_VALORE.forEach(function (f) {
-        var c = (b.famiglie || {})[f[0]];
-        if (!c || !c.n) return;
-        html += '<span class="c nome">' + f[1] + '</span><span class="c dx">' + c.n + '</span><span class="c dx">' + c.vinte +
-          '</span><span class="c dx ' + (c.rendimento >= 0 ? "verde" : "") + '">' + pctSegno(c.rendimento, 0) + "</span>";
-      });
-      var sc = b.schedine || { n: 0 };
-      if (sc.n) {
-        html += '<span class="c nome">Schedine del giorno</span><span class="c dx">' + sc.n + '</span><span class="c dx">' + sc.vinte +
-          '</span><span class="c dx ' + (sc.rendimento >= 0 ? "verde" : "") + '">' + pctSegno(sc.rendimento, 0) + "</span>";
-      }
-      html += "</div>";
-    }
-    var puntata = v.puntata || 10;
-    var frase = ver[1].replace("{min}", b.min_verdetto || 100).replace("{n}", clv.n || 0);
-    if (s.n) frase = "Sulla carta, a " + euro(puntata) + " a giocata: " + euro(s.utile * puntata, true) + ". " + frase;
-    return html + '<span class="nota" style="padding:0">' + esc(frase) + "</span></div>";
-  }
-
-  function vistaValore() {
-    var v = stato.valore;
-    var sotto = "";
-    if (v && v.generato) {
-      var dg = data(v.generato);
-      sotto = "Valore · " + (chiaveGiorno(dg) === chiaveGiorno(new Date()) ? "aggiornato alle " + oraDi(dg)
-        : "ultimo aggiornamento " + dataBreve(dg) + " " + oraDi(dg));
-    }
-    var html = testa("Giocate", sotto) + chipSchede() + avvisoFuoriLinea() + '<div class="corpo">' +
-      '<div class="nota">' + SCHEDE[0].testo + "</div>";
-    if (!v) {
-      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La scheda si riempie appena valore.py gira sul server.</div></div>';
-    }
-
-    var oggi = v.oggi || [];
-    var gruppi = { giocare: [], corso: [], chiuse: [] };
-    oggi.forEach(function (r) { gruppi[momentoValore(r)].push(r); });
-    var dove = stato.valoreElenco in gruppi ? stato.valoreElenco : "giocare";
-    var nomiElenco = { giocare: "Da giocare", corso: "In corso", chiuse: "Chiuse" };
-    html += '<div class="gruppo-testa"><h2>Oggi</h2><span>' + (oggi.length === 1 ? "1 giocata" : oggi.length + " giocate") + "</span></div>" +
-      '<div class="riga-chip nascosto-scroll" style="padding:0">' +
-      ["giocare", "corso", "chiuse"].map(function (k) {
-        return '<button class="chip' + (dove === k ? " attivo" : "") + '" data-valore-elenco="' + k + '">' +
-          nomiElenco[k] + " · " + gruppi[k].length + "</button>";
-      }).join("") + "</div>";
-    var lista = gruppi[dove];
-    if (dove === "chiuse") lista = lista.slice().reverse();
-    var schedinaQui = v.schedina && momentoSchedina(v.schedina) === dove;
-    if (!lista.length && !schedinaQui) {
-      html += '<div class="vuoto">' + ({
-        giocare: oggi.length ? "Adesso niente da giocare: le giocate di oggi sono già partite." :
-          "Per ora nessun bookmaker paga più del giusto: oggi si salta. Il server ricontrolla più volte durante il giorno, e ogni 5 minuti durante gli intervalli.",
-        corso: "Nessuna giocata in corso.",
-        chiuse: "Nessuna giocata chiusa oggi."
-      })[dove] + "</div>";
-    }
-    lista.forEach(function (r) { html += cartaValore(r); });
-    if (schedinaQui) html += cartaSchedinaValore(v.schedina);
-
-    html += '<h2 class="sezione" style="padding-top:10px">Come sta andando</h2>' + riquadroProva(v);
-
-    var ultime = v.ultime || [];
-    if (ultime.length) {
-      html += '<div class="carta apribile' + (stato.valoreAperte ? " aperta" : "") + '"><button data-valore-aperte="1" aria-expanded="' + stato.valoreAperte + '">' +
-        '<span><span class="t1">Ultime chiuse</span><span class="t2">' + ultime.length + (ultime.length === 1 ? " giocata" : " giocate") +
-        '</span></span><span class="bottone">' + (stato.valoreAperte ? "Chiudi" : "Apri") + "</span></button>";
-      if (stato.valoreAperte) {
-        html += '<div class="dentro">';
-        ultime.forEach(function (r) {
-          var vinta = r.esito === "vinta", persa = r.esito === "persa";
-          html += '<div class="riga-evento"><span class="segno' + (persa ? " no" : "") + '"' + (!vinta && !persa ? ' style="background:var(--grigio-forte)"' : "") + ">" +
-            (vinta ? "✓" : persa ? "✕" : "–") + '</span><span class="nome">' + esc(r.nome) +
-            '<br><small style="font-size:11px;font-weight:500;color:var(--testo3)">' + esc(r.partita) + " · " + dataBreve(data(r.data)) + "</small></span>" +
-            '<span class="es">' + quota(r.quota) + '</span><span class="rs">' + esc((r.risultato || "").split(" ")[0]) + "</span></div>";
-        });
-        html += "</div>";
-      }
-      html += "</div>";
-    }
-
-    return html + '<p class="nota-piccola">Il prezzo giusto è la quota di Pinnacle senza il suo margine; sui mercati dei tempi che Pinnacle non quota è stimato dalle sue quote finali, e lì si chiede più vantaggio. Le giocate all\'intervallo confrontano Bet365 live con il nostro prezzo, che parte dalle quote di Pinnacle del mattino e dal risultato del primo tempo: arrivano con una notifica, e vanno giocate prima che ricominci la partita. Le quote dei bookmaker arrivano dai siti internazionali e possono essere vecchie di qualche ora: sul sito italiano conta solo la quota minima. "Contro Pinnacle a fine mercato" dice quanto le quote prese battono l\'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p></div>';
-  }
-
-  // ---------------------------------------------------------------
-  //  RISULTATI ESATTI
-  // ---------------------------------------------------------------
-  function vistaEsatti() {
+  function corpoEsatti() {
     var lista = stato.dati.esatti || [];
-    var html = testa("Risultati esatti", "I cinque più probabili di tutto il palinsesto") + avvisoFuoriLinea() +
-      '<div class="corpo"><div class="avviso">' + ICONA_AVVISO +
+    var html = '<div class="avviso">' + icona("avviso") +
       "<span>La parte meno verificata del modello. Anche il punteggio più probabile esce raramente più di una volta su sette.</span></div>";
     if (!lista.length) html += '<div class="vuoto"><h3>Nessuna partita</h3>Non ci sono partite in programma.</div>';
     lista.forEach(function (r, i) {
-      var netto = r.p >= 0.15;
-      html += '<div class="esatto carta' + (netto ? " netto" : "") + '"><div class="pos' + (i === 0 ? " primo" : "") + '">' + (i + 1) +
+      html += '<div class="esatto carta' + (r.p >= 0.15 ? " netto" : "") + '"><div class="pos' + (i === 0 ? " primo" : "") + '">' + (i + 1) +
         '</div><div class="punteggio">' + esc(r.ris) + '</div><div class="info"><b>' + esc(r.partita) + "</b><small>" + esc(r.info) +
         "</small><span>stacca il secondo di " + (r.distacco * 100).toFixed(1).replace(".", ",") + ' punti</span></div><div class="perc">' +
         pct(r.p, 1) + "</div></div>";
     });
-    return html + '<p class="nota-piccola">Ordinati per probabilità: tendono a uscire le partite chiuse, dove pochi punteggi concentrano le possibilità.</p></div>';
+    return html;
+  }
+
+  function vistaGiocate() {
+    var scheda = SCHEDE.filter(function (s) { return s.id === stato.scheda; })[0];
+    if (!scheda) { stato.scheda = "alta"; scheda = SCHEDE[0]; }
+    var g = stato.dati.giocate || {};
+    var fatte = g.generato ? "Proposte di oggi, fatte alle " + oraDi(data(g.generato)) : "Le proposte del nostro modello";
+    var html = testa("Giocate", fatte) + '<div class="filtri"><div class="riga-chip stretta nascosto-scroll">' +
+      SCHEDE.map(function (s) {
+        return '<button class="chip' + (stato.scheda === s.id ? " attivo" : "") + '" data-scheda="' + s.id + '">' + s.nome + "</button>";
+      }).join("") + "</div></div>" + avvisoFuoriLinea() + '<div class="corpo"><p class="nota">' + scheda.testo + "</p>";
+
+    if (stato.scheda === "esatti") {
+      html += corpoEsatti();
+    } else {
+      var carte = g[stato.scheda] || [];
+      if (!carte.length) {
+        var spiega = (g.note || {})[stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
+        html += '<div class="vuoto"><h3>Nessuna proposta</h3>' + esc(spiega) + "</div>";
+      }
+      carte.forEach(function (c) {
+        var sistema = stato.scheda === "sistemi";
+        var q = sistema ? quota(c.quota, 1) + "–" + quota(c.quota_max, 0) : quota(c.quota);
+        var titolo = sistema && c.combinazioni ? c.titolo + " · " + c.combinazioni + " combinazioni" : c.titolo;
+        html += '<article class="giocata carta"><div class="giocata-testa"><span>' + esc(titolo) +
+          '</span><div class="quota"><small>quota</small><b>' + q + "</b></div></div>";
+        (c.eventi || []).forEach(function (e) {
+          html += '<div class="evento"><div class="sx"><b>' + esc(e.partita) + "</b><small>" + esc(e.info) +
+            '</small></div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
+            (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + "</small></div></div>";
+        });
+        var piede = sistema ? "probabilità di vincere almeno una combinazione" : "probabilità che esca tutto";
+        html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + pct(c.prob) + "</b></div></article>";
+      });
+    }
+
+    return html + '<p class="nota-info">' + icona("info") + "<span>Proposte fatte al mattino dal nostro modello, senza un vantaggio dimostrato: " +
+      "il mercato resta più preciso. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, " +
+      "22% su una tripla. Le giocate con vantaggio sono in Oggi.</span></p></div>";
   }
 
   // ---------------------------------------------------------------
-  //  VERIFICA
+  //  RISULTATI: la prova sulla carta e la verifica del modello
   // ---------------------------------------------------------------
+  // il grafico della prova, giocata per giocata; il dito ci scorre sopra
+  function graficoProva(serie) {
+    var p = puntata();
+    var punti = [0], giorni = [null];
+    serie.forEach(function (x) { punti.push(punti[punti.length - 1] + x[1] * p); giorni.push(x[0]); });
+    var W = 326, H = 128, sx = 18, dx = 10, su = 12, giu = 12;
+    var min = Math.min(0, Math.min.apply(null, punti)), max = Math.max(0, Math.max.apply(null, punti));
+    var margine = (max - min) * 0.08 || 5;
+    min -= margine; max += margine;
+    var n = punti.length - 1;
+    function X(i) { return sx + (W - sx - dx) * i / n; }
+    function Y(v) { return su + (H - su - giu) * (1 - (v - min) / (max - min)); }
+    var ultimo = punti[n], giu2 = ultimo < 0;
+    stato.grafico = { punti: punti, giorni: giorni, W: W, X: X, Y: Y };
+    var linea = punti.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
+    var y0 = Y(0).toFixed(1);
+    var svg = '<div class="grafico-box" data-grafico="1"><svg class="grafico" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Andamento della prova sulla carta, giocata per giocata">' +
+      '<line class="g-zero" x1="14" x2="' + W + '" y1="' + y0 + '" y2="' + y0 + '"></line>' +
+      '<text class="g-asse" x="0" y="' + (Y(0) + 3.5).toFixed(1) + '">0</text>' +
+      '<path class="g-linea' + (giu2 ? " giu" : "") + '" d="' + linea + '"></path>' +
+      '<line class="g-croce" id="g-croce" x1="0" x2="0" y1="' + su + '" y2="' + (H - giu) + '" style="display:none"></line>' +
+      '<circle class="g-punto' + (giu2 ? " giu" : "") + '" cx="' + X(n).toFixed(1) + '" cy="' + Y(ultimo).toFixed(1) + '" r="4.5"></circle>' +
+      '<circle class="g-punto mobile" id="g-dito" cx="0" cy="0" r="4.5" style="display:none"></circle></svg>' +
+      '<div class="g-etichetta" id="g-etichetta" hidden><b></b><small></small></div></div>';
+    var primo = giorni[1], ultimoG = giorni[n], mezzo = giorni[Math.max(1, Math.round(n / 2))];
+    svg += '<div class="asse"><span>' + (primo ? giornoCorto(daChiave(primo)) : "") + "</span><span>" +
+      (n > 2 && mezzo ? giornoCorto(daChiave(mezzo)) : "") + "</span><span>" + (ultimoG ? giornoCorto(daChiave(ultimoG)) : "") + "</span></div>";
+    return svg;
+  }
+  function mostraPunto(ev) {
+    var box = ev.target.closest && ev.target.closest("[data-grafico]");
+    var g = stato.grafico;
+    if (!box || !g) return;
+    var svg = box.querySelector("svg"), r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    var x = (ev.clientX - r.left) / r.width * g.W;
+    var n = g.punti.length - 1, i = 0, meglio = Infinity;
+    for (var k = 1; k <= n; k++) { var dd = Math.abs(g.X(k) - x); if (dd < meglio) { meglio = dd; i = k; } }
+    if (!i) return;
+    var croce = document.getElementById("g-croce"), dito = document.getElementById("g-dito");
+    var et = document.getElementById("g-etichetta");
+    croce.setAttribute("x1", g.X(i).toFixed(1)); croce.setAttribute("x2", g.X(i).toFixed(1)); croce.style.display = "";
+    dito.setAttribute("cx", g.X(i).toFixed(1)); dito.setAttribute("cy", g.Y(g.punti[i]).toFixed(1)); dito.style.display = "";
+    et.querySelector("b").textContent = euro(g.punti[i], true);
+    et.querySelector("small").textContent = "dopo " + i + (i === 1 ? " giocata" : " giocate") + (g.giorni[i] ? " · " + giornoCorto(daChiave(g.giorni[i])) : "");
+    et.hidden = false;
+    var sinistra = g.X(i) / g.W * r.width;
+    et.style.left = Math.max(0, Math.min(r.width - et.offsetWidth, sinistra - et.offsetWidth / 2)) + "px";
+  }
+  function nascondiPunto() {
+    ["g-croce", "g-dito"].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.display = "none"; });
+    var et = document.getElementById("g-etichetta"); if (et) et.hidden = true;
+  }
+
+  function corpoCarta() {
+    var v = stato.valore;
+    if (!v) {
+      return stato.valoreCaricato ? '<div class="vuoto"><h3>Ancora nessun dato</h3>La prova sulla carta compare appena valore.py gira sul server.</div>'
+        : '<div class="caricamento">Caricamento…</div>';
+    }
+    var b = v.bilancio || {};
+    var s = b.singole || { n: 0 };
+    var clv = b.clv || { n: 0 };
+    var p = puntata();
+    var ver = VERDETTI_VALORE[b.verdetto] || VERDETTI_VALORE.presto;
+    var min = b.min_verdetto || 100;
+    var html = '<section class="riquadro carta"><div><span class="etichetta">' + etichettaProva(v) + '</span><div class="verdetto">' + ver[0] + "</div></div>";
+    if (!b.verdetto || b.verdetto === "presto") {
+      var fatto = Math.min(1, (clv.n || 0) / min);
+      html += '<div class="progresso"><div class="traccia"><div style="width:' + (fatto * 100).toFixed(1) + '%"></div></div>' +
+        '<div class="progresso-testi"><span><b>' + (clv.n || 0) + "</b> di " + min + " giocate</span><span>poi il verdetto</span></div></div>";
+    }
+    html += '<p class="testo">' + esc(ver[1].replace("{min}", min).replace("{n}", clv.n || 0)) + "</p></section>";
+
+    // i soldi sulla carta, con il grafico
+    var serie = v.serie || [];
+    var utile = s.n ? s.utile * p : 0;
+    var giornoPrima = ieri(), diIeri = serie.filter(function (x) { return x[0] === giornoPrima; });
+    var utileIeri = diIeri.reduce(function (t, x) { return t + x[1] * p; }, 0);
+    html += '<section class="riquadro carta"><div class="soldi-testa"><div><span class="etichetta">Sulla carta, ' + euroTondo(p) + " a giocata</span>" +
+      '<div class="soldi ' + (utile > 0.004 ? "turchese" : utile < -0.004 ? "arancio" : "") + '">' + euro(utile, true) + "</div></div>" +
+      (diIeri.length ? '<span class="soldi-ieri">ieri <b class="' + (utileIeri > 0.004 ? "turchese" : utileIeri < -0.004 ? "arancio" : "") + '">' + euro(utileIeri, true) + "</b></span>" : "") +
+      "</div>";
+    stato.grafico = null;
+    if (serie.length >= 2) html += graficoProva(serie);
+    else html += '<p class="testo fioco">Il grafico parte quando si chiudono le prime giocate.</p>';
+    html += '<div class="tre separato"><div><b>' + (s.n || 0) + "</b><span>chiuse" + (s.n ? " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") : "") + "</span></div>" +
+      '<div><b class="' + (s.n ? (s.rendimento >= 0 ? "turchese" : "arancio") : "") + '">' + (s.n ? pctSegno(s.rendimento) : "–") + "</b><span>rendimento</span></div>" +
+      '<div><b class="' + (clv.n ? (clv.media >= 0 ? "turchese" : "arancio") : "") + '">' + (clv.n ? pctSegno(clv.media) : "–") +
+      "</b><span>contro Pinnacle a fine mercato</span></div></div></section>";
+
+    // per mercato
+    if (s.n) {
+      html += '<section class="riquadro carta"><h2 class="titoletto">Per mercato</h2><div class="tabella"><span class="ti">Mercato</span><span class="ti dx">Gioc.</span>' +
+        '<span class="ti dx">Vinte</span><span class="ti dx">Rend.</span>';
+      FAMIGLIE_VALORE.forEach(function (f) {
+        var c = (b.famiglie || {})[f[0]];
+        if (!c || !c.n) return;
+        html += '<span class="c nome">' + f[1] + '</span><span class="c dx">' + c.n + '</span><span class="c dx">' + c.vinte +
+          '</span><span class="c dx ' + (c.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(c.rendimento, 0) + "</span>";
+      });
+      var sc = b.schedine || { n: 0 };
+      if (sc.n) {
+        html += '<span class="c nome">Schedine del giorno</span><span class="c dx">' + sc.n + '</span><span class="c dx">' + sc.vinte +
+          '</span><span class="c dx ' + (sc.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(sc.rendimento, 0) + "</span>";
+      }
+      html += "</div></section>";
+    }
+
+    // le ultime chiuse
+    var ultime = (v.ultime || []).slice(0, 10);
+    if (ultime.length) {
+      html += '<section class="riquadro carta"><div class="blocco-testa"><h2 class="titoletto">Ultime chiuse</h2><span>la più recente in alto</span></div>' +
+        '<div class="righe-dentro">' + ultime.map(function (r) { return rigaGiocata(r, true, true); }).join("") + "</div></section>";
+    }
+
+    return html + '<p class="nota-piccola">Il prezzo giusto è la quota di Pinnacle senza il suo margine; sui mercati dei tempi che Pinnacle non quota ' +
+      "è stimato dalle sue quote finali, e lì si chiede più vantaggio. Le giocate all'intervallo confrontano Bet365 live con il nostro prezzo, " +
+      "che parte dalle quote di Pinnacle del mattino e dal risultato del primo tempo. \"Contro Pinnacle a fine mercato\" dice quanto le quote " +
+      "prese battono l'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p>";
+  }
+
   var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", esatti: "Risultati esatti" };
 
-  function vistaVerifica() {
+  function corpoModello() {
+    if (!stato.dati) return senzaDati();
     var v = stato.dati.verifica;
     var s = stato.dati.schedine || { totale: { n: 0 }, categorie: {}, ieri: [] };
-    var html = testa("Verifica", "Come sono andate le previsioni già giocate") + avvisoFuoriLinea() +
-      '<div class="corpo"><h2 class="sezione">Partite</h2>';
+    var html = "";
 
     if (!v || !v.verificate) {
       html += '<div class="vuoto">Ancora nessuna partita verificata.</div>';
     } else {
-      html += '<div class="griglia2"><div class="stat carta"><small>Verificate</small><b>' + v.verificate +
-        "</b><span>in totale, dall'inizio</span></div>" +
-        '<div class="stat carta"><small>Azzeccate</small><b class="verde">' + pct(v.azzeccate / v.verificate) +
-        "</b><span>" + v.azzeccate + " su " + v.verificate + " · log loss " + Number(v.log_loss).toFixed(4).replace(".", ",") + "</span></div></div>";
+      html += '<section class="riquadro carta"><h2 class="titoletto">Le previsioni</h2><div class="griglia2">' +
+        '<div class="stat"><small>Verificate</small><b>' + v.verificate + "</b><span>partite, dall'inizio</span></div>" +
+        '<div class="stat"><small>Azzeccate</small><b>' + pct(v.azzeccate / v.verificate) + "</b><span>" + v.azzeccate + " su " + v.verificate +
+        " · log loss " + Number(v.log_loss).toFixed(4).replace(".", ",") + "</span></div></div></section>";
 
       if (v.con_quote && v.intervallo) {
         var lo = v.intervallo[0], hi = v.intervallo[1];
         var verdetto = lo > 0 ? "Battiamo il mercato" : (hi < 0 ? "Il mercato è migliore" : "Non distinguibile");
         var frase = lo > 0 ? "Su " + v.con_quote + " partite con quote siamo avanti in modo dimostrato."
-          : hi < 0 ? "Su " + v.con_quote + " partite con quote il mercato è più preciso di noi, in modo dimostrato."
+          : hi < 0 ? "Su " + v.con_quote + " partite con quote il mercato è più preciso di noi, in modo dimostrato. Per questo le giocate di valore partono dalle quote di Pinnacle."
           : "Su " + v.con_quote + " partite con quote " + (v.vantaggio >= 0 ? "siamo leggermente avanti" : "siamo leggermente indietro") +
             ", ma la fascia di incertezza attraversa lo zero: ancora troppo presto per dire chi è migliore.";
-        function posiz(x) { return Math.max(2, Math.min(98, 50 + x / 0.06 * 50)); }
+        var posiz = function (x) { return Math.max(2, Math.min(98, 50 + x / 0.06 * 50)); };
         var sx = posiz(lo), dx = posiz(hi);
-        html += '<div class="riquadro carta"><div><span class="etichetta">Contro i bookmaker</span><div class="verdetto" style="margin-top:4px">' +
-          verdetto + '</div></div><div><div class="scala"><div class="t"></div><div class="f" style="left:' + sx + "%;width:" + (dx - sx) +
+        html += '<section class="riquadro carta"><div><span class="etichetta">Contro i bookmaker</span><div class="verdetto">' + verdetto +
+          '</div></div><div><div class="scala"><div class="t"></div><div class="f" style="left:' + sx + "%;width:" + (dx - sx) +
           '%"></div><div class="z"></div><div class="p" style="left:' + posiz(v.vantaggio) + '%"></div></div>' +
           '<div class="scala-testi"><span>meglio il mercato</span><span>pari</span><span>meglio noi</span></div></div>' +
-          '<span class="nota" style="padding:0">' + frase + "</span></div>";
+          '<p class="testo">' + frase + "</p></section>";
       }
     }
 
-    html += '<h2 class="sezione" style="padding-top:10px">Schedine</h2>';
     var t = s.totale || { n: 0 };
     if (!t.n) {
       html += '<div class="vuoto">Nessuna schedina ancora conclusa. I conteggi compariranno appena le prime saranno giocate.</div>';
     } else {
-      html += '<div class="riquadro carta"><div class="tre"><div><b>' + t.n + "</b><span>concluse in totale</span></div>" +
-        '<div><b class="verde">' + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
+      html += '<section class="riquadro carta"><h2 class="titoletto">Le schedine proposte</h2><div class="tre"><div><b>' + t.n + "</b><span>concluse in totale</span></div>" +
+        "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["singole", "alta", "valore", "sistemi", "miste", "esatti"].forEach(function (k) {
+      ["alta", "sistemi", "miste", "esatti", "singole", "valore"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
-        html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx verde">' +
+        html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +
           pct(c.vinte / c.n) + '</span><span class="c dx">' + pct(c.attesa) + "</span>";
       });
-      html += '</div><span class="nota" style="padding:0">Se "uscite" e "attese" restano vicine, le probabilità delle schedine sono oneste.'
-        + (t.annullate ? " " + t.annullate + (t.annullate === 1 ? " schedina annullata" : " schedine annullate")
-           + " per partite rinviate o mai arrivate." : "")
-        + "</span></div>";
+      html += '</div><p class="testo fioco">Se "uscite" e "attese" restano vicine, le probabilità delle schedine sono oneste.' +
+        (t.annullate ? " " + t.annullate + (t.annullate === 1 ? " schedina annullata" : " schedine annullate") + " per partite rinviate o mai arrivate." : "") +
+        "</p></section>";
     }
 
-    var ieri = s.ieri || [];
-    var vinte = ieri.filter(function (x) { return x.vinta; }).length;
-    html += '<div class="carta apribile' + (stato.aperta ? " aperta" : "") + '"><button data-apri="1" aria-expanded="' + stato.aperta + '">' +
-      '<span><span class="t1">Concluse ieri</span><span class="t2">' +
-      (ieri.length ? ieri.length + (ieri.length === 1 ? " schedina · " : " schedine · ") + vinte + (vinte === 1 ? " vinta" : " vinte") : "Nessuna schedina conclusa ieri") +
-      '</span></span><span class="bottone">' + (stato.aperta ? "Chiudi" : "Apri") + "</span></button>";
+    var ieriL = s.ieri || [];
+    var vinte = ieriL.filter(function (x) { return x.vinta; }).length;
+    html += '<div class="carta lista-apri"><button class="riga-apri" data-apri="1" aria-expanded="' + stato.aperta + '">' +
+      '<span class="ra-testi"><span class="ra-t1">Schedine concluse ieri</span><span class="ra-t2">' +
+      (ieriL.length ? ieriL.length + (ieriL.length === 1 ? " schedina · " : " schedine · ") + vinte + (vinte === 1 ? " vinta" : " vinte") : "Nessuna schedina conclusa ieri") +
+      "</span></span>" + icona(stato.aperta ? "su" : "giu") + "</button>";
     if (stato.aperta) {
-      html += '<div class="dentro">';
-      if (!ieri.length) html += '<div class="nota">Nessuna schedina si è chiusa ieri.</div>';
-      ieri.forEach(function (x) {
+      html += '<div class="ra-dentro">';
+      if (!ieriL.length) html += '<div class="nota">Nessuna schedina si è chiusa ieri.</div>';
+      ieriL.forEach(function (x) {
         var q = x.categoria === "sistemi" ? "" : quota(x.quota);
         html += '<div class="conclusa"><div class="riga"><div class="etichette"><span class="esito-badge ' + (x.vinta ? "vinta" : "persa") + '">' +
-          (x.vinta ? "VINTA" : "PERSA") + '</span><span class="lega" style="text-transform:none;letter-spacing:0;font-size:13px">' + esc(x.titolo) +
-          '</span></div><b style="font-family:var(--titolo);font-size:22px;color:' + (x.vinta ? "var(--lime)" : "var(--testo3)") + '">' + q + "</b></div>";
-        x.eventi.forEach(function (e) {
-          html += '<div class="riga-evento"><span class="segno' + (e.preso ? "" : " no") + '">' + (e.preso ? "✓" : "✕") +
+          (x.vinta ? "VINTA" : "PERSA") + '</span><span class="titolo-conclusa">' + esc(x.titolo) +
+          '</span></div><b class="q-conclusa' + (x.vinta ? " turchese" : " fioco") + '">' + q + "</b></div>";
+        (x.eventi || []).forEach(function (e) {
+          html += '<div class="riga-evento"><span class="segno' + (e.preso ? "" : " no") + '">' + icona(e.preso ? "vinta" : "persa") +
             '</span><span class="nome">' + esc(e.partita) + '</span><span class="es">' + esc(e.esito) + '</span><span class="rs">' + esc(e.ris) + "</span></div>";
         });
-        html += '<span class="nota" style="padding:0;font-size:11px">Il modello dava il ' + pct(x.prob) + (x.categoria === "sistemi" ? " di vincere almeno una combinazione" : " che uscisse tutto") + "</span></div>";
+        html += '<span class="nota">Il modello dava il ' + pct(x.prob) + (x.categoria === "sistemi" ? " di vincere almeno una combinazione" : " che uscisse tutto") + "</span></div>";
       });
       html += "</div>";
     }
     html += "</div>";
 
-    return html + '<p class="nota-piccola">Ogni partita e ogni schedina restano salvate: contano tutte nei totali qui sopra, anche se non vengono elencate.<br><br>App versione ' + VERSIONE_APP + '</p></div>';
+    return html + '<p class="nota-piccola">Ogni partita e ogni schedina restano salvate: contano tutte nei totali qui sopra, anche se non vengono elencate.<br><br>App versione ' + VERSIONE_APP + "</p>";
   }
 
-  // ---------------------------------------------------------------
-  //  MIE GIOCATE: registro personale con puntate Kelly 1/4
-  // ---------------------------------------------------------------
-  // Il registro vive solo sul telefono (memoria del browser): budget,
-  // obiettivo e giocate. I risultati arrivano da app.json, quindi le
-  // giocate si chiudono da sole appena la partita finisce.
-  //
-  // La puntata segue il criterio di Kelly frazionato:
-  //   vantaggio = p * quota - 1
-  //   Kelly pieno = vantaggio / (quota - 1)
-  //   puntata = un quarto del Kelly pieno, mai oltre il TETTO della banca
-  // L'obiettivo di guadagno NON entra nel calcolo: serve solo a misurare
-  // a che punto si e' e quanto manca, con i risultati veri.
-  var CHIAVE_REGISTRO = "previsioni-registro-v1";
-  var FRAZIONE_KELLY = 0.25;
-  var TETTO = 0.03;                 // mai piu' del 3% della banca su una giocata
-  var PUNTATA_MINIMA = 1;           // sotto, i bookmaker italiani non accettano
-  var MIN_PER_STIMA = 20;           // giocate chiuse prima di proiettare
-
-  // Gli esiti principali, sempre in vista nel modulo.
-  var ESITI = [
-    { k: "1", n: "1", g: "Esito finale", p: function (m) { return m.p["1"]; } },
-    { k: "X", n: "X", g: "Esito finale", p: function (m) { return m.p["X"]; } },
-    { k: "2", n: "2", g: "Esito finale", p: function (m) { return m.p["2"]; } },
-    { k: "1X", n: "1X", g: "Doppia chance", p: function (m) { return m.dc["1X"]; } },
-    { k: "12", n: "12", g: "Doppia chance", p: function (m) { return m.dc["12"]; } },
-    { k: "X2", n: "X2", g: "Doppia chance", p: function (m) { return m.dc["X2"]; } },
-    { k: "over15", n: "Over 1.5", g: "Under / Over", p: function (m) { return m.gol.over15; } },
-    { k: "under15", n: "Under 1.5", g: "Under / Over", p: function (m) { return m.gol.under15; } },
-    { k: "over25", n: "Over 2.5", g: "Under / Over", p: function (m) { return m.gol.over25; } },
-    { k: "under25", n: "Under 2.5", g: "Under / Over", p: function (m) { return m.gol.under25; } },
-    { k: "over35", n: "Over 3.5", g: "Under / Over", p: function (m) { return m.gol.over35; } },
-    { k: "under35", n: "Under 3.5", g: "Under / Over", p: function (m) { return m.gol.under35; } },
-    { k: "gol", n: "Gol", g: "Gol / NoGol", p: function (m) { return m.gg.gol; } },
-    { k: "nogol", n: "NoGol", g: "Gol / NoGol", p: function (m) { return m.gg.nogol; } }
-  ];
-  var GRUPPI_PRINCIPALI = { "Esito finale": 1, "Doppia chance": 1, "Under / Over": 1, "Gol / NoGol": 1 };
-
-  // Tutti gli esiti che il motore propone per una partita: i principali,
-  // gli "Altri mercati" della scheda (multigol, gol di squadra, handicap,
-  // combinazioni, altri totali) e i risultati esatti piu' probabili.
-  function esitiPartita(m) {
-    var lista = ESITI.map(function (e) {
-      return { k: e.k, n: e.n, nome: e.n, g: e.g, p: e.p(m) };
-    });
-    var vocab = (stato.dati && stato.dati.mercati) || [];
-    vocab.forEach(function (g, i) {
-      if (!g.k) return;                        // app.json di una versione vecchia
-      var titolo = g.t.replace("{casa}", m.casa).replace("{fuori}", m.fuori);
-      var valori = (m.altri || [])[i] || [];
-      g.k.forEach(function (k, j) {
-        var p = (valori[j] || 0) / 1000;
-        if (!(p > 0)) return;                  // sotto lo 0,5%: nessuno lo quota
-        var lungo = ((g.lunghi || [])[j] || g.n[j])
-          .replace(/^Casa\b/, m.casa).replace(/^Ospite\b/, m.fuori);
-        lista.push({ k: k, n: g.n[j], nome: lungo, g: titolo, p: p });
-      });
-    });
-    (m.esatti || []).forEach(function (e) {
-      lista.push({ k: e.r, n: e.r, nome: "Risultato " + e.r, g: "Risultato esatto", p: e.p });
-    });
-    return lista;
-  }
-  function trovaEsito(m, k) {
-    var lista = esitiPartita(m);
-    for (var i = 0; i < lista.length; i++) if (lista[i].k === k) return lista[i];
-    return null;
-  }
-  // l'esito opposto, per togliere il margine dalle quote a coppie
-  var OPPOSTO = { over25: "under25", under25: "over25", gol: "nogol", nogol: "gol" };
-
-  // Se un esito si e' verificato: la stessa regola del motore
-  // (esito_avvenuto in previsioni.py), comprese combinazioni e
-  // risultati esatti. null se l'esito non e' riconosciuto.
-  function avvenuto(k, gc, ga) {
-    k = String(k);
-    if (k.indexOf("+") > 0) {
-      var parti = k.split("+").map(function (x) { return avvenuto(x, gc, ga); });
-      if (parti.some(function (v) { return v === null; })) return null;
-      return parti.every(Boolean);
-    }
-    var esatto = /^(\d+)-(\d+)$/.exec(k);
-    if (esatto) return gc === +esatto[1] && ga === +esatto[2];
-    var t = gc + ga, s = gc - ga;
-    var mg = /^(casa_|fuori_)?mg_(\d+)_(\d+)$/.exec(k);
-    if (mg) {
-      var v = mg[1] === "casa_" ? gc : mg[1] === "fuori_" ? ga : t;
-      return v >= +mg[2] && v <= +mg[3];
-    }
-    var tabella = {
-      "1": gc > ga, "X": gc === ga, "2": gc < ga,
-      "1X": gc >= ga, "12": gc !== ga, "X2": gc <= ga,
-      over05: t >= 1, under05: t < 1, over15: t >= 2, under15: t < 2,
-      over25: t >= 3, under25: t < 3, over35: t >= 4, under35: t < 4,
-      over45: t >= 5, under45: t < 5, pari: t % 2 === 0, dispari: t % 2 === 1,
-      gol: gc > 0 && ga > 0, gol_gol: gc > 0 && ga > 0,
-      nogol: !(gc > 0 && ga > 0), no_gol: !(gc > 0 && ga > 0),
-      casa_segna: gc > 0, casa_nonsegna: gc === 0,
-      fuori_segna: ga > 0, fuori_nonsegna: ga === 0,
-      casa_over15: gc >= 2, casa_under15: gc < 2, casa_over25: gc >= 3, casa_under25: gc < 3,
-      fuori_over15: ga >= 2, fuori_under15: ga < 2, fuori_over25: ga >= 3, fuori_under25: ga < 3,
-      casa_2plus: s >= 2, casa_3plus: s >= 3, fuori_2plus: s <= -2, fuori_3plus: s <= -3,
-      casa_h1: s >= -1, fuori_h1: s <= 1
-    };
-    return k in tabella ? tabella[k] : null;
-  }
-
-  // ---- memoria -----------------------------------------------------
-  function registroVuoto() { return { budget: null, obiettivo: null, scadenza: null, giocate: [] }; }
-  function leggiRegistro() {
-    try {
-      var r = JSON.parse(localStorage.getItem(CHIAVE_REGISTRO) || "null");
-      if (r && Array.isArray(r.giocate)) return r;
-    } catch (e) {}
-    return registroVuoto();
-  }
-  function salvaRegistro() {
-    try { localStorage.setItem(CHIAVE_REGISTRO, JSON.stringify(registro)); return true; }
-    catch (e) { avviso("Non riesco a salvare sul telefono: la memoria del browser è piena o bloccata."); return false; }
-  }
-  var registro = leggiRegistro();
-
-  // ---- numeri ------------------------------------------------------
-  function numero(s) {
-    var v = parseFloat(String(s == null ? "" : s).replace(",", ".").replace(/[^\d.\-]/g, ""));
-    return isNaN(v) ? null : v;
-  }
-  function euro(v, segnoSempre) {
-    if (v == null || isNaN(v)) return "–";
-    var s = Math.abs(v).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    var pre = v < 0 ? "−" : (segnoSempre && v > 0 ? "+" : "");
-    return pre + s + " €";
-  }
-  function arrotondaPuntata(v) { return Math.floor(v * 2) / 2; }   // a 50 centesimi, per difetto
-
-  function profitto(g) {
-    if (g.stato === "vinta") return g.puntata * (g.quota - 1);
-    if (g.stato === "persa") return -g.puntata;
-    return 0;
-  }
-
-  // chiude da sola ogni giocata la cui partita ha un risultato
-  function chiudiGiocate() {
-    var ris = (stato.dati && stato.dati.risultati) || {};
-    var cambiate = 0;
-    registro.giocate.forEach(function (g) {
-      if (g.stato !== "attesa" || !(String(g.fid) in ris)) return;
-      var r = ris[String(g.fid)];
-      if (r === null) { g.stato = "annullata"; g.ris = "rinviata"; }
-      else {
-        var esito = avvenuto(g.esito, r[0], r[1]);
-        if (esito === null) return;          // si segna a mano
-        g.stato = esito ? "vinta" : "persa";
-        g.ris = r[0] + "-" + r[1];
-      }
-      g.chiusa = new Date().toISOString();
-      cambiate++;
-    });
-    if (cambiate) salvaRegistro();
-  }
-
-  function conti() {
-    var budget = registro.budget || 0;
-    var chiuse = registro.giocate.filter(function (g) { return g.stato === "vinta" || g.stato === "persa"; });
-    var inCorso = registro.giocate.filter(function (g) { return g.stato === "attesa"; });
-    // in ordine di partita: cosi' il grafico segue il calendario
-    chiuse.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : 0; });
-    var prof = 0, giocato = 0, vinte = 0;
-    var punti = [budget];
-    chiuse.forEach(function (g) {
-      prof += profitto(g); giocato += g.puntata;
-      if (g.stato === "vinta") vinte++;
-      punti.push(budget + prof);
-    });
-    var esposto = inCorso.reduce(function (s, g) { return s + g.puntata; }, 0);
-    return {
-      budget: budget, banca: budget + prof, disponibile: budget + prof - esposto,
-      profitto: prof, giocato: giocato, roi: giocato ? prof / giocato : null,
-      chiuse: chiuse, inCorso: inCorso, vinte: vinte, esposto: esposto, punti: punti
-    };
-  }
-
-  // Kelly 1/4 con tetto. Restituisce tutto quello che serve al pannello.
-  function kelly(p, q, banca) {
-    if (!p || !q || q <= 1) return null;
-    var vantaggio = p * q - 1;
-    var pieno = vantaggio / (q - 1);
-    var frazione = Math.max(0, Math.min(pieno * FRAZIONE_KELLY, TETTO));
-    return {
-      implicita: 1 / q, vantaggio: vantaggio, pieno: pieno,
-      frazione: frazione, limitata: pieno * FRAZIONE_KELLY > TETTO,
-      puntata: banca > 0 ? arrotondaPuntata(banca * frazione) : 0
-    };
-  }
-
-  // probabilita' del mercato per quell'esito, margine tolto (se c'e')
-  function probMercato(m, k) {
-    var mk = m.mercato;
-    if (mk && mk["1"] != null) {
-      if (k === "1" || k === "X" || k === "2") return mk[k];
-      if (k === "1X") return mk["1"] + mk["X"];
-      if (k === "12") return mk["1"] + mk["2"];
-      if (k === "X2") return mk["X"] + mk["2"];
-    }
-    var q = m.quote || {};
-    var o = OPPOSTO[k];
-    if (o && q[k] && q[o]) return (1 / q[k]) / (1 / q[k] + 1 / q[o]);
-    return null;
-  }
-
-  // ---- grafici -----------------------------------------------------
-  // Andamento della banca giocata dopo giocata, con la linea del budget
-  // iniziale e quella dell'obiettivo.
-  function graficoBanca(c) {
-    var punti = c.punti;
-    var W = 340, H = 170, sx = 44, dx = 10, su = 14, giu = 24;
-    var meta = registro.obiettivo ? c.budget + registro.obiettivo : null;
-    var valori = punti.slice();
-    valori.push(c.budget);
-    if (meta != null) valori.push(meta);
-    var min = Math.min.apply(null, valori), max = Math.max.apply(null, valori);
-    var margine = (max - min) * 0.12 || Math.max(1, c.budget * 0.05);
-    min -= margine; max += margine;
-    var n = Math.max(punti.length - 1, 1);
-    function X(i) { return sx + (W - sx - dx) * i / n; }
-    function Y(v) { return su + (H - su - giu) * (1 - (v - min) / (max - min)); }
-
-    var svg = '<svg class="grafico" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Andamento della banca">';
-    // griglia leggera: quattro valori
-    for (var i = 0; i <= 3; i++) {
-      var v = min + (max - min) * i / 3;
-      svg += '<line class="g-griglia" x1="' + sx + '" x2="' + (W - dx) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '"/>' +
-             '<text class="g-asse" x="' + (sx - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + Math.round(v) + "</text>";
-    }
-    // budget iniziale e obiettivo
-    svg += '<line class="g-base" x1="' + sx + '" x2="' + (W - dx) + '" y1="' + Y(c.budget).toFixed(1) + '" y2="' + Y(c.budget).toFixed(1) + '"/>';
-    if (meta != null) {
-      svg += '<line class="g-meta" x1="' + sx + '" x2="' + (W - dx) + '" y1="' + Y(meta).toFixed(1) + '" y2="' + Y(meta).toFixed(1) + '"/>' +
-             '<text class="g-meta-t" x="' + (W - dx) + '" y="' + (Y(meta) - 5).toFixed(1) + '" text-anchor="end">obiettivo ' + Math.round(meta) + " €</text>";
-    }
-    if (punti.length > 1) {
-      var linea = punti.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
-      var sopra = punti[punti.length - 1] >= c.budget;
-      svg += '<path class="g-area' + (sopra ? "" : " giu") + '" d="' + linea + " L" + X(punti.length - 1).toFixed(1) + " " + Y(c.budget).toFixed(1) +
-             " L" + X(0).toFixed(1) + " " + Y(c.budget).toFixed(1) + ' Z"/>';
-      svg += '<path class="g-linea' + (sopra ? "" : " giu") + '" d="' + linea + '"/>';
-      var ux = X(punti.length - 1), uy = Y(punti[punti.length - 1]);
-      svg += '<circle class="g-punto' + (sopra ? "" : " giu") + '" cx="' + ux.toFixed(1) + '" cy="' + uy.toFixed(1) + '" r="4.5"/>';
-    }
-    svg += '<text class="g-asse" x="' + sx + '" y="' + (H - 6) + '">inizio</text>' +
-           '<text class="g-asse" x="' + (W - dx) + '" y="' + (H - 6) + '" text-anchor="end">' +
-           (punti.length - 1) + (punti.length === 2 ? " giocata" : " giocate") + "</text></svg>";
-    return svg;
-  }
-
-  // Probabilita' del modello contro probabilita' implicita nella quota,
-  // sulla stessa scala da 0 a 100: lo spazio fra le due e' il vantaggio.
-  function barraVantaggio(p, implicita, pMercato) {
-    // la scala si stringe attorno ai valori, cosi' anche pochi punti
-    // di differenza si vedono bene
-    var valori = [p, implicita].concat(pMercato != null ? [pMercato] : []);
-    var lo = Math.max(0, Math.floor((Math.min.apply(null, valori) - 0.08) * 20) / 20);
-    var hi = Math.min(1, Math.ceil((Math.max.apply(null, valori) + 0.08) * 20) / 20);
-    function pos(v) { return ((v - lo) / (hi - lo) * 100).toFixed(1); }
-    var a = Math.min(p, implicita), b = Math.max(p, implicita);
-    var buono = p > implicita;
-    return '<div class="vantaggio-barra"><div class="vb-pista">' +
-      '<div class="vb-fascia ' + (buono ? "buono" : "cattivo") + '" style="left:' + pos(a) + "%;width:" + (pos(b) - pos(a)).toFixed(1) + '%"></div>' +
-      '<div class="vb-segno quota" style="left:' + pos(implicita) + '%"></div>' +
-      (pMercato != null ? '<div class="vb-segno mercato" style="left:' + pos(pMercato) + '%"></div>' : "") +
-      '<div class="vb-segno modello" style="left:' + pos(p) + '%"></div>' +
-      '</div><div class="vb-scala"><span>' + pct(lo) + "</span><span>" + pct(hi) + "</span></div>" +
-      '<div class="vb-leggenda"><span><i class="modello"></i>Modello ' + pct(p, 1) + "</span>" +
-      '<span><i class="quota"></i>Quota ' + pct(implicita, 1) + "</span>" +
-      (pMercato != null ? '<span><i class="mercato"></i>Mercato ' + pct(pMercato, 1) + "</span>" : "") +
-      "</div></div>";
-  }
-
-  // Quanto della banca va sulla giocata: Kelly pieno, 1/4 e tetto.
-  function barraPuntata(k) {
-    var scala = 0.12;   // la barra arriva al 12% della banca
-    function w(v) { return Math.max(0, Math.min(v / scala, 1)) * 100; }
-    return '<div class="puntata-barra"><div class="pb-pista">' +
-      '<div class="pb-pieno" style="width:' + w(Math.max(k.pieno, 0)).toFixed(1) + '%"></div>' +
-      '<div class="pb-quarto" style="width:' + w(k.frazione).toFixed(1) + '%"></div>' +
-      '<div class="pb-tetto" style="left:' + w(TETTO).toFixed(1) + '%"></div></div>' +
-      '<div class="vb-leggenda"><span><i class="quarto"></i>Kelly 1/4 ' + pct(k.frazione, 1) + "</span>" +
-      '<span><i class="pieno"></i>Kelly pieno ' + pct(Math.max(k.pieno, 0), 1) + "</span>" +
-      '<span><i class="tetto"></i>Tetto ' + pct(TETTO, 0) + "</span></div></div>";
-  }
-
-  // ---- schermata principale ---------------------------------------
-  function vistaMie() {
-    chiudiGiocate();
-    var c = conti();
-    var html = testa("Mie giocate", "Kelly 1/4 · registro salvato sul telefono") + avvisoFuoriLinea() + '<div class="corpo">';
-
-    if (!registro.budget) {
-      return html + '<div class="riquadro carta"><span class="etichetta">Per iniziare</span>' +
-        '<div class="verdetto">Imposta il budget</div>' +
-        '<span class="nota" style="padding:0">Soldi che puoi permetterti di perdere tutti. Su questa cifra si calcolano le puntate.</span>' +
-        moduloImpostazioni() + "</div></div>";
-    }
-
-    // riepilogo
-    html += '<div class="riquadro carta banca-carta"><div class="riga"><div><span class="etichetta">Banca</span>' +
-      '<div class="banca-num">' + euro(c.banca) + "</div></div>" +
-      '<div class="dx"><span class="etichetta">Profitto</span><div class="banca-prof ' + (c.profitto > 0 ? "piu" : c.profitto < 0 ? "meno" : "fioco") + '">' +
-      euro(c.profitto, true) + "</div></div></div>" + graficoBanca(c) +
-      '<div class="tre"><div><b>' + (c.roi == null ? "–" : (c.roi >= 0 ? "+" : "−") + Math.abs(c.roi * 100).toFixed(1).replace(".", ",") + "%") +
-      '</b><span>rendimento sul giocato</span></div><div><b>' + c.chiuse.length + "</b><span>chiuse · " + c.vinte + (c.vinte === 1 ? " vinta" : " vinte") +
-      "</span></div><div><b>" + c.inCorso.length + "</b><span>in corso · " + euro(c.esposto) + "</span></div></div></div>";
-
-    html += '<a class="bottone-grande" href="#/nuova">+ Nuova giocata</a>';
-
-    // obiettivo
-    html += cartaObiettivo(c);
-
-    // elenco giocate
-    var inCorso = registro.giocate.filter(function (g) { return g.stato === "attesa"; })
-      .sort(function (a, b) { return a.data < b.data ? -1 : 1; });
-    var concluse = registro.giocate.filter(function (g) { return g.stato !== "attesa"; })
-      .sort(function (a, b) { return a.data > b.data ? -1 : 1; });
-    var mostra = stato.elenco === "concluse" ? concluse : inCorso;
-    html += '<div class="riga-chip" style="padding:4px 0 0 0">' +
-      '<button class="chip' + (stato.elenco !== "concluse" ? " attivo" : "") + '" data-elenco="corso">In corso · ' + inCorso.length + "</button>" +
-      '<button class="chip' + (stato.elenco === "concluse" ? " attivo" : "") + '" data-elenco="concluse">Concluse · ' + concluse.length + "</button></div>";
-    if (!mostra.length) {
-      html += '<div class="nota" style="padding:6px 2px">' + (stato.elenco === "concluse" ? "Nessuna giocata conclusa." : "Nessuna giocata in corso.") + "</div>";
-    }
-    mostra.forEach(function (g) { html += cartaGiocata(g); });
-
-    // impostazioni e copia di sicurezza
-    html += '<div class="carta apribile' + (stato.impostazioni ? " aperta" : "") + '"><button data-impostazioni="1" aria-expanded="' + !!stato.impostazioni + '">' +
-      '<span><span class="t1">Budget e obiettivo</span><span class="t2">Budget ' + euro(registro.budget) +
-      (registro.obiettivo ? " · obiettivo +" + euro(registro.obiettivo) : " · nessun obiettivo") + '</span></span><span class="bottone">' +
-      (stato.impostazioni ? "Chiudi" : "Modifica") + "</span></button>" +
-      (stato.impostazioni ? '<div class="dentro">' + moduloImpostazioni() + "</div>" : "") + "</div>";
-    html += '<div class="carta apribile' + (stato.copia ? " aperta" : "") + '"><button data-copia="1" aria-expanded="' + !!stato.copia + '">' +
-      '<span><span class="t1">Copia di sicurezza</span><span class="t2">Il registro sta solo su questo telefono</span></span><span class="bottone">' +
-      (stato.copia ? "Chiudi" : "Apri") + "</span></button>" +
-      (stato.copia ? '<div class="dentro"><span class="nota">Se cancelli i dati del browser o cambi telefono il registro si perde. Esportalo ogni tanto e reimportalo quando serve.</span>' +
-        '<div class="due-bottoni"><button class="bottone-secondario" data-esporta="1">Esporta</button>' +
-        '<label class="bottone-secondario">Importa<input type="file" accept="application/json,.json" data-importa="1" hidden></label></div></div>' : "") + "</div>";
-
-    return html + '<p class="nota-piccola">La puntata è un quarto del criterio di Kelly, mai oltre il ' + pct(TETTO) +
-      ' della banca disponibile. Kelly presuppone che le probabilità del modello siano giuste: la verifica dice che sull\'1X2 il mercato è più preciso, quindi i vantaggi mostrati vanno presi con cautela.</p></div>';
-  }
-
-  function cartaObiettivo(c) {
-    if (!registro.obiettivo) {
-      return '<div class="riquadro carta"><span class="etichetta">Obiettivo</span><span class="nota" style="padding:0">Nessun obiettivo impostato. Aggiungilo da "Budget e obiettivo" qui sotto per vedere a che punto sei.</span></div>';
-    }
-    var ob = registro.obiettivo;
-    var fatto = Math.max(0, Math.min(c.profitto / ob, 1));
-    var html = '<div class="riquadro carta"><div class="riga"><div><span class="etichetta">Obiettivo</span>' +
-      '<div class="verdetto" style="margin-top:4px">+' + euro(ob) + "</div></div>" +
-      '<div class="dx"><span class="etichetta">' + (registro.scadenza ? "entro il" : "") + "</span>" +
-      (registro.scadenza ? '<div class="scad">' + dataLunga(registro.scadenza) + "</div>" : "") + "</div></div>" +
-      '<div class="traccia obiettivo"><div style="width:' + (fatto * 100).toFixed(1) + '%"></div></div>' +
-      '<div class="riga nota" style="padding:0"><span>' + (c.profitto >= ob ? "Raggiunto" : "Fatto " + pct(fatto)) + "</span><span>" +
-      (c.profitto >= ob ? "" : "mancano " + euro(ob - c.profitto)) + "</span></div>";
-
-    // proiezione: solo sui risultati veri, e solo con abbastanza giocate
-    var testo;
-    if (c.profitto >= ob) {
-      testo = "Obiettivo raggiunto. Non alzare le puntate per \"fare di più\": il metodo resta lo stesso.";
-    } else if (c.chiuse.length < MIN_PER_STIMA) {
-      testo = "Servono almeno " + MIN_PER_STIMA + " giocate chiuse per una stima credibile: ne hai " + c.chiuse.length + ".";
-    } else {
-      var primo = new Date(c.chiuse[0].data), oggi = new Date();
-      var giorni = Math.max(7, (oggi - primo) / 86400000);
-      var alGiorno = c.profitto / giorni;
-      if (alGiorno <= 0) {
-        testo = "Finora il saldo è negativo: a questo ritmo l'obiettivo non si raggiunge. Non aumentare le puntate per recuperare.";
-      } else {
-        var servono = Math.ceil((ob - c.profitto) / alGiorno);
-        var arrivo = new Date(); arrivo.setDate(arrivo.getDate() + servono);
-        testo = "Al ritmo attuale (" + euro(alGiorno) + " al giorno) ci arrivi in circa " + servono + " giorni, verso il " +
-          arrivo.getDate() + " " + MESI[arrivo.getMonth()] + ".";
-        if (registro.scadenza && chiaveGiorno(arrivo) > registro.scadenza) testo += " Dopo la scadenza che ti sei dato.";
-      }
-    }
-    return html + '<span class="nota" style="padding:0">' + esc(testo) + "</span></div>";
-  }
-  function dataLunga(chiave) {
-    var p = chiave.split("-");
-    return +p[2] + " " + MESI[+p[1] - 1];
-  }
-
-  function moduloImpostazioni() {
-    return '<div class="modulo">' +
-      '<label class="campo"><span>Budget iniziale (€)</span><input inputmode="decimal" data-campo="budget" value="' + (registro.budget || "") + '" placeholder="es. 300"></label>' +
-      '<label class="campo"><span>Obiettivo di guadagno (€)</span><input inputmode="decimal" data-campo="obiettivo" value="' + (registro.obiettivo || "") + '" placeholder="facoltativo"></label>' +
-      '<label class="campo"><span>Entro il</span><input type="date" data-campo="scadenza" value="' + (registro.scadenza || "") + '"></label>' +
-      '<button class="bottone-grande" data-salva-impostazioni="1">Salva</button></div>';
-  }
-
-  function cartaGiocata(g) {
-    var d = data(g.data);
-    var aperta = stato.giocataAperta === g.id;
-    var badgeCls = g.stato === "vinta" ? "vinta" : g.stato === "persa" ? "persa" : g.stato === "annullata" ? "annullata" : "attesa";
-    var badgeTxt = { vinta: "VINTA", persa: "PERSA", annullata: "ANNULLATA", attesa: "IN CORSO" }[g.stato];
-    var p = profitto(g);
-    var html = '<article class="giocata carta mia"><button class="mia-testa" data-giocata="' + esc(g.id) + '">' +
-      '<div class="riga"><div class="etichette"><span class="esito-badge ' + badgeCls + '">' + badgeTxt + "</span>" +
-      '<span class="lega">' + esc(nomeLega(g.campionato).nome) + " · " + dataBreve(d) + " " + oraDi(d) + "</span></div>" +
-      (g.ris ? '<span class="rs-mio">' + esc(g.ris) + "</span>" : "") + "</div>" +
-      '<div class="riga"><b class="mia-partita">' + esc(g.partita) + '</b><span class="esito">' + esc(g.nome) + "</span></div>" +
-      '<div class="mia-numeri"><span>quota <b>' + quota(g.quota) + "</b></span><span>puntata <b>" + euro(g.puntata) + "</b></span>" +
-      (g.stato === "vinta" || g.stato === "persa" ? '<span class="' + (p >= 0 ? "piu" : "meno") + '"><b>' + euro(p, true) + "</b></span>"
-        : g.stato === "attesa" ? "<span>vincita <b>" + euro(g.puntata * g.quota) + "</b></span>" : "<span>rimborsata</span>") + "</div></button>";
-    if (aperta) {
-      html += '<div class="mia-azioni"><span class="nota">Modello ' + pct(g.prob, 1) + " · vantaggio stimato " + segno(g.prob * g.quota - 1) +
-        "% · puntata consigliata " + euro(g.consigliata) + "</span><div class=\"quattro\">";
-      if (g.stato === "attesa") {
-        html += '<button data-segna="vinta" data-id="' + esc(g.id) + '">Vinta</button>' +
-                '<button data-segna="persa" data-id="' + esc(g.id) + '">Persa</button>' +
-                '<button data-segna="annullata" data-id="' + esc(g.id) + '">Annullata</button>';
-      } else {
-        html += '<button data-segna="attesa" data-id="' + esc(g.id) + '">Riapri</button>';
-      }
-      html += '<button class="elimina" data-elimina="' + esc(g.id) + '">Elimina</button></div></div>';
-    }
-    return html + "</article>";
-  }
-
-  // ---- nuova giocata ----------------------------------------------
-  function partiteGiocabili() {
-    var ora = Date.now();
-    return ((stato.dati && stato.dati.partite) || []).filter(function (m) { return data(m.data).getTime() > ora; });
-  }
-  function normalizza(s) {
-    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  }
-
-  function listaRicerca() {
-    var q = normalizza(stato.nuova.cerca).trim();
-    var tutte = partiteGiocabili();
-    var trovate = q ? tutte.filter(function (m) {
-      return normalizza(m.casa + " " + m.fuori + " " + m.campionato).indexOf(q) >= 0;
-    }) : tutte;
-    var html = "";
-    if (!trovate.length) return '<div class="nota" style="padding:8px 2px">Nessuna partita in programma con questo nome.</div>';
-    trovate.slice(0, 40).forEach(function (m) {
-      var d = data(m.data);
-      html += '<button class="scelta-partita" data-scegli="' + esc(m.id) + '"><div class="ora"><b>' + oraDi(d) + "</b><span>" + dataBreve(d) + "</span></div>" +
-        '<div class="sp-testi"><b>' + esc(m.casa) + " – " + esc(m.fuori) + "</b><small>" + bandiera(nomeLega(m.campionato).paese) + " " +
-        esc(nomeLega(m.campionato).nome) + "</small></div></button>";
-    });
-    if (trovate.length > 40) html += '<div class="nota" style="padding:6px 2px">Altre ' + (trovate.length - 40) + " partite: scrivi il nome di una squadra per trovarle.</div>";
-    return html;
-  }
-
-  function vistaNuova(id) {
-    var n = stato.nuova;
-    if (id && String(n.fid) !== String(id)) {
-      stato.nuova = n = { fid: id, esito: null, quota: "", puntata: "", toccata: false, cerca: "" };
-    }
-    var indietro = '<a class="indietro" href="#/mie"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Mie giocate</a>';
-    var html = indietro + '<header class="testa" style="padding-top:4px"><h1 class="titolo">Nuova giocata</h1></header><div class="corpo">';
-    if (!registro.budget) {
-      return html + '<div class="vuoto"><h3>Prima il budget</h3>Imposta il budget nella sezione Mie giocate: serve per calcolare la puntata.<br><button data-vai="#/mie">Imposta</button></div></div>';
-    }
-    var m = n.fid ? trovaPartita(n.fid) : null;
-    if (m && data(m.data).getTime() <= Date.now()) m = null;
-
-    // 1. la partita
-    if (!m) {
-      html += '<h2 class="sezione">1 · Partita</h2>' +
-        '<input class="cerca" type="search" data-cerca="1" placeholder="Cerca una squadra o un campionato" value="' + esc(n.cerca) + '" autocomplete="off">' +
-        '<div id="lista-ricerca" class="lista-ricerca">' + listaRicerca() + "</div></div>";
-      return html;
-    }
-    var d = data(m.data);
-    html += '<div class="carta partita-scelta"><div><span class="lega">' + bandiera(nomeLega(m.campionato).paese) + " " + esc(nomeLega(m.campionato).nome) +
-      " · " + dataBreve(d) + " " + oraDi(d) + '</span><b>' + esc(m.casa) + " – " + esc(m.fuori) + "</b></div>" +
-      '<button class="bottone-secondario piccolo" data-cambia="1">Cambia</button></div>';
-
-    // 2. l'esito
-    html += '<h2 class="sezione">2 · Esito</h2>';
-    var gruppi = [], perTitolo = {};
-    esitiPartita(m).forEach(function (e) {
-      if (!perTitolo[e.g]) { perTitolo[e.g] = { t: e.g, v: [] }; gruppi.push(perTitolo[e.g]); }
-      perTitolo[e.g].v.push(e);
-    });
-    function tessera(e) {
-      var qm = (m.quote || {})[e.k];
-      return '<button class="esito-scelta' + (n.esito === e.k ? " attivo" : "") + '" data-esito="' + esc(e.k) + '" title="' + esc(e.nome) + '"><b>' + esc(e.n) +
-        "</b><small>" + pct(e.p) + "</small>" + (qm ? '<span class="qm">' + quota(qm) + "</span>" : "") + "</button>";
-    }
-    var altri = 0;
-    gruppi.forEach(function (g) {
-      if (GRUPPI_PRINCIPALI[g.t]) {
-        html += '<div class="etichetta" style="padding:2px 2px 0">' + esc(g.t) + '</div><div class="griglia-esiti">' +
-          g.v.map(tessera).join("") + "</div>";
-        return;
-      }
-      if (!altri++) html += '<div class="etichetta" style="padding:8px 2px 0">Altri mercati del modello</div>';
-      var dentro = g.v.some(function (e) { return e.k === n.esito; });
-      var aperto = !!(n.aperti || {})[g.t] || dentro;
-      html += '<div class="carta apribile mercati' + (aperto ? " aperta" : "") + '"><button data-gruppo-esiti="' + esc(g.t) + '" aria-expanded="' + aperto + '">' +
-        '<span><span class="t1">' + esc(g.t) + '</span><span class="t2">' + g.v.length + (g.v.length === 1 ? " esito" : " esiti") +
-        (dentro ? " · scelto " + esc(trovaEsito(m, n.esito).n) : "") + '</span></span><span class="bottone">' + (aperto ? "Chiudi" : "Apri") + "</span></button>" +
-        (aperto ? '<div class="dentro"><div class="griglia-esiti">' + g.v.map(tessera).join("") + "</div></div>" : "") + "</div>";
-    });
-    if (m.quote) html += '<div class="nota">Il numero in basso è la quota media dei bookmaker, quando disponibile.</div>';
-
-    if (!n.esito) return html + "</div>";
-
-    // 3. quota e puntata
-    html += '<h2 class="sezione">3 · Quota e puntata</h2>' +
-      '<label class="campo"><span>Quota del tuo bookmaker</span><input inputmode="decimal" data-quota="1" value="' + esc(n.quota) + '" placeholder="es. 2,10"></label>' +
-      '<div id="calcolo">' + pannelloCalcolo(m) + "</div>" +
-      '<label class="campo"><span>Puntata (€)</span><input inputmode="decimal" data-puntata="1" value="' + esc(n.puntata) + '"></label>' +
-      '<div id="salva-box">' + boxSalva(m) + "</div>";
+  function vistaRisultati() {
+    var html = testa("Risultati", "Come stanno andando le giocate") + avvisoFuoriLinea() + '<div class="corpo">' +
+      '<div class="segmenti"><button class="segmento' + (stato.risultati === "carta" ? " attivo" : "") + '" data-risultati="carta" aria-pressed="' + (stato.risultati === "carta") + '">Sulla carta</button>' +
+      '<button class="segmento' + (stato.risultati === "modello" ? " attivo" : "") + '" data-risultati="modello" aria-pressed="' + (stato.risultati === "modello") + '">Il modello</button></div>';
+    html += stato.risultati === "modello" ? corpoModello() : corpoCarta();
     return html + "</div>";
   }
 
-  function calcoloCorrente(m) {
-    var n = stato.nuova, e = n.esito ? trovaEsito(m, n.esito) : null;
-    if (!e) return null;
-    var p = e.p, q = numero(n.quota);
-    var k = kelly(p, q, conti().disponibile);
-    return { e: e, p: p, q: q, k: k, pm: probMercato(m, e.k) };
-  }
-
-  function pannelloCalcolo(m) {
-    var c = calcoloCorrente(m);
-    if (!c) return "";
-    if (!c.k) return '<div class="nota" style="padding:4px 2px">Scrivi la quota per vedere quanto puntare.</div>';
-    var k = c.k, buono = k.vantaggio > 0;
-    var html = '<div class="riquadro carta calcolo ' + (buono ? "buono" : "cattivo") + '">' +
-      '<div class="riga"><div><span class="etichetta">Vantaggio stimato</span><div class="verdetto ' + (buono ? "verde" : "arancio") + '">' +
-      (k.vantaggio >= 0 ? "+" : "−") + Math.abs(k.vantaggio * 100).toFixed(1).replace(".", ",") + "%</div></div>" +
-      '<div class="dx"><span class="etichetta">' + (buono ? "Punta" : "Consiglio") + '</span><div class="verdetto ' + (buono ? "" : "arancio") + '">' +
-      (buono ? euro(k.puntata) : "Non giocare") + "</div></div></div>" +
-      barraVantaggio(c.p, k.implicita, c.pm);
-    if (buono) html += barraPuntata(k);
-    html += '<span class="nota" style="padding:0">';
-    if (buono) {
-      html += "Il modello dà " + pct(c.p, 1) + ", la quota ne paga " + pct(k.implicita, 1) + ". Kelly 1/4 = " + pct(k.frazione, 1) +
-        " della banca disponibile (" + euro(conti().disponibile) + ")" + (k.limitata ? ", ridotto al tetto del " + pct(TETTO) : "") + ".";
-      if (k.puntata < PUNTATA_MINIMA) html += " Viene meno della puntata minima di " + euro(PUNTATA_MINIMA) + ": con questo budget conviene lasciarla.";
-    } else {
-      html += "La quota paga meno di quanto il modello pensa che l'esito valga: nel lungo periodo è una giocata in perdita.";
-    }
-    html += "</span>";
-    if (c.pm != null && Math.abs(c.p - c.pm) >= 0.10) {
-      html += '<div class="avviso">' + ICONA_AVVISO + "<span>Il modello si allontana di " + Math.round(Math.abs(c.p - c.pm) * 100) +
-        " punti dal mercato (" + pct(c.pm) + "). Nei test, con divergenze così, di solito sbaglia il modello.</span></div>";
-    }
-    var qm = (m.quote || {})[c.e.k];
-    if (qm && c.q && Math.abs(c.q / qm - 1) > 0.2) {
-      html += '<div class="avviso">' + ICONA_AVVISO + "<span>La quota scritta è molto diversa dalla media dei bookmaker (" + quota(qm) + "). Controlla di non aver sbagliato.</span></div>";
-    }
-    return html + "</div>";
-  }
-
-  function boxSalva(m) {
-    var c = calcoloCorrente(m);
-    var puntata = numero(stato.nuova.puntata);
-    var pronto = c && c.k && puntata > 0;
-    var buono = c && c.k && c.k.vantaggio > 0;
-    return '<button class="bottone-grande' + (buono ? "" : " spento") + '" data-registra="1"' + (pronto ? "" : " disabled") + ">" +
-      (buono || !pronto ? "Registra giocata" : "Registra comunque") + "</button>";
-  }
-
-  // aggiorna solo i pezzi che cambiano, senza togliere la tastiera
-  function aggiornaCalcolo() {
-    var m = trovaPartita(stato.nuova.fid);
-    if (!m) return;
-    var c = calcoloCorrente(m);
-    if (!stato.nuova.toccata) {
-      stato.nuova.puntata = c && c.k && c.k.vantaggio > 0 ? String(c.k.puntata).replace(".", ",") : "";
-      var campo = schermo.querySelector("[data-puntata]");
-      if (campo) campo.value = stato.nuova.puntata;
-    }
-    var box = document.getElementById("calcolo");
-    if (box) box.innerHTML = pannelloCalcolo(m);
-    var s = document.getElementById("salva-box");
-    if (s) s.innerHTML = boxSalva(m);
-  }
-
-  function registraGiocata() {
-    var m = trovaPartita(stato.nuova.fid);
-    if (!m) return;
-    if (data(m.data).getTime() <= Date.now()) { avviso("La partita è già iniziata."); return; }
-    var c = calcoloCorrente(m);
-    var puntata = numero(stato.nuova.puntata);
-    if (!c || !c.k || !(puntata > 0)) return;
-    registro.giocate.push({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      creata: new Date().toISOString(),
-      fid: m.id, data: m.data, campionato: m.campionato,
-      partita: m.casa + " – " + m.fuori,
-      esito: c.e.k, nome: c.e.nome, quota: c.q, prob: c.p, mercato: c.pm,
-      puntata: puntata, consigliata: c.k.vantaggio > 0 ? c.k.puntata : 0,
-      stato: "attesa"
-    });
-    if (!salvaRegistro()) return;
-    stato.nuova = { fid: null, esito: null, quota: "", puntata: "", toccata: false, cerca: "" };
-    stato.elenco = "corso";
-    location.hash = "#/mie";
-    avviso("Giocata registrata: si chiude da sola quando arriva il risultato.");
-  }
-
-  function salvaImpostazioni() {
-    function val(nome) { var el = schermo.querySelector('[data-campo="' + nome + '"]'); return el ? el.value : ""; }
-    var b = numero(val("budget"));
-    if (!(b > 0)) { avviso("Scrivi un budget maggiore di zero."); return; }
-    var o = numero(val("obiettivo"));
-    registro.budget = b;
-    registro.obiettivo = o > 0 ? o : null;
-    registro.scadenza = val("scadenza") || null;
-    if (salvaRegistro()) { stato.impostazioni = false; disegna(); avviso("Salvato."); }
-  }
-
-  function esportaRegistro() {
-    var testo = JSON.stringify(registro, null, 1);
-    var nome = "giocate-" + chiaveGiorno(new Date()) + ".json";
-    try {
-      var file = new File([testo], nome, { type: "application/json" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: "Registro giocate" }).catch(function () {});
-        return;
-      }
-    } catch (e) {}
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([testo], { type: "application/json" }));
-    a.download = nome;
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-
-  function importaRegistro(file) {
-    var r = new FileReader();
-    r.onload = function () {
-      try {
-        var d = JSON.parse(r.result);
-        if (!d || !Array.isArray(d.giocate)) throw new Error("formato");
-        if (!window.confirm("Sostituire il registro attuale con quello del file (" + d.giocate.length + " giocate)?")) return;
-        registro = d;
-        salvaRegistro(); disegna(); avviso("Registro importato.");
-      } catch (e) { avviso("Il file non è un registro valido."); }
-    };
-    r.readAsText(file);
-  }
-
   // ---------------------------------------------------------------
-  //  navigazione
+  //  disegno e navigazione
   // ---------------------------------------------------------------
+  function sostituisci(hash) {
+    if (history.replaceState) history.replaceState(null, "", hash);
+    return hash;
+  }
+
   function disegna() {
     var h = location.hash || "#/";
-    var vista = "partite";
-    var html;
-    if (!stato.dati) {
-      html = '<div class="vuoto"><h3>Nessun dato</h3>Non riesco a scaricare le previsioni. Controlla la connessione e riprova.' +
-             '<br><button data-ricarica="1">Riprova</button></div>';
-    } else if (h.indexOf("#/partita/") === 0) {
-      html = vistaDettaglio(decodeURIComponent(h.slice(10)));
+    // indirizzi delle versioni prima della 18, anche dentro le notifiche
+    if (h === "#/valore" || h === "#/mie" || h === "#/nuova" || h.indexOf("#/nuova/") === 0) h = sostituisci("#/");
+    else if (h === "#/esatti") { stato.scheda = "esatti"; h = sostituisci("#/giocate"); }
+    else if (h === "#/verifica") { stato.risultati = "modello"; h = sostituisci("#/risultati"); }
+
+    var vista = "oggi", html;
+    if (h.indexOf("#/partita/") === 0) {
+      vista = "partite"; html = stato.dati ? vistaDettaglio(decodeURIComponent(h.slice(10))) : senzaDati();
+    } else if (h === "#/partite") {
+      vista = "partite"; html = stato.dati ? vistaPartite() : senzaDati();
     } else if (h === "#/giocate") {
-      vista = "giocate"; html = vistaGiocate();
-    } else if (h === "#/valore") {
-      // arriva dalla notifica del mattino: apre Giocate sulla scheda Valore
-      stato.scheda = "valore";
-      if (history.replaceState) history.replaceState(null, "", "#/giocate");
-      vista = "giocate"; html = vistaGiocate();
-    } else if (h === "#/esatti") {
-      vista = "esatti"; html = vistaEsatti();
-    } else if (h === "#/verifica") {
-      vista = "verifica"; html = vistaVerifica();
-    } else if (h === "#/mie") {
-      vista = "mie"; html = vistaMie();
-    } else if (h === "#/nuova" || h.indexOf("#/nuova/") === 0) {
-      vista = "mie"; html = vistaNuova(h.length > 8 ? decodeURIComponent(h.slice(8)) : null);
+      vista = "giocate"; html = stato.dati ? vistaGiocate() : senzaDati();
+    } else if (h === "#/risultati") {
+      vista = "risultati"; html = vistaRisultati();
     } else {
-      html = vistaPartite();
+      html = !stato.dati && !stato.valore && stato.valoreCaricato && stato.datiCaricati ? senzaDati() : vistaOggi();
     }
     schermo.innerHTML = html;
     document.querySelectorAll("#barra a").forEach(function (a) {
-      a.classList.toggle("attiva", a.getAttribute("data-vista") === vista);
+      var attiva = a.getAttribute("data-vista") === vista;
+      a.classList.toggle("attiva", attiva);
+      if (attiva) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+  }
+  function ridisegnaFermo() {
+    var y = window.scrollY; disegna(); window.scrollTo(0, y);
   }
 
   schermo.addEventListener("click", function (ev) {
@@ -1502,100 +1117,29 @@
     if (el.hasAttribute("data-giorno")) { stato.giorno = el.getAttribute("data-giorno"); disegna(); }
     else if (el.hasAttribute("data-lega")) { stato.lega = el.getAttribute("data-lega"); disegna(); }
     else if (el.hasAttribute("data-scheda")) { stato.scheda = el.getAttribute("data-scheda"); disegna(); }
-    else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; disegna(); }
-    else if (el.hasAttribute("data-valore-elenco")) {
-      stato.valoreElenco = el.getAttribute("data-valore-elenco");
-      var ye = window.scrollY; disegna(); window.scrollTo(0, ye);
-    }
-    else if (el.hasAttribute("data-valore-aperte")) {
-      stato.valoreAperte = !stato.valoreAperte;
-      var yv = window.scrollY; disegna(); window.scrollTo(0, yv);
+    else if (el.hasAttribute("data-risultati")) { stato.risultati = el.getAttribute("data-risultati"); disegna(); }
+    else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; ridisegnaFermo(); }
+    else if (el.hasAttribute("data-apri-oggi")) {
+      var k = el.getAttribute("data-apri-oggi");
+      stato.oggiAperto[k] = !stato.oggiAperto[k];
+      ridisegnaFermo();
     }
     else if (el.hasAttribute("data-mercato")) {
       var g = el.getAttribute("data-mercato");
       stato.mercati[g] = !stato.mercati[g];
-      var y = window.scrollY;
-      disegna();
-      window.scrollTo(0, y);          // si riapre dove si era rimasti
+      ridisegnaFermo();          // si riapre dove si era rimasti
     }
     else if (el.hasAttribute("data-azzera")) { stato.giorno = "tutti"; stato.lega = "tutte"; disegna(); }
     else if (el.hasAttribute("data-ricarica")) { carica(); }
     else if (el.hasAttribute("data-campana")) { gestisciCampana(); }
-    // mie giocate
-    else if (el.hasAttribute("data-elenco")) { stato.elenco = el.getAttribute("data-elenco"); stato.giocataAperta = null; disegna(); }
-    else if (el.hasAttribute("data-giocata")) {
-      var gid = el.getAttribute("data-giocata");
-      stato.giocataAperta = stato.giocataAperta === gid ? null : gid;
-      var y2 = window.scrollY; disegna(); window.scrollTo(0, y2);
-    }
-    else if (el.hasAttribute("data-segna")) {
-      var gs = registro.giocate.filter(function (x) { return x.id === el.getAttribute("data-id"); })[0];
-      if (gs) {
-        gs.stato = el.getAttribute("data-segna");
-        gs.ris = gs.stato === "attesa" ? null : (gs.ris || null);
-        gs.manuale = gs.stato !== "attesa";
-        // riaperta, si richiude da sola se il risultato e' gia' arrivato
-        salvaRegistro();
-        var y3 = window.scrollY; disegna(); window.scrollTo(0, y3);
-      }
-    }
-    else if (el.hasAttribute("data-elimina")) {
-      if (window.confirm("Eliminare questa giocata dal registro?")) {
-        var eid = el.getAttribute("data-elimina");
-        registro.giocate = registro.giocate.filter(function (x) { return x.id !== eid; });
-        salvaRegistro(); disegna();
-      }
-    }
-    else if (el.hasAttribute("data-impostazioni")) { stato.impostazioni = !stato.impostazioni; disegna(); }
-    else if (el.hasAttribute("data-copia")) { stato.copia = !stato.copia; disegna(); }
-    else if (el.hasAttribute("data-salva-impostazioni")) { salvaImpostazioni(); }
-    else if (el.hasAttribute("data-esporta")) { esportaRegistro(); }
-    else if (el.hasAttribute("data-scegli")) {
-      stato.nuova = { fid: el.getAttribute("data-scegli"), esito: null, quota: "", puntata: "", toccata: false, cerca: "" };
-      disegna(); window.scrollTo(0, 0);
-    }
-    else if (el.hasAttribute("data-cambia")) {
-      stato.nuova = { fid: null, esito: null, quota: "", puntata: "", toccata: false, cerca: "" };
-      if (location.hash !== "#/nuova") location.hash = "#/nuova"; else disegna();
-    }
-    else if (el.hasAttribute("data-esito")) {
-      var mq = trovaPartita(stato.nuova.fid);
-      stato.nuova.esito = el.getAttribute("data-esito");
-      var qm = mq && mq.quote && mq.quote[stato.nuova.esito];
-      stato.nuova.quota = qm ? String(qm).replace(".", ",") : "";
-      stato.nuova.toccata = false;
-      var y4 = window.scrollY; disegna(); window.scrollTo(0, y4);
-      aggiornaCalcolo();
-    }
-    else if (el.hasAttribute("data-gruppo-esiti")) {
-      var tg = el.getAttribute("data-gruppo-esiti");
-      stato.nuova.aperti = stato.nuova.aperti || {};
-      stato.nuova.aperti[tg] = !stato.nuova.aperti[tg];
-      var y5 = window.scrollY; disegna(); window.scrollTo(0, y5);
-    }
-    else if (el.hasAttribute("data-registra")) { registraGiocata(); }
-    else if (el.hasAttribute("data-vai")) { location.hash = el.getAttribute("data-vai"); }
   });
 
-  schermo.addEventListener("input", function (ev) {
-    var el = ev.target;
-    if (el.hasAttribute("data-cerca")) {
-      stato.nuova.cerca = el.value;
-      var l = document.getElementById("lista-ricerca");
-      if (l) l.innerHTML = listaRicerca();
-    } else if (el.hasAttribute("data-quota")) {
-      stato.nuova.quota = el.value; aggiornaCalcolo();
-    } else if (el.hasAttribute("data-puntata")) {
-      stato.nuova.puntata = el.value; stato.nuova.toccata = el.value !== "";
-      var m = trovaPartita(stato.nuova.fid);
-      var s = document.getElementById("salva-box");
-      if (m && s) s.innerHTML = boxSalva(m);
-    }
-  });
-  schermo.addEventListener("change", function (ev) {
-    var el = ev.target;
-    if (el.hasAttribute("data-importa") && el.files && el.files[0]) importaRegistro(el.files[0]);
-  });
+  // il dito sul grafico della prova mostra il saldo giocata per giocata
+  schermo.addEventListener("pointerdown", mostraPunto);
+  schermo.addEventListener("pointermove", mostraPunto);
+  schermo.addEventListener("pointerleave", function (ev) {
+    if (ev.target.hasAttribute && ev.target.hasAttribute("data-grafico")) nascondiPunto();
+  }, true);
 
   window.addEventListener("hashchange", function () { disegna(); window.scrollTo(0, 0); });
 
@@ -1614,23 +1158,25 @@
           if (r) return r.json().then(function (d) { stato.valore = d; });
         });
       })
+      .catch(function () {})
       .then(function () {
-        if (stato.dati && (location.hash === "#/giocate" || location.hash === "#/valore") && stato.scheda === "valore") disegna();
-      })
-      .catch(function () {});
+        stato.valoreCaricato = true;
+        ridisegnaFermo();
+      });
   }
 
   function carica() {
     caricaValore();
     return fetch("app.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (d) { stato.dati = d; stato.fuoriLinea = false; disegna(); })
+      .then(function (d) { stato.dati = d; stato.fuoriLinea = false; stato.datiCaricati = true; ridisegnaFermo(); })
       .catch(function () {
         // senza rete: il componente offline restituisce l'ultima copia salvata
+        var fine = function () { stato.datiCaricati = true; ridisegnaFermo(); };
         return typeof caches !== "undefined" ? caches.match("app.json").then(function (r) {
-          if (r) return r.json().then(function (d) { stato.dati = d; stato.fuoriLinea = true; disegna(); });
-          disegna();
-        }) : disegna();
+          if (r) return r.json().then(function (d) { stato.dati = d; stato.fuoriLinea = true; fine(); });
+          fine();
+        }).catch(fine) : fine();
       });
   }
 
@@ -1639,6 +1185,17 @@
     if (document.visibilityState === "visible") carica();
   });
   setInterval(function () { if (document.visibilityState === "visible") carica(); }, 5 * 60 * 1000);
+  // in Oggi il tempo che resta per le giocate all'intervallo scorre da solo:
+  // si ridisegna solo mentre ce n'e' una aperta, o appena scaduta
+  setInterval(function () {
+    var h = location.hash || "#/";
+    if (document.visibilityState !== "visible" || (h !== "#/" && h !== "#") || !stato.valore) return;
+    var adesso = Date.now();
+    var aperte = (stato.valore.oggi || []).some(function (r) {
+      return r.intervallo && r.registrata && !r.esito && adesso - data(r.registrata).getTime() < 16 * 60000;
+    });
+    if (aperte) ridisegnaFermo();
+  }, 30 * 1000);
 
   // ---------------------------------------------------------------
   //  notifiche
@@ -1665,13 +1222,13 @@
   function controllaNotifiche() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       stato.notifiche = suIPhone() && !installata() ? "installa" : "non-supportate";
-      return disegna();
+      return ridisegnaFermo();
     }
-    if (Notification.permission === "denied") { stato.notifiche = "negate"; return disegna(); }
+    if (Notification.permission === "denied") { stato.notifiche = "negate"; return ridisegnaFermo(); }
     navigator.serviceWorker.ready
       .then(function (reg) { return reg.pushManager.getSubscription(); })
-      .then(function (s) { stato.notifiche = s ? "attive" : "spente"; disegna(); })
-      .catch(function () { stato.notifiche = "spente"; disegna(); });
+      .then(function (s) { stato.notifiche = s ? "attive" : "spente"; ridisegnaFermo(); })
+      .catch(function () { stato.notifiche = "spente"; ridisegnaFermo(); });
   }
 
   function chiaveInByte(testo) {
@@ -1686,7 +1243,7 @@
     Notification.requestPermission().then(function (permesso) {
       if (permesso !== "granted") {
         stato.notifiche = permesso === "denied" ? "negate" : "spente";
-        disegna();
+        ridisegnaFermo();
         if (permesso === "denied") avviso("Hai negato il permesso. Si riattiva dalle impostazioni del telefono, alla voce di questa app.");
         return;
       }
@@ -1705,8 +1262,8 @@
         }).then(function (r) { if (!r.ok) throw new Error("iscrizione"); });
       }).then(function () {
         stato.notifiche = "attive";
-        disegna();
-        avviso("Notifiche attivate. Ti avviso quando una previsione cambia molto con le formazioni ufficiali.");
+        ridisegnaFermo();
+        avviso("Notifiche attivate: le giocate di valore del mattino, quelle all'intervallo e le partite che cambiano molto con le formazioni ufficiali.");
       });
     }).catch(function () {
       avviso("Non sono riuscito ad attivare le notifiche. Controlla la connessione e riprova.");
@@ -1726,7 +1283,7 @@
           }).catch(function () {});
         });
       })
-      .then(function () { stato.notifiche = "spente"; disegna(); avviso("Notifiche disattivate."); })
+      .then(function () { stato.notifiche = "spente"; ridisegnaFermo(); avviso("Notifiche disattivate."); })
       .catch(function () { avviso("Non sono riuscito a disattivare le notifiche. Riprova."); });
   }
 

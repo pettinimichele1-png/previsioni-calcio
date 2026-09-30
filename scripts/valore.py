@@ -342,6 +342,43 @@ def ricavate(gp, cal):
             if (cal.get("mercati", {}).get(k) or {}).get("affidabile")}
 
 
+# esito, doppia chance e Gol/NoGol come li quota Pinnacle -> nostra chiave
+CHIAVI_FINALE = {("match winner", "home"): "1", ("match winner", "draw"): "X",
+                 ("match winner", "away"): "2", ("double chance", "home/draw"): "1X",
+                 ("double chance", "home/away"): "12", ("double chance", "draw/away"): "X2",
+                 ("both teams score", "yes"): "gol_gol", ("both teams score", "no"): "no_gol"}
+COPPIE_FINALE = (("over15", "under15"), ("over25", "under25"), ("over35", "under35"),
+                 ("gol_gol", "no_gol"))
+
+
+def finali(g, gp, cal):
+    """
+    Le probabilita' giuste di esito, doppia chance, Under/Over e Gol/NoGol,
+    per la pagina della partita nell'app. Quelle che Pinnacle quota sono le
+    sue; le altre si ricavano dai suoi gol attesi, corrette come i tempi.
+    Serve solo a mostrarle: le giocate non passano di qui. {} se non si puo'.
+    """
+    try:
+        out = {k: g[chiave] for chiave, k in CHIAVI_FINALE.items() if chiave in g}
+        for linea in ("1.5", "2.5", "3.5"):
+            o = g.get(("goals over/under", "over " + linea))
+            u = g.get(("goals over/under", "under " + linea))
+            if o and u:
+                k = linea.replace(".", "")
+                out["over" + k], out["under" + k] = o, u
+        if Q is not None and cal and gp and any(a not in out for a, _ in COPPIE_FINALE):
+            grezze, _ = Q.tutte(*gp["p"], gp["po"], gol=(gp["lc"], gp["lf"]), linea=gp["linea"],
+                                quota_pt=cal.get("quota_primo_tempo"))
+            prob = Q.correggi(grezze, cal)
+            affidabile = lambda k: (cal.get("mercati", {}).get(k) or {}).get("affidabile")
+            for a, b in COPPIE_FINALE:
+                if a not in out and a in prob and b in prob and affidabile(a) and affidabile(b):
+                    out[a], out[b] = prob[a], prob[b]
+        return {k: round(v, 4) for k, v in out.items()}
+    except Exception:
+        return {}
+
+
 def valuta(libri, m, esito, p, soglia):
     """Chi paga l'esito almeno la soglia sopra il giusto: {bookmaker: quota}."""
     pagano = {}
@@ -600,9 +637,12 @@ def giro(notifica=False):
                                   "fuori": info.get("fuori", "?"),
                                   "campionato": info.get("campionato", ""),
                                   "aggiornato": adesso.isoformat(timespec="minutes")}
-        if rp and fid in palinsesto:
-            tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
-                                    "p": {k: round(v, 4) for k, v in rp.items()}}
+        if fid in palinsesto:
+            fin = finali(g, gp, cal)
+            if rp or fin:
+                tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
+                                        "p": {k: round(v, 4) for k, v in rp.items()},
+                                        "f": fin}
         # il prezzo giusto piu' recente, per il CLV delle giocate gia' fatte
         for r in registro:
             if r["tipo"] != "singola" or r["fixture_id"] != fid or r["esito"] is not None:
@@ -895,8 +935,21 @@ def cartella_app():
     return os.path.join(sito, "app")
 
 
+def serie_app(singole):
+    """[giorno, utile per unita' di puntata] di ogni giocata chiusa, in ordine
+    di partita: l'app ne fa il grafico della prova sulla carta."""
+    try:
+        chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa")),
+                        key=lambda r: leggi_data(r["data"]))
+        return [[leggi_data(r["data"]).astimezone(FUSO).date().isoformat(), round(utile_singola(r), 4)]
+                for r in chiuse]
+    except Exception:
+        return []
+
+
 def voce_app(r):
-    return {"data": r["data"], "partita": r["partita"], "campionato": r.get("campionato", ""),
+    return {"fixture_id": r.get("fixture_id"),
+            "data": r["data"], "partita": r["partita"], "campionato": r.get("campionato", ""),
             "nome": r["nome"], "book": r["book"], "quota": r["quota"],
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
@@ -905,7 +958,8 @@ def voce_app(r):
 
 
 def scrivi_app(registro, stato):
-    """Scrive valore.json accanto all'app, che lo mostra nella scheda Valore."""
+    """Scrive valore.json accanto all'app, che lo mostra in Oggi, in Risultati
+    e nella pagina di ogni partita."""
     cartella = cartella_app()
     if not os.path.isdir(cartella):
         return f"app non trovata in {cartella}: valore.json non scritto"
@@ -930,6 +984,7 @@ def scrivi_app(registro, stato):
                         "prima": min(inizi, key=leggi_data) if inizi else s.get("data")}
         chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa", "annullata")),
                         key=lambda r: r["data"], reverse=True)[:20]
+        tempi = carica(FILE_TEMPI, {})
         salva(os.path.join(cartella, "valore.json"), {
             "generato": datetime.now(FUSO).isoformat(timespec="minutes"),
             "prova": {"giorno": giorno_prova(stato) if stato.get("inizio") else 1, "di": GIORNI_PROVA},
@@ -939,7 +994,11 @@ def scrivi_app(registro, stato):
             "bilancio": statistiche(registro),
             "ultime": [voce_app(r) for r in chiuse],
             # le quote giuste di primo e secondo tempo, per la pagina di ogni partita
-            "tempi": {fid: t["p"] for fid, t in carica(FILE_TEMPI, {}).items()}})
+            "tempi": {fid: t["p"] for fid, t in tempi.items() if t.get("p")},
+            # esito, Under/Over e Gol/NoGol secondo Pinnacle, per la stessa pagina
+            "finale": {fid: t["f"] for fid, t in tempi.items() if t.get("f")},
+            # la prova giocata per giocata, per il grafico
+            "serie": serie_app(singole)})
         return "app aggiornata: " + os.path.join(cartella, "valore.json")
     except Exception as e:
         return f"valore.json non scritto ({e})"
