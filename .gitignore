@@ -8,3 +8,15 @@ verifica.html
 verifica.json
 *.pyc
 __pycache__/
+# file generati sul server dagli script (non vanno nel repository)
+/modello.json
+/correzione_divisione.json
+/giocate_giorno.json
+/log_aggiornamenti.txt
+stato/valore_registro.json
+stato/valore_stato.json
+stato/valore_gol.json
+stato/valore_tempi.json
+stato/valore.lock
+stato/intervallo.json
+stato/calibrazione_mercati.*
