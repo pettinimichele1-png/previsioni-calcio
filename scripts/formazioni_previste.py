@@ -97,6 +97,10 @@ def carica_storico(conn):
     """)
     per_partita = {}
     for fid, tid, pid, pos, data in cur.fetchall():
+        # l'API a volte manda un titolare senza id: come per le ufficiali,
+        # si salta (altrimenti l'ordinamento dell'undici si blocca)
+        if pid is None:
+            continue
         k = (fid, tid)
         if k not in per_partita:
             per_partita[k] = {"data": data, "undici": set(), "ruoli": {}}
