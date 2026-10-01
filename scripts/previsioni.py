@@ -28,6 +28,7 @@ import urllib.parse
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from nucleo import media_pesata, carica_conservazione, indicatori_squadra
+from consumo_api import frena
 
 DB_PATH = "calcio_dati.db"
 MODELLO = "modello.json"
@@ -38,6 +39,10 @@ GIORNI_AVANTI = int(os.environ.get("GIORNI_AVANTI", "4"))
 # scarica anche le quote per il confronto (circa 90 chiamate in piu')
 CON_QUOTE = os.environ.get("CON_QUOTE", "1") != "0"
 MAX_CHIAMATE_QUOTE = 200
+# quote grezze dell'ultimo giro, per verifica.py, e quando e' stato
+# scaricato ogni giorno: i giorni lontani si riscaricano ogni 3 ore
+QUOTE_GIRO = "quote_giro.json"
+ORE_GIORNI_LONTANI = 3
 MIN_PARTITE = 3
 MAX_GOL = 8
 
@@ -280,9 +285,82 @@ def quote_1x2(voce):
             "bookmaker": n}
 
 
+def giorni_da_scaricare(previsioni):
+    """
+    I giorni di cui scaricare le quote in questo giro.
+
+    L'API da' le quote per giornata, di tutte le partite del mondo, a
+    pagine da 10: ogni giorno costa decine di chiamate. Oggi e domani si
+    scaricano a ogni giro; i giorni piu' lontani, dove le quote si
+    muovono poco, al giro delle 7 e delle 8 e poi ogni 3 ore. Un giorno
+    con una partita non ancora archiviata si scarica sempre, cosi'
+    verifica.py la archivia con le quote del momento come prima.
+    """
+    adesso = datetime.now(timezone.utc)
+    vicino = (adesso + timedelta(days=1)).date().isoformat()
+    ora_it = datetime.now(ZoneInfo("Europe/Rome"))
+    mattino = ora_it.hour in (7, 8) and ora_it.minute < 30
+    ultimi = leggi_giro().get("ultimo_scarico", {})
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        archiviate = {r[0] for r in conn.execute(
+            "SELECT fixture_id FROM archivio_previsioni")}
+        conn.close()
+    except sqlite3.OperationalError:
+        archiviate = set()
+    giorni = set()
+    for p in previsioni:
+        g = p["data"][:10]
+        if mattino or g <= vicino or p["fixture_id"] not in archiviate:
+            giorni.add(g)
+            continue
+        try:
+            eta = adesso - datetime.fromisoformat(ultimi[g])
+        except (KeyError, ValueError):
+            eta = None
+        if eta is None or eta >= timedelta(hours=ORE_GIORNI_LONTANI, minutes=-10):
+            giorni.add(g)
+    lontani = {p["data"][:10] for p in previsioni} - giorni
+    if lontani:
+        print(f"  giorni lontani con le quote di meno di {ORE_GIORNI_LONTANI} ore fa: "
+              f"{', '.join(sorted(lontani))}")
+    return giorni
+
+
+def leggi_giro():
+    try:
+        with open(QUOTE_GIRO, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def scrivi_giro(voci, completi):
+    """
+    Lascia a verifica.py le quote grezze appena scaricate, cosi' non le
+    riscarica: e' lo stesso download, fatto pochi secondi prima.
+    """
+    adesso = datetime.now(timezone.utc)
+    ultimi = leggi_giro().get("ultimo_scarico", {})
+    for g in completi:
+        ultimi[g] = adesso.isoformat()
+    ieri = (adesso - timedelta(days=1)).date().isoformat()
+    ultimi = {g: t for g, t in ultimi.items() if g >= ieri}
+    try:
+        with open(QUOTE_GIRO, "w", encoding="utf-8") as f:
+            json.dump({"generato": adesso.isoformat(),
+                       "giorni_scaricati": sorted(completi),
+                       "ultimo_scarico": ultimi,
+                       "voci": voci}, f, ensure_ascii=False)
+    except OSError as e:
+        print(f"  [quote del giro non salvate: {e}]")
+
+
 def scarica_quote(giorni, id_ammessi):
     """Quote per giornata: poche chiamate invece di una per partita."""
     quote = {}
+    voci = {}
+    completi = []
     chiamate = 0
     for giorno in sorted(giorni):
         pagina = 1
@@ -300,17 +378,22 @@ def scarica_quote(giorni, id_ammessi):
             chiamate += 1
             risposta = dati.get("response", [])
             if not risposta:
+                if not dati.get("errors"):
+                    completi.append(giorno)
                 break
             for voce in risposta:
                 fid = (voce.get("fixture") or {}).get("id")
                 if fid in id_ammessi:
+                    voci[fid] = voce
                     est = quote_mercati(voce)
                     if est:
                         quote[fid] = est
             if pagina >= (dati.get("paging") or {}).get("total", 1):
+                completi.append(giorno)
                 break
             pagina += 1
     print(f"  quote trovate: {len(quote)} (chiamate {chiamate})")
+    scrivi_giro(voci, completi)
     return quote
 
 
@@ -2092,8 +2175,11 @@ def main():
 
     if CON_QUOTE and previsioni:
         print("Scarico le quote per il confronto...")
-        quote = scarica_quote({p["data"][:10] for p in previsioni},
-                              {p["fixture_id"] for p in previsioni})
+        if frena("le quote per il confronto"):
+            quote = {}
+        else:
+            quote = scarica_quote(giorni_da_scaricare(previsioni),
+                                  {p["fixture_id"] for p in previsioni})
         quote = ricorda_quote(quote, {p["fixture_id"] for p in previsioni})
         for p in previsioni:
             q = quote.get(p["fixture_id"])

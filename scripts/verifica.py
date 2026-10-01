@@ -53,11 +53,21 @@ try:
 except Exception:
     P = None
     quote_mercati = None
+try:
+    from consumo_api import frena
+except Exception:
+    def frena(cosa):
+        return False
 
 DB_PATH = "calcio_dati.db"
 PREVISIONI = "previsioni.json"
 BASE_URL = "https://v3.football.api-sports.io"
 API_KEY = os.environ.get("API_FOOTBALL_KEY", "").strip()
+
+# quote grezze lasciate da previsioni.py nello stesso giro: valgono solo
+# se fresche, altrimenti si scaricano come prima
+QUOTE_GIRO = "quote_giro.json"
+MINUTI_GIRO = 20
 
 USCITA_HTML = "verifica.html"
 USCITA_JSON = "verifica.json"
@@ -80,6 +90,19 @@ def chiamata(endpoint, params):
         print(f"    [ERRORE API] {dati['errors']}")
         return [], {}
     return dati.get("response", []), dati.get("paging", {})
+
+
+def quote_del_giro():
+    """Le quote appena scaricate da previsioni.py, o None se non ci sono."""
+    try:
+        with open(QUOTE_GIRO, encoding="utf-8") as f:
+            giro = json.load(f)
+        eta = datetime.now(timezone.utc) - datetime.fromisoformat(giro["generato"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if eta.total_seconds() > MINUTI_GIRO * 60 or not isinstance(giro.get("voci"), dict):
+        return None
+    return giro
 
 
 def crea_tabella(conn):
@@ -216,12 +239,35 @@ def archivia(conn):
 
     quote = {}
     altre = {}
+    def leggi(voce):
+        fid = (voce.get("fixture") or {}).get("id")
+        est = quote_1x2(voce) if fid else None
+        if est:
+            quote[fid] = est
+        if fid and quote_mercati:
+            tutte = quote_mercati(voce) or {}
+            if "over25" in tutte or "gol_gol" in tutte:
+                altre[fid] = tutte
+
     if API_KEY:
         print("Scarico le quote del momento...")
         chiamate = 0
         # i giorni servono per entrambe: le nuove e quelle da completare
-        for giorno in sorted({p["data"][:10]
-                              for p in nuove + da_completare}):
+        giorni = {p["data"][:10] for p in nuove + da_completare}
+        giro = quote_del_giro()
+        if giro is not None:
+            # previsioni.py le ha appena scaricate: si leggono da li'.
+            # Si scarica solo un giorno con partite nuove che quel giro
+            # non ha letto; quelle da completare aspettano il prossimo
+            # giro che lo legge, o le quote ricordate qui sotto.
+            for voce in giro["voci"].values():
+                leggi(voce)
+            giorni = ({p["data"][:10] for p in nuove}
+                      - set(giro.get("giorni_scaricati", [])))
+            print(f"  lette dal giro delle previsioni: {len(giro['voci'])} partite")
+        if giorni and frena("le quote del momento"):
+            giorni = set()
+        for giorno in sorted(giorni):
             pagina = 1
             while chiamate < MAX_CHIAMATE:
                 risposta, paging = chiamata("odds", {"date": giorno, "page": pagina})
@@ -229,14 +275,7 @@ def archivia(conn):
                 if not risposta:
                     break
                 for voce in risposta:
-                    fid = (voce.get("fixture") or {}).get("id")
-                    est = quote_1x2(voce) if fid else None
-                    if est:
-                        quote[fid] = est
-                    if fid and quote_mercati:
-                        tutte = quote_mercati(voce) or {}
-                        if "over25" in tutte or "gol_gol" in tutte:
-                            altre[fid] = tutte
+                    leggi(voce)
                 if pagina >= (paging or {}).get("total", 1):
                     break
                 pagina += 1
