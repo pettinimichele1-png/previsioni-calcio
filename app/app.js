@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "18.3";
+  var VERSIONE_APP = "18.4";
 
   var stato = {
     dati: null,
@@ -85,7 +85,16 @@
     var p = String(chiave).split("-");
     return new Date(+p[0], +p[1] - 1, +p[2]);
   }
-  function ieri() { var d = new Date(); d.setDate(d.getDate() - 1); return chiaveGiorno(d); }
+  // La giornata delle giocate va dalle 7 alle 7 del giorno dopo, come sul
+  // server: le partite sudamericane della notte restano con la sera prima.
+  function giornataDi(d) {
+    return chiaveGiorno(new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getHours() < 7 ? 1 : 0)));
+  }
+  function ieri() { var d = daChiave(giornataDi(new Date())); d.setDate(d.getDate() - 1); return chiaveGiorno(d); }
+  // l'ora di una partita, col giorno davanti se non e' oggi (quelle della notte)
+  function oraConGiorno(d) {
+    return (chiaveGiorno(d) !== chiaveGiorno(new Date()) ? GIORNI[d.getDay()].toLowerCase() + " " : "") + oraDi(d);
+  }
   function relativo(chiave) {
     var oggi = new Date();
     var domani = new Date(); domani.setDate(oggi.getDate() + 1);
@@ -297,7 +306,7 @@
     }
     html += '<div class="val-corpo"><div class="val-sx">';
     if (!pausa) {
-      html += '<div class="val-riga1"><b class="val-ora">' + oraDi(data(r.data)) + '</b><span class="val-partita">' + esc(r.partita) + "</span></div>";
+      html += '<div class="val-riga1"><b class="val-ora">' + oraConGiorno(data(r.data)) + '</b><span class="val-partita">' + esc(r.partita) + "</span></div>";
     }
     html += '<span class="val-nome">' + esc(nomeValore(r)) + "</span>" +
       '<span class="val-libro">' + libroValore(r) + " " + quota(r.quota) + ' · <b class="lime">' + pctSegno(r.vantaggio, 0) + "</b></span></div>" +
@@ -310,7 +319,7 @@
   function orarioVoce(v) {
     var oggi = (stato.valore && stato.valore.oggi) || [];
     for (var i = 0; i < oggi.length; i++) {
-      if (oggi[i].partita === v.partita && oggi[i].nome === v.nome) return oraDi(data(oggi[i].data));
+      if (oggi[i].partita === v.partita && oggi[i].nome === v.nome) return oraConGiorno(data(oggi[i].data));
     }
     return "";
   }
@@ -340,7 +349,10 @@
         (r.esito === "annullata" ? "annullata" : euro(u, true)) + "</b><small>quota " + quota(r.quota) + "</small></div>";
     } else {
       segnoR = '<span class="tondo attesa">' + icona("orologio") + "</span>";
-      dx = '<div class="rg-dx"><small>' + (r.intervallo ? "dall'intervallo" : "dalle " + oraDi(data(r.data))) + "</small></div>";
+      // quasi due ore dopo il calcio d'inizio la partita e' finita: il
+      // risultato arriva al primo controllo del server (ogni 15 minuti)
+      var finita = Date.now() - data(r.data).getTime() > 115 * 60000;
+      dx = '<div class="rg-dx"><small>' + (finita ? "risultato in arrivo" : r.intervallo ? "dall'intervallo" : "dalle " + oraConGiorno(data(r.data))) + "</small></div>";
     }
     var sotto = esc(r.partita);
     if (chiusa) {
@@ -389,7 +401,8 @@
 
   function notaOggi() {
     return '<p class="nota-info">' + icona("info") + "<span>Gioca solo se sul tuo sito trovi almeno la quota minima: le quote qui " +
-      "possono essere vecchie di qualche ora. Quelle all'intervallo vanno fatte prima che ricominci la partita.</span></p>";
+      "possono essere vecchie di qualche ora. Quelle all'intervallo vanno fatte prima che ricominci la partita. " +
+      "La giornata va dalle 7 alle 7: le partite della notte restano con la sera prima.</span></p>";
   }
 
   function rigaApri(chiave, titolo, destra, dentro) {
@@ -401,11 +414,12 @@
 
   function vistaOggi() {
     var v = stato.valore;
-    var oggi = new Date();
+    // fino alle 7 del mattino la pagina resta sulla giornata di ieri sera
+    var adesso = new Date(), chiaveOggi = giornataDi(adesso), oggi = daChiave(chiaveOggi);
     var sotto = GIORNI_LUNGHI[oggi.getDay()] + " " + oggi.getDate() + " " + MESI[oggi.getMonth()];
     if (v && v.generato) {
       var dg = data(v.generato);
-      sotto += " · " + (chiaveGiorno(dg) === chiaveGiorno(oggi) ? "aggiornato alle " + oraDi(dg)
+      sotto += " · " + (giornataDi(dg) === chiaveOggi ? "aggiornato alle " + oraDi(dg)
         : "ultimo aggiornamento " + dataBreve(dg) + " " + oraDi(dg));
     }
     var html = testa("Oggi", sotto, campana(), true) + avvisoFuoriLinea() + '<div class="corpo">';
@@ -451,7 +465,7 @@
     if (!chiuse.length && !schChiusa) {
       quando = "ieri";
       var giornoPrima = ieri();
-      chiuse = (v.ultime || []).filter(function (r) { return chiaveGiorno(data(r.data)) === giornoPrima; });
+      chiuse = (v.ultime || []).filter(function (r) { return giornataDi(data(r.data)) === giornoPrima; });
     }
     if (chiuse.length || schChiusa) {
       var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
@@ -936,6 +950,9 @@
       '<circle class="g-punto mobile" id="g-dito" cx="0" cy="0" r="4.5" style="display:none"></circle></svg>' +
       '<div class="g-etichetta" id="g-etichetta" hidden><b></b><small></small></div></div>';
     var primo = giorni[1], ultimoG = giorni[n], mezzo = giorni[Math.max(1, Math.round(n / 2))];
+    // ogni giorno scritto una volta sola: all'inizio le giocate sono quasi tutte dello stesso giorno
+    if (mezzo === primo || mezzo === ultimoG) mezzo = null;
+    if (ultimoG === primo) ultimoG = null;
     svg += '<div class="asse"><span>' + (primo ? giornoCorto(daChiave(primo)) : "") + "</span><span>" +
       (n > 2 && mezzo ? giornoCorto(daChiave(mezzo)) : "") + "</span><span>" + (ultimoG ? giornoCorto(daChiave(ultimoG)) : "") + "</span></div>";
     return svg;
@@ -998,7 +1015,7 @@
     if (serie.length >= 2) html += graficoProva(serie);
     else html += '<p class="testo fioco">Il grafico parte quando si chiudono le prime giocate.</p>';
     html += '<div class="tre separato"><div><b>' + (s.n || 0) + "</b><span>chiuse" + (s.n ? " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") : "") + "</span></div>" +
-      '<div><b class="' + (s.n ? (s.rendimento >= 0 ? "turchese" : "arancio") : "") + '">' + (s.n ? pctSegno(s.rendimento) : "–") + "</b><span>rendimento</span></div>" +
+      '<div><b class="' + (s.n ? (s.rendimento >= 0 ? "turchese" : "arancio") : "") + '">' + (s.n ? pctSegno(s.rendimento, Math.abs(s.rendimento) >= 0.995 ? 0 : 1) : "–") + "</b><span>rendimento</span></div>" +
       '<div><b class="' + (clv.n ? (clv.media >= 0 ? "turchese" : "arancio") : "") + '">' + (clv.n ? pctSegno(clv.media) : "–") +
       "</b><span>contro Pinnacle a fine mercato</span></div></div></section>";
 

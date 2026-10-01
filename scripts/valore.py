@@ -37,6 +37,10 @@ Al primo giro del mattino chiude le giocate di ieri, sceglie quelle di
 oggi e manda la notifica al telefono; i giri dopo aggiornano le quote
 di Pinnacle, che servono per il CLV.
 
+La giornata va dalle 7 alle 7 del giorno dopo: le partite sudamericane
+della notte appartengono alla sera prima, cosi' il giro delle 20 le vede
+e l'app le tiene in Oggi finche' non finiscono.
+
 ALL'INTERVALLO
 Ogni 5 minuti "intervallo" guarda quali partite di oggi sono alla pausa.
 Il prezzo giusto del secondo tempo viene dai gol attesi delle quote di
@@ -49,7 +53,13 @@ con un'espulsione nel primo tempo si saltano: il modello non la conosce.
 Seconda riga di crontab:
     */5 * * * * cd ~/previsioni-calcio/previsioni-calcio && . ~/.previsioni_env && python3 scripts/valore.py intervallo >> ~/valore_intervallo.log 2>&1
 Quando nessuna delle nostre partite puo' essere alla pausa non fa niente e
-non chiama l'API; se no costa due o tre chiamate.
+non chiama l'API; se no costa due o tre chiamate. Dall'una alle 7 le
+giocate all'intervallo si registrano senza notifica.
+
+La stessa riga chiude le giocate finite: circa due ore dopo il calcio
+d'inizio chiede il risultato all'API (al massimo ogni 15 minuti, e solo
+se c'e' qualcosa da chiudere) e riscrive l'app, cosi' il risultato
+compare subito e non al giro del mattino.
 
 Primo e secondo tempo: dove Pinnacle quota il mercato vale la sua quota;
 dove no (secondo tempo, Gol nei tempi, tempo con piu' gol...) il prezzo
@@ -170,6 +180,17 @@ def quando(info):
         return leggi_data(info["data"]).astimezone(FUSO)
     except (KeyError, TypeError, ValueError):
         return None
+
+
+INIZIO_GIORNATA = 7
+
+
+def giornata(d):
+    """Il giorno delle giocate: dalle 7 del mattino alle 7 del giorno dopo.
+    Cosi' le partite sudamericane della notte stanno con la sera prima: il
+    giro delle 20 le vede, e nell'app restano in Oggi finche' non finiscono."""
+    d = d.astimezone(FUSO)
+    return d.date() - timedelta(days=1) if d.hour < INIZIO_GIORNATA else d.date()
 
 
 def trova_previsioni():
@@ -515,10 +536,13 @@ def famiglia(r):
 #  chiusura delle giocate finite
 # ---------------------------------------------------------------
 
+FINE_PARTITA = timedelta(hours=2)   # dal calcio d'inizio: di solito e' gia' finita
+
+
 def chiudi(registro, conta):
     adesso = datetime.now(timezone.utc)
     aperte = [r for r in registro if r["tipo"] == "singola" and r["esito"] is None
-              and leggi_data(r["data"]) < adesso - timedelta(hours=2, minutes=30)]
+              and leggi_data(r["data"]) < adesso - FINE_PARTITA]
     ids = sorted({r["fixture_id"] for r in aperte})
     risultati = {}
     for i in range(0, len(ids), 20):
@@ -590,7 +614,7 @@ def schedina_del_giorno(giocate):
 
 def giro(notifica=False):
     adesso = datetime.now(FUSO)
-    oggi = adesso.date()
+    oggi = giornata(adesso)
     registro = carica(FILE_REGISTRO, [])
     stato = carica(FILE_STATO, {})
     stato.setdefault("inizio", oggi.isoformat())
@@ -604,7 +628,7 @@ def giro(notifica=False):
         print("  previsioni.json non trovato: lancialo dalla cartella del progetto.")
         return
     palinsesto = {p["fixture_id"]: p for p in tutte
-                  if quando(p) and quando(p).date() == oggi
+                  if quando(p) and giornata(quando(p)) == oggi
                   and quando(p) > adesso + timedelta(minutes=5)}
     in_attesa = {r["fixture_id"] for r in registro if r["tipo"] == "singola"
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
@@ -720,7 +744,7 @@ def giro(notifica=False):
 
 def giorno_prova(stato):
     inizio = datetime.fromisoformat(stato.get("inizio")).date()
-    return (datetime.now(FUSO).date() - inizio).days + 1
+    return (giornata(datetime.now(FUSO)) - inizio).days + 1
 
 
 def stampa_giro(adesso, stato, giocate, schedina, nuove, senza_pinnacle, n_partite, chiamate):
@@ -766,7 +790,7 @@ def stampa_giro(adesso, stato, giocate, schedina, nuove, senza_pinnacle, n_parti
 def riassunto_ieri(registro, oggi):
     ieri = oggi - timedelta(days=1)
     chiuse = [r for r in registro if r["tipo"] == "singola" and r["esito"] in ("vinta", "persa")
-              and leggi_data(r["data"]).astimezone(FUSO).date() == ieri]
+              and giornata(leggi_data(r["data"])) == ieri]
     if not chiuse:
         return ""
     utile = sum(utile_singola(r) for r in chiuse) * PUNTATA
@@ -941,7 +965,7 @@ def serie_app(singole):
     try:
         chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa")),
                         key=lambda r: leggi_data(r["data"]))
-        return [[leggi_data(r["data"]).astimezone(FUSO).date().isoformat(), round(utile_singola(r), 4)]
+        return [[giornata(leggi_data(r["data"])).isoformat(), round(utile_singola(r), 4)]
                 for r in chiuse]
     except Exception:
         return []
@@ -964,11 +988,11 @@ def scrivi_app(registro, stato):
     if not os.path.isdir(cartella):
         return f"app non trovata in {cartella}: valore.json non scritto"
     try:
-        oggi = datetime.now(FUSO).date()
+        oggi = giornata(datetime.now(FUSO))
         singole = {r["id"]: r for r in registro if r["tipo"] == "singola"}
         di_oggi = sorted((r for r in singole.values()
-                          if leggi_data(r["data"]).astimezone(FUSO).date() == oggi),
-                         key=lambda r: r["data"])
+                          if giornata(leggi_data(r["data"])) == oggi),
+                         key=lambda r: leggi_data(r["data"]))
         s = next((r for r in registro if r["id"] == f"schedina|{oggi.isoformat()}"), None)
         schedina = None
         if s:
@@ -987,6 +1011,7 @@ def scrivi_app(registro, stato):
         tempi = carica(FILE_TEMPI, {})
         salva(os.path.join(cartella, "valore.json"), {
             "generato": datetime.now(FUSO).isoformat(timespec="minutes"),
+            "giornata": oggi.isoformat(),
             "prova": {"giorno": giorno_prova(stato) if stato.get("inizio") else 1, "di": GIORNI_PROVA},
             "puntata": PUNTATA,
             "oggi": [voce_app(r) for r in di_oggi],
@@ -1156,6 +1181,41 @@ def rosso(eventi):
     return False
 
 
+CHIUSURA_OGNI = timedelta(minutes=15)
+CHIUSURA_FINESTRA = timedelta(hours=8)   # oltre, ci pensa il giro del mattino
+
+
+def chiusura():
+    """
+    Da cron ogni 5 minuti, insieme all'intervallo: chiude le giocate gia'
+    finite e aggiorna l'app, cosi' il risultato compare poco dopo la fine
+    della partita invece che al giro del mattino (le partite sudamericane
+    finiscono di notte). Chiama l'API solo se c'e' qualcosa da chiudere,
+    al massimo una volta ogni 15 minuti, e solo per partite iniziate da
+    meno di 8 ore: una partita sospesa non deve far chiamare l'API
+    per giorni.
+    """
+    registro = carica(FILE_REGISTRO, [])
+    adesso = datetime.now(timezone.utc)
+    if not any(r["tipo"] == "singola" and r["esito"] is None
+               and adesso - CHIUSURA_FINESTRA < leggi_data(r["data"]) < adesso - FINE_PARTITA
+               for r in registro):
+        return
+    stato = carica(FILE_STATO, {})
+    ultima = stato.get("ultima_chiusura")
+    if ultima and adesso - leggi_data(ultima) < CHIUSURA_OGNI:
+        return
+    prima = sum(1 for r in registro if r["esito"] is not None)
+    chiudi(registro, [0])
+    stato["ultima_chiusura"] = adesso.isoformat(timespec="minutes")
+    salva(FILE_STATO, stato)
+    dopo = sum(1 for r in registro if r["esito"] is not None)
+    if dopo != prima:
+        salva(FILE_REGISTRO, registro)
+        print(f"  {datetime.now(FUSO):%d/%m %H:%M}  chiuse {dopo - prima} giocate")
+        print("  " + scrivi_app(registro, stato))
+
+
 def intervallo():
     """Da cron ogni 5 minuti: le partite di oggi alla pausa, contro Bet365 live."""
     mod = carica(FILE_INTERVALLO, None)
@@ -1267,7 +1327,12 @@ def intervallo():
             scrivi(f"{partita} {htc}-{hta}: {nome} a {q:.2f} su Bet365 (giusta {1 / p:.2f}, {v:+.1%})")
         if nuove:
             salva(FILE_REGISTRO, registro)
+            # dall'una alle 7 si registrano sulla carta senza notifica:
+            # le partite sudamericane non devono svegliare nessuno
+            notte = 1 <= datetime.now(FUSO).hour < INIZIO_GIORNATA
             for r in nuove:
+                if notte:
+                    continue
                 scrivi(spedisci({
                     "titolo": f"Intervallo: {r['partita']} {r['ht']}",
                     "testo": f"{r['nome'].split(' (intervallo')[0]} a {r['quota']:.2f} su Bet365, "
@@ -1314,6 +1379,10 @@ def main():
         elif comando == "mercati":
             mercati()
         elif comando == "intervallo":
+            try:
+                chiusura()
+            except Exception as e:      # la chiusura non deve mai fermare l'intervallo
+                print(f"  {datetime.now(FUSO):%d/%m %H:%M}  chiusura non riuscita: {e}")
             intervallo()
         elif comando == "auto":
             adesso = datetime.now(FUSO)
