@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "19.4";
+  var VERSIONE_APP = "19.5";
 
   var stato = {
     dati: null,
@@ -384,7 +384,11 @@
   //  OGGI
   // ---------------------------------------------------------------
   function riepilogoProva(v) {
-    var s = ((v.bilancio || {}).singole) || { n: 0 };
+    // dalla v19.5 valore.json separa le giocate prima della partita (che
+    // contano per il verdetto) da quelle all'intervallo; col file vecchio, tutte
+    var b = v.bilancio || {};
+    var s = (b.prima || b.singole) || { n: 0 };
+    var pz = b.prima && b.intervallo && b.intervallo.n ? b.intervallo.n : 0;
     var p = puntata(), num = "0,00 €", cls = "";
     if (s.n) {
       var u = s.utile * p;
@@ -394,6 +398,8 @@
     var sotto = s.n
       ? contaGiocate(s.n).replace("giocata", "giocata chiusa").replace("giocate", "giocate chiuse") + " · " + s.vinte + (s.vinte === 1 ? " vinta" : " vinte") + " · " + euroTondo(p) + " a giocata"
       : "Ancora nessuna giocata chiusa · " + euroTondo(p) + " a giocata";
+    if (b.prima) sotto = "Prima della partita: " + sotto.charAt(0).toLowerCase() + sotto.slice(1) +
+      (pz ? " · più " + pz + " all'intervallo, a parte" : "");
     return '<a class="riepilogo carta" href="#/risultati"><div class="riep-testi"><span class="etichetta">' + etichettaProva(v) +
       '</span><span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span></div>" +
       icona("destra", "freccia") + "</a>";
@@ -989,7 +995,10 @@
         : '<div class="caricamento">Caricamento…</div>';
     }
     var b = v.bilancio || {};
-    var s = b.singole || { n: 0 };
+    // dalla v19.5: prima della partita (contano per il verdetto) e intervallo
+    // separati; col valore.json vecchio si mostra tutto insieme come prima
+    var divisa = !!b.prima;
+    var s = (divisa ? b.prima : b.singole) || { n: 0 };
     var clv = b.clv || { n: 0 };
     var p = puntata();
     var ver = VERDETTI_VALORE[b.verdetto] || VERDETTI_VALORE.presto;
@@ -1003,11 +1012,12 @@
     html += '<p class="testo">' + esc(ver[1].replace("{min}", min).replace("{n}", clv.n || 0)) + "</p></section>";
 
     // i soldi sulla carta, con il grafico
-    var serie = v.serie || [];
+    var serie = (v.serie || []).filter(function (x) { return !divisa || !x[2]; });
     var utile = s.n ? s.utile * p : 0;
     var giornoPrima = ieri(), diIeri = serie.filter(function (x) { return x[0] === giornoPrima; });
     var utileIeri = diIeri.reduce(function (t, x) { return t + x[1] * p; }, 0);
-    html += '<section class="riquadro carta"><div class="soldi-testa"><div><span class="etichetta">Sulla carta, ' + euroTondo(p) + " a giocata</span>" +
+    html += '<section class="riquadro carta"><div class="soldi-testa"><div><span class="etichetta">' +
+      (divisa ? "Prima della partita, " : "Sulla carta, ") + euroTondo(p) + " a giocata</span>" +
       '<div class="soldi ' + (utile > 0.004 ? "turchese" : utile < -0.004 ? "arancio" : "") + '">' + euro(utile, true) + "</div></div>" +
       (diIeri.length ? '<span class="soldi-ieri">ieri <b class="' + (utileIeri > 0.004 ? "turchese" : utileIeri < -0.004 ? "arancio" : "") + '">' + euro(utileIeri, true) + "</b></span>" : "") +
       "</div>";
@@ -1025,7 +1035,7 @@
         '<span class="ti dx">Vinte</span><span class="ti dx">Rend.</span>';
       FAMIGLIE_VALORE.forEach(function (f) {
         var c = (b.famiglie || {})[f[0]];
-        if (!c || !c.n) return;
+        if (!c || !c.n || (divisa && f[0] === "all'intervallo")) return;
         html += '<span class="c nome">' + f[1] + '</span><span class="c dx">' + c.n + '</span><span class="c dx">' + c.vinte +
           '</span><span class="c dx ' + (c.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(c.rendimento, 0) + "</span>";
       });
@@ -1035,6 +1045,19 @@
           '</span><span class="c dx ' + (sc.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(sc.rendimento, 0) + "</span>";
       }
       html += "</div></section>";
+    }
+
+    // all'intervallo, a parte: non c'e' una quota di Pinnacle per il verdetto
+    var pz = b.intervallo || { n: 0 };
+    if (divisa && pz.n) {
+      var up = pz.utile * p;
+      html += '<section class="riquadro carta"><div class="soldi-testa"><div><span class="etichetta">All\'intervallo, a parte</span>' +
+        '<div class="soldi ' + (up > 0.004 ? "turchese" : up < -0.004 ? "arancio" : "") + '">' + euro(up, true) + "</div></div></div>" +
+        '<div class="tre separato"><div><b>' + pz.n + "</b><span>chiuse · " + pz.vinte + (pz.vinte === 1 ? " vinta" : " vinte") + "</span></div>" +
+        "<div><b>" + String(pz.attese).replace(".", ",") + "</b><span>vinte attese</span></div>" +
+        '<div><b class="' + (pz.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(pz.rendimento, Math.abs(pz.rendimento) >= 0.995 ? 0 : 1) +
+        "</b><span>rendimento</span></div></div>" +
+        '<p class="testo fioco">Non contano per il verdetto: all\'intervallo non c\'è una quota di Pinnacle con cui confrontarle.</p></section>';
     }
 
     // le ultime chiuse

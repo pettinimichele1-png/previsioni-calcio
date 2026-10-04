@@ -955,7 +955,11 @@ def statistiche(registro):
                "lo": None if lo is None else round(lo, 4), "hi": None if hi is None else round(hi, 4)}
         if len(valori) >= MIN_VERDETTO:
             verdetto = "vero" if lo > 0 else ("no" if hi < 0 else "incerto")
+    # prima della partita (contano per il verdetto) e all'intervallo, a parte
+    prima = [r for r in singole if famiglia(r) != "all'intervallo"]
+    pausa = [r for r in singole if famiglia(r) == "all'intervallo"]
     return {"singole": riassunto(singole),
+            "prima": riassunto(prima), "intervallo": riassunto(pausa),
             "famiglie": {f: riassunto([r for r in singole if famiglia(r) == f]) for f in FAMIGLIE},
             "schedine": riassunto(schedine, utile_schedina),
             "clv": clv, "verdetto": verdetto, "min_verdetto": MIN_VERDETTO,
@@ -1037,12 +1041,14 @@ def cartella_app():
 
 
 def serie_app(singole):
-    """[giorno, utile per unita' di puntata] di ogni giocata chiusa, in ordine
+    """[giorno, utile per unita' di puntata, intervallo] di ogni giocata chiusa, in ordine
     di partita: l'app ne fa il grafico della prova sulla carta."""
     try:
         chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa")),
                         key=lambda r: leggi_data(r["data"]))
-        return [[giornata(leggi_data(r["data"])).isoformat(), round(utile_singola(r), 4)]
+        # terzo valore: 1 se la giocata e' all'intervallo (l'app le separa)
+        return [[giornata(leggi_data(r["data"])).isoformat(), round(utile_singola(r), 4),
+                 1 if famiglia(r) == "all'intervallo" else 0]
                 for r in chiuse]
     except Exception:
         return []
