@@ -32,10 +32,10 @@ Uso, dalla cartella del progetto:
 
 Per farlo girare da solo, una riga in crontab (crontab -e):
     20 * * * * cd ~/previsioni-calcio/previsioni-calcio && . ~/.previsioni_env && python3 scripts/valore.py auto >> ~/valore.log 2>&1
-Parte ogni ora ma lavora solo alle 7, 10, 13, 16, 18 e 20 ora italiana.
-Al primo giro del mattino chiude le giocate di ieri, sceglie quelle di
-oggi e manda la notifica al telefono; i giri dopo aggiornano le quote
-di Pinnacle, che servono per il CLV.
+Lavora ogni ora dalle 7 alle 23 ora italiana. Al primo giro del mattino
+chiude le giocate di ieri, sceglie quelle di oggi e manda la notifica al
+telefono; i giri dopo aggiornano le quote di Pinnacle, che servono per
+il CLV, e mandano una notifica solo se trovano giocate nuove.
 
 La giornata va dalle 7 alle 7 del giorno dopo: le partite sudamericane
 della notte appartengono alla sera prima, cosi' il giro delle 20 le vede
@@ -73,7 +73,10 @@ giusto si ricava dalle sue quote finali con quote_giuste.py, corretto con
 stato/calibrazione_mercati.json (lo crea, una volta, calibra_mercati.py).
 Su questi si chiede piu' margine: 5% invece del 3%.
 
-Costa una chiamata all'API per ogni partita ancora da giocare, a ogni giro.
+Le quote si leggono da quote_giro.json, che previsioni.py scarica ogni
+mezz'ora per oggi e domani: sono le stesse dell'API partita per partita,
+quindi di solito un giro non costa chiamate. Se il file manca o e'
+vecchio, una chiamata per ogni partita ancora da giocare.
 Variabili facoltative: VANTAGGIO_MIN (0.03), VANTAGGIO_MIN_RICAVATI
 (0.05), PUNTATA (10 euro a giocata, solo per contare il bilancio in euro).
 """
@@ -106,7 +109,9 @@ QUOTA_GIUSTA_MIN, QUOTA_GIUSTA_MAX = 1.25, 3.00   # niente sfavorite
 MAX_SCHEDINA = 3
 GIORNI_PROVA = 28
 MIN_VERDETTO = 100
-ORE_AUTO = (7, 10, 13, 16, 18, 20)
+# ogni ora dalle 7 alle 23: le quote si leggono da quelle del pipeline,
+# senza chiamate (v19.4); prima erano le 7, 10, 13, 16, 18 e 20
+ORE_AUTO = tuple(range(7, 24))
 FUSO = ZoneInfo("Europe/Rome")
 
 # Bookmaker con sito italiano (ADM) fra quelli che l'API passa, con la
@@ -644,6 +649,29 @@ def clv_misurabile(r):
     return True
 
 
+QUOTE_PIPELINE = "quote_giro.json"
+MINUTI_PIPELINE = 40
+
+
+def quote_del_pipeline():
+    """
+    {fixture_id: voce} delle quote che previsioni.py scarica ogni mezz'ora
+    (oggi e domani, tutti i bookmaker e i mercati): sono le stesse che
+    l'API da' partita per partita, quindi non si richiedono. {} se il file
+    manca o ha piu' di 40 minuti: allora si chiama l'API come prima.
+    """
+    try:
+        with open(QUOTE_PIPELINE, encoding="utf-8") as f:
+            d = json.load(f)
+        eta = datetime.now(timezone.utc) - datetime.fromisoformat(d["generato"])
+        voci = d["voci"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+    if eta > timedelta(minutes=MINUTI_PIPELINE) or not isinstance(voci, dict):
+        return {}
+    return voci
+
+
 def giro(notifica=False):
     adesso = datetime.now(FUSO)
     oggi = giornata(adesso)
@@ -666,20 +694,25 @@ def giro(notifica=False):
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
     giocate, senza_pinnacle, guasto = [], 0, False
     gol_oggi, tempi_oggi = {}, {}
+    dal_pipeline = quote_del_pipeline()
     for fid in sorted(set(palinsesto) | in_attesa):
-        try:
-            dati = chiama("odds", {"fixture": fid})
-        except Exception as e:
-            print(f"  errore dall'API: {e}")
-            guasto = True
-            break
-        conta[0] += 1
-        time.sleep(0.3)
-        if dati.get("errors"):
-            print(f"  l'API risponde: {dati['errors']}")
-            guasto = True
-            break
-        voci = dati.get("response") or []
+        if str(fid) in dal_pipeline:
+            # le stesse quote, scaricate dal pipeline da meno di 40 minuti
+            voci = [dal_pipeline[str(fid)]]
+        else:
+            try:
+                dati = chiama("odds", {"fixture": fid})
+            except Exception as e:
+                print(f"  errore dall'API: {e}")
+                guasto = True
+                break
+            conta[0] += 1
+            time.sleep(0.3)
+            if dati.get("errors"):
+                print(f"  l'API risponde: {dati['errors']}")
+                guasto = True
+                break
+            voci = dati.get("response") or []
         if not voci:
             continue
         g, rp, trovate, gp = candidate(voci[0], cal)
@@ -717,9 +750,11 @@ def giro(notifica=False):
     # registro: ogni giocata una volta sola, alla quota del momento in cui e' comparsa
     gia = {r["id"] for r in registro}
     nuove = 0
+    trovate_ora = []
     for c in giocate:
         if c["id"] in gia:
             continue
+        trovate_ora.append(c)
         info = c["info"]
         registro.append({
             "id": c["id"], "tipo": "singola", "fixture_id": info["fixture_id"],
@@ -763,6 +798,9 @@ def giro(notifica=False):
     if notifica and not guasto and stato.get("notificato") != oggi.isoformat():
         print("  " + manda_notifica(giocate, schedina, riassunto_ieri(registro, oggi)))
         stato["notificato"] = oggi.isoformat()
+    elif notifica and trovate_ora:
+        # i giri dopo quello del mattino avvisano solo delle giocate nuove
+        print("  " + notifica_nuove(trovate_ora))
     stato["ultimo_giro"] = adesso.isoformat(timespec="minutes")
     salva(FILE_STATO, stato)
     print("  " + scrivi_app(registro, stato))
@@ -841,6 +879,18 @@ def manda_notifica(giocate, schedina, ieri):
     if ieri:
         testo += f". {ieri}"
     return spedisci({"titolo": titolo, "testo": testo + ".", "url": "./#/valore", "tag": "valore"})
+
+
+def notifica_nuove(nuove):
+    """Le giocate trovate nei giri dopo quello del mattino (fino alle 23)."""
+    n = len(nuove)
+    pezzi = [f"{c['info'].get('casa', '?')}-{c['info'].get('fuori', '?')}: "
+             f"{nome_giocata(c, c['info'].get('casa'), c['info'].get('fuori'), breve=True)}"
+             f" ({c['book']} {c['quota']:.2f}, minima {c['minima']:.2f})"
+             for c in nuove[:3]]
+    return spedisci({"titolo": f"Valore: {n} giocat{'a' if n == 1 else 'e'} nuov{'a' if n == 1 else 'e'}",
+                     "testo": "; ".join(pezzi) + (f" e altre {n - 3}" if n > 3 else "") + ". Prova sulla carta.",
+                     "url": "./#/valore", "tag": "valore-nuove"})
 
 
 def spedisci(dati):
