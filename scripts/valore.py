@@ -56,6 +56,12 @@ Quando nessuna delle nostre partite puo' essere alla pausa non fa niente e
 non chiama l'API; se no costa due o tre chiamate. Dall'una alle 7 le
 giocate all'intervallo si registrano senza notifica.
 
+La stessa riga, 20 minuti prima del calcio d'inizio di ogni partita con
+una giocata aperta, prende l'ultima quota di Pinnacle per il CLV (una
+chiamata a partita). L'API aggiorna le quote ogni qualche ora: il CLV
+conta solo se quella fotografia e' piu' recente di quella con cui la
+giocata e' stata trovata.
+
 La stessa riga chiude le giocate finite: circa due ore dopo il calcio
 d'inizio chiede il risultato all'API (al massimo ogni 15 minuti, e solo
 se c'e' qualcosa da chiudere) e riscrive l'app, cosi' il risultato
@@ -612,6 +618,32 @@ def schedina_del_giorno(giocate):
     return migliore
 
 
+def aggiorna_ultima(registro, fid, g, rp, agg_api, adesso):
+    """Il prezzo giusto piu' recente di Pinnacle per le giocate aperte di una
+    partita, per il CLV. agg_api e' l'ora in cui l'API ha aggiornato le quote."""
+    for r in registro:
+        if r["tipo"] != "singola" or r["fixture_id"] != fid or r["esito"] is not None:
+            continue
+        p = rp.get(r["chiave"]) if r.get("chiave") else g.get((r["mercato"], r["scelta"]))
+        if p:
+            r["pinnacle_ultima"] = round(1 / p, 3)
+            r["aggiornata"] = adesso.isoformat(timespec="minutes")
+            if agg_api:
+                r["pinnacle_del"] = agg_api
+
+
+def clv_misurabile(r):
+    """
+    L'ultima quota di Pinnacle vale per il CLV solo se l'API l'ha aggiornata
+    dopo le quote con cui la giocata e' stata trovata: se e' la stessa
+    fotografia, il "CLV" sarebbe solo il vantaggio di partenza. Le giocate
+    registrate prima della v19.2 non hanno le ore e contano come prima.
+    """
+    if r.get("quote_del") and r.get("pinnacle_del"):
+        return r["pinnacle_del"] > r["quote_del"]
+    return True
+
+
 def giro(notifica=False):
     adesso = datetime.now(FUSO)
     oggi = giornata(adesso)
@@ -667,14 +699,7 @@ def giro(notifica=False):
                 tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
                                         "p": {k: round(v, 4) for k, v in rp.items()},
                                         "f": fin}
-        # il prezzo giusto piu' recente, per il CLV delle giocate gia' fatte
-        for r in registro:
-            if r["tipo"] != "singola" or r["fixture_id"] != fid or r["esito"] is not None:
-                continue
-            p = rp.get(r["chiave"]) if r.get("chiave") else g.get((r["mercato"], r["scelta"]))
-            if p:
-                r["pinnacle_ultima"] = round(1 / p, 3)
-                r["aggiornata"] = adesso.isoformat(timespec="minutes")
+        aggiorna_ultima(registro, fid, g, rp, voci[0].get("update"), adesso)
         # per ogni partita al massimo una giocata sulla partita intera e una
         # sui tempi: la migliore, contando il margine che ognuna richiede
         if fid in palinsesto:
@@ -685,6 +710,7 @@ def giro(notifica=False):
                 c = max(scelte, key=lambda t: t["vantaggio"] - t["soglia"])
                 c["info"] = palinsesto[fid]
                 c["id"] = f"{fid}|{c['mercato']}|{c['scelta']}"
+                c["agg"] = voci[0].get("update")
                 giocate.append(c)
     giocate.sort(key=lambda c: (quando(c["info"]), c["info"]["fixture_id"], sul_tempo(c)))
 
@@ -704,7 +730,7 @@ def giro(notifica=False):
             "book": c["book"], "quota": c["quota"], "commissione": c["commissione"],
             "giusta": round(c["giusta"], 3), "minima": c["minima"],
             "vantaggio": round(c["vantaggio"], 4), "prob": round(c["prob"], 4),
-            "registrata": adesso.isoformat(timespec="minutes"),
+            "registrata": adesso.isoformat(timespec="minutes"), "quote_del": c.get("agg"),
             "pinnacle_ultima": None, "esito": None})
         nuove += 1
 
@@ -868,7 +894,8 @@ def statistiche(registro):
     schedine = [r for r in registro if r["tipo"] == "schedina" and r["esito"] in ("vinta", "persa")]
     # il CLV si conta solo a partita iniziata: prima la quota di Pinnacle puo' ancora muoversi
     con_clv = [r for r in registro if r["tipo"] == "singola" and r.get("pinnacle_ultima")
-               and r["esito"] != "annullata" and leggi_data(r["data"]) < adesso]
+               and r["esito"] != "annullata" and leggi_data(r["data"]) < adesso
+               and clv_misurabile(r)]
     clv, verdetto = {"n": 0}, "presto"
     if con_clv:
         valori = [quota_netta(r["quota"], r.get("commissione", 0)) / r["pinnacle_ultima"] - 1
@@ -1216,6 +1243,50 @@ def chiusura():
         print("  " + scrivi_app(registro, stato))
 
 
+AL_VIA = timedelta(minutes=20)
+
+
+def ultima_al_via():
+    """
+    Da cron ogni 5 minuti: per le giocate aperte (non quelle all'intervallo)
+    la cui partita inizia entro 20 minuti, l'ultima quota di Pinnacle prima
+    del via, per il CLV. I giri delle 10-20 la prendono anche ore prima, e
+    per le partite di sera e di notte non la prendevano affatto. Una
+    chiamata per partita, una volta sola; se Pinnacle non c'e' si riprova
+    fino al calcio d'inizio.
+    """
+    registro = carica(FILE_REGISTRO, [])
+    adesso = datetime.now(timezone.utc)
+    aperte = [r for r in registro if r["tipo"] == "singola" and r["esito"] is None
+              and r.get("fonte") != "intervallo" and not r.get("al_via")
+              and adesso < leggi_data(r["data"]) <= adesso + AL_VIA]
+    if not aperte:
+        return
+    cal = Q.carica_calibrazione() if Q is not None else None
+    ora = datetime.now(FUSO)
+    prese = 0
+    for fid in sorted({r["fixture_id"] for r in aperte}):
+        try:
+            dati = chiama("odds", {"fixture": fid})
+        except Exception as e:
+            print(f"  {ora:%d/%m %H:%M}  errore dall'API (ultima quota): {e}")
+            break
+        time.sleep(0.3)
+        voci = dati.get("response") or []
+        g, rp, _, _ = candidate(voci[0], cal) if voci else (None, {}, [], None)
+        if g is None:
+            continue
+        aggiorna_ultima(registro, fid, g, rp, voci[0].get("update"), ora)
+        for r in aperte:
+            if r["fixture_id"] == fid:
+                r["al_via"] = ora.isoformat(timespec="minutes")
+        prese += 1
+    if prese:
+        salva(FILE_REGISTRO, registro)
+        print(f"  {ora:%d/%m %H:%M}  ultima quota di Pinnacle prima del via: "
+              f"{prese} partit{'a' if prese == 1 else 'e'}")
+
+
 def intervallo():
     """Da cron ogni 5 minuti: le partite di oggi alla pausa, contro Bet365 live."""
     mod = carica(FILE_INTERVALLO, None)
@@ -1383,6 +1454,10 @@ def main():
                 chiusura()
             except Exception as e:      # la chiusura non deve mai fermare l'intervallo
                 print(f"  {datetime.now(FUSO):%d/%m %H:%M}  chiusura non riuscita: {e}")
+            try:
+                ultima_al_via()
+            except Exception as e:      # neanche l'ultima quota
+                print(f"  {datetime.now(FUSO):%d/%m %H:%M}  ultima quota non riuscita: {e}")
             intervallo()
         elif comando == "auto":
             adesso = datetime.now(FUSO)
