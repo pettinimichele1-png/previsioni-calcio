@@ -83,10 +83,24 @@ def salva_stato():
             print(f"  salvato: {CARTELLA_STATO}/{nome}")
 
 
+# le fasi fallite in questo giro, per l'allarme al telefono (allarmi.py)
+FALLITE = []
+
+
+def avvisa_guasti():
+    """Non deve mai fermare il pipeline, neanche se l'allarme stesso si rompe."""
+    try:
+        import allarmi
+        allarmi.controlla(FALLITE)
+    except Exception as e:
+        print(f"  [allarme non riuscito: {e}]")
+
+
 def esegui(script, descrizione, argomenti=(), obbligatoria=False):
     percorso = os.path.join(CARTELLA, script)
     if not os.path.exists(percorso):
         print(f"  [SALTATA] {script} non trovato")
+        FALLITE.append(descrizione)
         return False
 
     print(f"\n{'=' * 64}")
@@ -100,6 +114,7 @@ def esegui(script, descrizione, argomenti=(), obbligatoria=False):
         print(f"--- completata in {durata:.0f}s")
         return True
     print(f"--- FALLITA (codice {esito.returncode}) dopo {durata:.0f}s")
+    FALLITE.append(descrizione)
     if obbligatoria:
         print("Fase obbligatoria fallita: interrompo.")
         sys.exit(1)
@@ -215,4 +230,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code not in (0, None):
+            FALLITE.append("tutto il giro (interrotto)")
+        raise
+    except Exception:
+        FALLITE.append("tutto il giro (interrotto da un errore)")
+        raise
+    finally:
+        avvisa_guasti()

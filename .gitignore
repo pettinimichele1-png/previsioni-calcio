@@ -21,6 +21,7 @@ stato/valore.lock
 stato/intervallo.json
 stato/calibrazione_mercati.*
 /quote_giro.json
+stato/allarmi.json
 # copie e dati locali del server
 /docs/app/
 /dati_valore/
