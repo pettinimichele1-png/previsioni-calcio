@@ -245,7 +245,8 @@ def sorpasso(p):
     Restituisce (nuovo favorito, vecchio favorito) oppure None.
     """
     def chiaro(q):
-        ordinati = sorted(q.values(), reverse=True)
+        # solo 1, X e 2: "prima" contiene anche i gol attesi come testo
+        ordinati = sorted((q[k] for k in ("1", "X", "2")), reverse=True)
         return ordinati[0] - ordinati[1] >= STACCO_SORPASSO
 
     m, prima = p["mercati"], p["prima"]
