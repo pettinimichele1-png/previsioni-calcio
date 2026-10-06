@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "19.7";
+  var VERSIONE_APP = "19.8";
 
   var stato = {
     dati: null,
@@ -142,6 +142,12 @@
       return String.fromCodePoint.apply(null, punti);
     }
     return String.fromCodePoint(0x1F1E6 + codice.charCodeAt(0) - 65, 0x1F1E6 + codice.charCodeAt(1) - 65);
+  }
+  // la partita con la bandiera del paese davanti (Giocate e risultati
+  // esatti, dalla v19.8); con un app.json vecchio, senza campionato, solo il nome
+  function conBandiera(e) {
+    var b = e.campionato ? bandiera(nomeLega(e.campionato).paese) : "";
+    return (b ? b + " " : "") + esc(e.partita);
   }
   function trovaPartita(id) {
     var lista = (stato.dati && stato.dati.partite) || [];
@@ -881,7 +887,7 @@
     if (!lista.length) html += '<div class="vuoto"><h3>Nessuna partita</h3>Non ci sono partite in programma.</div>';
     lista.forEach(function (r, i) {
       html += '<div class="esatto carta' + (r.p >= 0.15 ? " netto" : "") + '"><div class="pos' + (i === 0 ? " primo" : "") + '">' + (i + 1) +
-        '</div><div class="punteggio">' + esc(r.ris) + '</div><div class="info"><b>' + esc(r.partita) + "</b><small>" + esc(r.info) +
+        '</div><div class="punteggio">' + esc(r.ris) + '</div><div class="info"><b>' + conBandiera(r) + "</b><small>" + esc(r.info) +
         "</small><span>stacca il secondo di " + (r.distacco * 100).toFixed(1).replace(".", ",") + ' punti</span></div><div class="perc">' +
         pct(r.p, 1) + "</div></div>";
     });
@@ -913,7 +919,7 @@
         html += '<article class="giocata carta"><div class="giocata-testa"><span>' + esc(titolo) +
           '</span><div class="quota"><small>quota</small><b>' + q + "</b></div></div>";
         (c.eventi || []).forEach(function (e) {
-          html += '<div class="evento"><div class="sx"><b>' + esc(e.partita) + "</b><small>" + esc(e.info) +
+          html += '<div class="evento"><div class="sx"><b>' + conBandiera(e) + "</b><small>" + esc(e.info) +
             '</small></div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
             (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + "</small></div></div>";
         });

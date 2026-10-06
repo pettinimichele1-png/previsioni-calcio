@@ -279,6 +279,7 @@ def risultati_per_app(conn):
 
 def evento_per_app(v):
     return {"partita": f"{v['casa']} – {v['fuori']}", "info": info_partita(v),
+            "campionato": v.get("campionato", ""),
             "esito": v.get("nome") or v["esito"], "p": v["prob"]}
 
 
@@ -318,6 +319,7 @@ def giocate_per_app(previsioni, rho):
             eventi.append({
                 "partita": f"{voci[0]['casa']} – {voci[0]['fuori']}",
                 "info": info_partita(voci[0]),
+                "campionato": voci[0].get("campionato", ""),
                 "esito": " · ".join(x.get("nome") or x["esito"] for x in voci),
                 "p": unione, "almeno_uno": True})
         fuori["sistemi"].append({
@@ -338,7 +340,8 @@ def esatti_per_app(previsioni):
     scelti, _ = P.esatti_correnti(previsioni)
     return [{"ris": d["risultato"], "p": d["prob"], "distacco": d["distacco"],
              "partita": f"{d['p']['casa']} – {d['p']['fuori']}",
-             "info": info_partita(d["p"])} for d in scelti]
+             "info": info_partita(d["p"]), "campionato": d["p"].get("campionato", "")}
+            for d in scelti]
 
 
 # ---------------------------------------------------------------
