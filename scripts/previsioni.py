@@ -29,6 +29,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from nucleo import media_pesata, carica_conservazione, indicatori_squadra
 from consumo_api import frena
+from campionati_valore import CAMPIONATI_VALORE
 
 DB_PATH = "calcio_dati.db"
 MODELLO = "modello.json"
@@ -335,7 +336,7 @@ def leggi_giro():
         return {}
 
 
-def scrivi_giro(voci, completi):
+def scrivi_giro(voci, completi, extra=()):
     """
     Lascia a verifica.py le quote grezze appena scaricate, cosi' non le
     riscarica: e' lo stesso download, fatto pochi secondi prima.
@@ -351,17 +352,20 @@ def scrivi_giro(voci, completi):
             json.dump({"generato": adesso.isoformat(),
                        "giorni_scaricati": sorted(completi),
                        "ultimo_scarico": ultimi,
-                       "voci": voci}, f, ensure_ascii=False)
+                       "voci": voci,
+                       # le partite dei campionati solo per valore.py
+                       "partite_extra": list(extra)}, f, ensure_ascii=False)
     except OSError as e:
         print(f"  [quote del giro non salvate: {e}]")
 
 
-def scarica_quote(giorni, id_ammessi):
+def scarica_quote(giorni, id_ammessi, extra=()):
     """Quote per giornata: poche chiamate invece di una per partita."""
     quote = {}
     voci = {}
     completi = []
     chiamate = 0
+    id_extra = {e["fixture_id"] for e in extra}
     for giorno in sorted(giorni):
         pagina = 1
         while chiamate < MAX_CHIAMATE_QUOTE:
@@ -383,6 +387,8 @@ def scarica_quote(giorni, id_ammessi):
                 break
             for voce in risposta:
                 fid = (voce.get("fixture") or {}).get("id")
+                if fid in id_extra:
+                    voci[fid] = voce      # solo per valore.py
                 if fid in id_ammessi:
                     voci[fid] = voce
                     est = quote_mercati(voce)
@@ -393,7 +399,7 @@ def scarica_quote(giorni, id_ammessi):
                 break
             pagina += 1
     print(f"  quote trovate: {len(quote)} (chiamate {chiamate})")
-    scrivi_giro(voci, completi)
+    scrivi_giro(voci, completi, extra)
     return quote
 
 
@@ -2079,10 +2085,17 @@ def main():
     con_formazioni = 0
     print(f"Cerco le partite dei prossimi {GIORNI_AVANTI} giorni...")
 
+    extra = []      # partite dei campionati solo per valore.py, oggi e domani
     for scarto in range(GIORNI_AVANTI + 1):
         giorno = (oggi + timedelta(days=scarto)).isoformat()
-        partite = [p for p in chiamata("fixtures", {"date": giorno})
-                   if p["league"]["id"] in nomi_lega]
+        tutte = chiamata("fixtures", {"date": giorno})
+        partite = [p for p in tutte if p["league"]["id"] in nomi_lega]
+        if scarto <= 1:
+            extra += [{"fixture_id": p["fixture"]["id"], "data": p["fixture"]["date"],
+                       "campionato": CAMPIONATI_VALORE[p["league"]["id"]],
+                       "casa": p["teams"]["home"]["name"], "fuori": p["teams"]["away"]["name"]}
+                      for p in tutte if p["league"]["id"] in CAMPIONATI_VALORE
+                      and p["fixture"]["status"]["short"] in ("NS", "TBD")]
         if not partite:
             continue
         print(f"  {giorno}: {len(partite)} partite")
@@ -2173,13 +2186,16 @@ def main():
     except sqlite3.OperationalError:
         pass
 
+    if extra:
+        print(f"  campionati solo per le giocate di valore: {len(extra)} partite fra oggi e domani")
     if CON_QUOTE and previsioni:
         print("Scarico le quote per il confronto...")
         if frena("le quote per il confronto"):
             quote = {}
         else:
-            quote = scarica_quote(giorni_da_scaricare(previsioni),
-                                  {p["fixture_id"] for p in previsioni})
+            quote = scarica_quote(giorni_da_scaricare(previsioni)
+                                  | {e["data"][:10] for e in extra},
+                                  {p["fixture_id"] for p in previsioni}, extra)
         quote = ricorda_quote(quote, {p["fixture_id"] for p in previsioni})
         for p in previsioni:
             q = quote.get(p["fixture_id"])

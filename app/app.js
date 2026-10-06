@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "19.5";
+  var VERSIONE_APP = "19.6";
 
   var stato = {
     dati: null,
@@ -130,7 +130,7 @@
     "india": "IN", "iran": "IR", "kazakhstan": "KZ", "belarus": "BY", "lithuania": "LT",
     "latvia": "LV", "estonia": "EE", "bosnia": "BA", "north macedonia": "MK", "albania": "AL",
     "georgia": "GE", "armenia": "AM", "azerbaijan": "AZ", "moldova": "MD", "montenegro": "ME",
-    "wales": "#gbwls", "scotland": "#gbsct", "england": "#gbeng"
+    "costa rica": "CR", "wales": "#gbwls", "scotland": "#gbsct", "england": "#gbeng"
   };
   function bandiera(paese) {
     var codice = ISO[String(paese || "").toLowerCase().replace(/[-_]/g, " ").trim()];
@@ -1043,6 +1043,12 @@
       if (sc.n) {
         html += '<span class="c nome">Schedine del giorno</span><span class="c dx">' + sc.n + '</span><span class="c dx">' + sc.vinte +
           '</span><span class="c dx ' + (sc.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(sc.rendimento, 0) + "</span>";
+      }
+      // dalla v19.6: le giocate prima della partita nei campionati seguiti solo per il valore
+      var ag = b.aggiunti || { n: 0 };
+      if (divisa && ag.n) {
+        html += '<span class="c nome">di cui campionati aggiunti</span><span class="c dx">' + ag.n + '</span><span class="c dx">' + ag.vinte +
+          '</span><span class="c dx ' + (ag.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(ag.rendimento, 0) + "</span>";
       }
       html += "</div></section>";
     }

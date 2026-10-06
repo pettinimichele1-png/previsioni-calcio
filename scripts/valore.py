@@ -17,6 +17,11 @@ Ogni giorno:
   - la schedina del giorno, se su uno stesso bookmaker ci sono almeno
     due giocate di valore.
 
+Le partite sono quelle dei campionati del nostro modello (previsioni.json)
+piu', dalla v19.6, quelle dei campionati in campionati_valore.py, seguiti
+solo qui: calendario e quote arrivano da quote_giro.json. Le giocate di
+quei campionati sono segnate "extra" e contate anche a parte.
+
 PROVA SULLA CARTA
 Le prime quattro settimane non si mettono soldi: ogni giocata viene
 registrata e poi verificata da sola. "bilancio" dice come sta andando e
@@ -655,21 +660,24 @@ MINUTI_PIPELINE = 40
 
 def quote_del_pipeline():
     """
-    {fixture_id: voce} delle quote che previsioni.py scarica ogni mezz'ora
-    (oggi e domani, tutti i bookmaker e i mercati): sono le stesse che
-    l'API da' partita per partita, quindi non si richiedono. {} se il file
-    manca o ha piu' di 40 minuti: allora si chiama l'API come prima.
+    ({fixture_id: voce}, [partite extra]) dalle quote che previsioni.py
+    scarica ogni mezz'ora (oggi e domani, tutti i bookmaker e i mercati):
+    sono le stesse che l'API da' partita per partita, quindi non si
+    richiedono. Le partite extra sono quelle dei campionati seguiti solo
+    qui (campionati_valore.py, dalla v19.6). ({}, []) se il file manca o
+    ha piu' di 40 minuti: allora si chiama l'API come prima, senza extra.
     """
     try:
         with open(QUOTE_PIPELINE, encoding="utf-8") as f:
             d = json.load(f)
         eta = datetime.now(timezone.utc) - datetime.fromisoformat(d["generato"])
         voci = d["voci"]
+        extra = [e for e in d.get("partite_extra") or [] if isinstance(e, dict) and "fixture_id" in e]
     except (OSError, ValueError, KeyError, TypeError):
-        return {}
+        return {}, []
     if eta > timedelta(minutes=MINUTI_PIPELINE) or not isinstance(voci, dict):
-        return {}
-    return voci
+        return {}, []
+    return voci, extra
 
 
 def giro(notifica=False):
@@ -687,6 +695,9 @@ def giro(notifica=False):
     if not tutte:
         print("  previsioni.json non trovato: lancialo dalla cartella del progetto.")
         return
+    dal_pipeline, extra = quote_del_pipeline()
+    nostre = {p["fixture_id"] for p in tutte}
+    tutte = tutte + [dict(e, extra=True) for e in extra if e["fixture_id"] not in nostre]
     palinsesto = {p["fixture_id"]: p for p in tutte
                   if quando(p) and giornata(quando(p)) == oggi
                   and quando(p) > adesso + timedelta(minutes=5)}
@@ -694,7 +705,6 @@ def giro(notifica=False):
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
     giocate, senza_pinnacle, guasto = [], 0, False
     gol_oggi, tempi_oggi = {}, {}
-    dal_pipeline = quote_del_pipeline()
     for fid in sorted(set(palinsesto) | in_attesa):
         if str(fid) in dal_pipeline:
             # le stesse quote, scaricate dal pipeline da meno di 40 minuti
@@ -725,8 +735,11 @@ def giro(notifica=False):
                                   "data": info["data"], "casa": info.get("casa", "?"),
                                   "fuori": info.get("fuori", "?"),
                                   "campionato": info.get("campionato", ""),
+                                  "extra": bool(info.get("extra")),
                                   "aggiornato": adesso.isoformat(timespec="minutes")}
-        if fid in palinsesto:
+        if fid in palinsesto and not palinsesto[fid].get("extra"):
+            # le probabilita' per la pagina della partita: le partite dei
+            # campionati aggiunti non hanno pagina nell'app
             fin = finali(g, gp, cal)
             if rp or fin:
                 tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
@@ -766,6 +779,7 @@ def giro(notifica=False):
             "giusta": round(c["giusta"], 3), "minima": c["minima"],
             "vantaggio": round(c["vantaggio"], 4), "prob": round(c["prob"], 4),
             "registrata": adesso.isoformat(timespec="minutes"), "quote_del": c.get("agg"),
+            "extra": bool(info.get("extra")),
             "pinnacle_ultima": None, "esito": None})
         nuove += 1
 
@@ -960,6 +974,8 @@ def statistiche(registro):
     pausa = [r for r in singole if famiglia(r) == "all'intervallo"]
     return {"singole": riassunto(singole),
             "prima": riassunto(prima), "intervallo": riassunto(pausa),
+            # prima della partita, nei campionati aggiunti dalla v19.6
+            "aggiunti": riassunto([r for r in prima if r.get("extra")]),
             "famiglie": {f: riassunto([r for r in singole if famiglia(r) == f]) for f in FAMIGLIE},
             "schedine": riassunto(schedine, utile_schedina),
             "clv": clv, "verdetto": verdetto, "min_verdetto": MIN_VERDETTO,
@@ -997,6 +1013,7 @@ def bilancio():
     for f in FAMIGLIE:
         riga("  " + f, st["famiglie"][f])
     riga("schedine del giorno", st["schedine"])
+    riga("campionati aggiunti", st["aggiunti"])
 
     c = st["clv"]
     print()
@@ -1366,13 +1383,16 @@ def intervallo():
     def scrivi(testo):
         print(f"  {datetime.now(FUSO):%d/%m %H:%M}  {testo}")
 
-    try:
-        dati = chiama("fixtures", {"ids": "-".join(candidati[:20])})
-    except Exception as e:
-        scrivi(f"errore dall'API: {e}")
-        return
+    # l'API accetta al massimo 20 partite per chiamata: a gruppi di 20
+    risposte = []
+    for i in range(0, len(candidati), 20):
+        try:
+            risposte += chiama("fixtures", {"ids": "-".join(candidati[i:i + 20])}).get("response") or []
+        except Exception as e:
+            scrivi(f"errore dall'API: {e}")
+            return
     in_pausa = {}
-    for f in dati.get("response") or []:
+    for f in risposte:
         fid = str((f.get("fixture") or {}).get("id"))
         st = ((f.get("fixture") or {}).get("status") or {}).get("short")
         if st in FINITE:
@@ -1443,6 +1463,7 @@ def intervallo():
             r = {"id": rid, "tipo": "singola", "fonte": "intervallo", "fixture_id": int(fid),
                  "data": g["data"], "partita": partita, "campionato": g.get("campionato", ""),
                  "mercato": k, "scelta": "", "chiave": None, "ht": f"{htc}-{hta}",
+                 "extra": bool(g.get("extra")),
                  "nome": f"{nome} (intervallo {htc}-{hta})", "book": LIBRO_LIVE, "quota": q,
                  "commissione": 0, "giusta": round(1 / p, 3),
                  "minima": math.ceil((1 + VANTAGGIO_MIN_INTERVALLO) / p * 100 - 1e-9) / 100,
