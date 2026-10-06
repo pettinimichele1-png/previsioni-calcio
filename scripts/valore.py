@@ -90,6 +90,7 @@ import fcntl
 import json
 import math
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -488,11 +489,20 @@ def etichetta(m, esito, casa="Casa", fuori="Ospite", breve=False):
     if tipo == "1x2":
         if breve:
             return {"home": "1", "draw": "X", "away": "2"}[esito] + pt
-        return {"home": f"1 ({casa})", "draw": "X", "away": f"2 ({fuori})"}[esito] + pt
+        # per esteso coi nomi delle squadre (dalla v19.7: prima "1 (Casa)", "X")
+        if tempo == "primo":
+            return {"home": f"{casa} vince il primo tempo", "draw": "Primo tempo in pareggio",
+                    "away": f"{fuori} vince il primo tempo"}[esito]
+        return {"home": f"{casa} vince", "draw": "Pareggio", "away": f"{fuori} vince"}[esito]
     if tipo == "doppia":
-        return {"home/draw": "1X", "home/away": "12", "draw/away": "X2"}[esito]
+        if breve:
+            return {"home/draw": "1X", "home/away": "12", "draw/away": "X2"}[esito]
+        return {"home/draw": f"{casa} o pareggio", "home/away": "Nessun pareggio",
+                "draw/away": f"{fuori} o pareggio"}[esito]
     if tipo == "sino":
-        return "Gol" if esito == "yes" else "NoGol"
+        if breve:
+            return "Gol" if esito == "yes" else "NoGol"
+        return "Segnano entrambe (Gol)" if esito == "yes" else "Non segnano entrambe (NoGol)"
     verso, linea = esito.split()
     di = {"casa": f"{casa} ", "fuori": f"{fuori} "}.get(chi, "")
     return f"{di}{'Over' if verso == 'over' else 'Under'} {linea}{pt}"
@@ -502,8 +512,26 @@ def nome_giocata(r, casa="Casa", fuori="Ospite", breve=False):
     """Il nome di una giocata, diretta o ricavata."""
     if r.get("chiave") and Q is not None:
         n = Q.nome(r["chiave"])
-        return n.replace(" primo tempo", " 1T").replace(" secondo tempo", " 2T") if breve else n
+        return n.replace(" primo tempo", " 1T").replace(" secondo tempo", " 2T") if breve \
+            else tempi_in_chiaro(n, casa, fuori)
     return etichetta(r["mercato"], r["scelta"], casa, fuori, breve)
+
+
+def tempi_in_chiaro(n, casa, fuori):
+    """I nomi dei mercati dei tempi di quote_giuste.py ("1 secondo tempo",
+    "Casa segna primo tempo") coi nomi delle squadre, per esteso."""
+    m = re.match(r"^(1X|X2|12|1|X|2) (primo|secondo) tempo$", n)
+    if m:
+        s, t = m.groups()
+        return {"1": f"{casa} vince il {t} tempo", "2": f"{fuori} vince il {t} tempo",
+                "X": f"{t.capitalize()} tempo in pareggio", "1X": f"{casa} o pareggio nel {t} tempo",
+                "X2": f"{fuori} o pareggio nel {t} tempo", "12": f"Nessun pareggio nel {t} tempo"}[s]
+    n = re.sub(r"^NoGol (primo|secondo) tempo$", r"Non segnano entrambe nel \1 tempo", n)
+    n = re.sub(r"^Gol (primo|secondo) tempo$", r"Segnano entrambe nel \1 tempo", n)
+    n = re.sub(r"^(Over|Under) (\S+) (primo|secondo) tempo$", r"\1 \2 nel \3 tempo", n)
+    n = re.sub(r" segna (primo|secondo) tempo$", r" segna nel \1 tempo", n)
+    n = re.sub(r"^Casa segna ", lambda _: f"{casa} segna ", n)
+    return re.sub(r"^Ospite segna ", lambda _: f"{fuori} segna ", n)
 
 
 def verifica(r, gc, ga, htc, hta):
@@ -1071,10 +1099,28 @@ def serie_app(singole):
         return []
 
 
+def nome_app(r):
+    """Il nome della giocata per l'app, per esteso coi nomi delle squadre
+    (dalla v19.7: prima "1 secondo tempo", "X"), anche per le giocate gia'
+    nel registro, che resta com'era."""
+    k = r.get("mercato")
+    if " - " not in r.get("partita", ""):
+        return r["nome"]
+    casa, fuori = r["partita"].split(" - ", 1)
+    try:
+        if r.get("fonte") == "intervallo":
+            if k in MERCATI_PAUSA:
+                return MERCATI_PAUSA[k][0].format(casa=casa, fuori=fuori) + f" (intervallo {r.get('ht')})"
+            return r["nome"]
+        return nome_giocata(r, casa, fuori)
+    except (KeyError, ValueError, TypeError):
+        return r["nome"]
+
+
 def voce_app(r):
     return {"fixture_id": r.get("fixture_id"),
             "data": r["data"], "partita": r["partita"], "campionato": r.get("campionato", ""),
-            "nome": r["nome"], "book": r["book"], "quota": r["quota"],
+            "nome": nome_app(r), "book": r["book"], "quota": r["quota"],
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
             "intervallo": r.get("ht"), "registrata": r.get("registrata"),
@@ -1099,7 +1145,7 @@ def scrivi_app(registro, stato):
             voci, inizi = [], []
             for v in s["voci"]:
                 r = singole.get(v["id"]) or {}
-                voci.append({"partita": r.get("partita", ""), "nome": r.get("nome", v.get("nome", "")),
+                voci.append({"partita": r.get("partita", ""), "nome": nome_app(r) if r else v.get("nome", ""),
                              "quota": v["quota"], "esito": r.get("esito")})
                 if r.get("data"):
                     inizi.append(r["data"])
@@ -1145,23 +1191,23 @@ FINITE = ("FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO")
 
 # nostra chiave -> (nome, mercati di test_intervallo.py che devono risultare affidabili)
 MERCATI_PAUSA = {
-    "fin_1": ("1 finale", ["1 finale"]),
-    "fin_X": ("X finale", ["X finale"]),
-    "fin_2": ("2 finale", ["2 finale"]),
-    "fin_1X": ("1X finale", ["1 finale", "X finale"]),
-    "fin_X2": ("X2 finale", ["X finale", "2 finale"]),
-    "fin_12": ("12 finale", ["1 finale", "2 finale"]),
-    "fin_over15": ("Over 1.5 finale", ["Over 1.5 finale"]),
-    "fin_under15": ("Under 1.5 finale", ["Over 1.5 finale"]),
-    "fin_over25": ("Over 2.5 finale", ["Over 2.5 finale"]),
-    "fin_under25": ("Under 2.5 finale", ["Over 2.5 finale"]),
-    "fin_over35": ("Over 3.5 finale", ["Over 3.5 finale"]),
-    "fin_under35": ("Under 3.5 finale", ["Over 3.5 finale"]),
-    "fin_gol": ("Gol finale", ["Gol finale"]),
-    "fin_nogol": ("NoGol finale", ["Gol finale"]),
-    "st_1": ("1 secondo tempo", ["1 secondo tempo"]),
-    "st_X": ("X secondo tempo", ["X secondo tempo"]),
-    "st_2": ("2 secondo tempo", ["2 secondo tempo"]),
+    "fin_1": ("{casa} vince la partita", ["1 finale"]),
+    "fin_X": ("Pareggio a fine partita", ["X finale"]),
+    "fin_2": ("{fuori} vince la partita", ["2 finale"]),
+    "fin_1X": ("{casa} o pareggio a fine partita", ["1 finale", "X finale"]),
+    "fin_X2": ("{fuori} o pareggio a fine partita", ["X finale", "2 finale"]),
+    "fin_12": ("Non finisce in pareggio", ["1 finale", "2 finale"]),
+    "fin_over15": ("Over 1.5 a fine partita", ["Over 1.5 finale"]),
+    "fin_under15": ("Under 1.5 a fine partita", ["Over 1.5 finale"]),
+    "fin_over25": ("Over 2.5 a fine partita", ["Over 2.5 finale"]),
+    "fin_under25": ("Under 2.5 a fine partita", ["Over 2.5 finale"]),
+    "fin_over35": ("Over 3.5 a fine partita", ["Over 3.5 finale"]),
+    "fin_under35": ("Under 3.5 a fine partita", ["Over 3.5 finale"]),
+    "fin_gol": ("Segnano entrambe (Gol)", ["Gol finale"]),
+    "fin_nogol": ("Non segnano entrambe (NoGol)", ["Gol finale"]),
+    "st_1": ("{casa} vince il secondo tempo", ["1 secondo tempo"]),
+    "st_X": ("Secondo tempo in pareggio", ["X secondo tempo"]),
+    "st_2": ("{fuori} vince il secondo tempo", ["2 secondo tempo"]),
     "st_casa_si": ("{casa} segna nel secondo tempo", ["Casa segna nel secondo tempo"]),
     "st_casa_no": ("{casa} non segna nel secondo tempo", ["Casa segna nel secondo tempo"]),
     "st_ospite_si": ("{fuori} segna nel secondo tempo", ["Ospite segna nel secondo tempo"]),

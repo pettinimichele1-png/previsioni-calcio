@@ -126,7 +126,8 @@ a.val:active { background: var(--carta2); }
 .val-sx { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
 .val-riga1 { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 12px; font-weight: 700; color: var(--testo2); }
 .val-ora { flex-shrink: 0; font-family: var(--titolo); font-size: 16px; font-weight: 700; color: var(--testo); }
-.val-riga1 .val-partita { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.val-riga1 .val-partita { min-width: 0; overflow-wrap: anywhere; }
+.val-testa .val-conto { margin-left: auto; }
 .val-nome { font-size: 16px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
 .val.pausa .val-nome { font-size: 18px; }
 .val-libro { font-size: 12px; color: var(--testo2); }

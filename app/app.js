@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "19.6";
+  var VERSIONE_APP = "19.7";
 
   var stato = {
     dati: null,
@@ -300,14 +300,13 @@
     var pausa = !!r.intervallo;
     var html = "<" + tag + ' class="val carta' + (pausa ? " pausa" : "") + '"' + (href ? ' href="' + href + '"' : "") + ">";
     if (pausa) {
+      // la partita va sulla riga sotto, a tutta larghezza (v19.7): qui veniva tagliata
       html += '<div class="val-testa"><span class="tag-live">Intervallo ' + esc(r.intervallo) + "</span>" +
-        '<span class="val-partita">' + esc(r.partita) + "</span>" +
         '<span class="val-conto">' + icona("orologio") + "ancora " + minutiPausa(r) + " min</span></div>";
     }
     html += '<div class="val-corpo"><div class="val-sx">';
-    if (!pausa) {
-      html += '<div class="val-riga1"><b class="val-ora">' + oraConGiorno(data(r.data)) + '</b><span class="val-partita">' + esc(r.partita) + "</span></div>";
-    }
+    html += '<div class="val-riga1">' + (pausa ? "" : '<b class="val-ora">' + oraConGiorno(data(r.data)) + "</b>") +
+      '<span class="val-partita">' + esc(r.partita) + "</span></div>";
     html += '<span class="val-nome">' + esc(nomeValore(r)) + "</span>" +
       '<span class="val-libro">' + libroValore(r) + " " + quota(r.quota) + ' · <b class="lime">' + pctSegno(r.vantaggio, 0) + "</b></span></div>" +
       '<div class="val-dx"><span class="val-etich">Minima</span><b class="val-min">' + quota(r.minima) + "</b>" +
