@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "20.4";
+  var VERSIONE_APP = "20.5";
 
   var stato = {
     dati: null,
@@ -303,6 +303,32 @@
 
   // una giocata da fare: partita, giocata e bookmaker a sinistra, quota
   // minima a destra. Quelle all'intervallo hanno in piu' il tempo che resta.
+  // statistiche del primo tempo e confronto alla ripresa (v20.5)
+  function rigaStatPt(st) {
+    if (!st) return "";
+    var pezzi = [];
+    [["tiri", "Tiri"], ["porta", "in porta"], ["angoli", "angoli"], ["possesso", "possesso"], ["xg", "xG"]].forEach(function (n) {
+      var x = st[n[0]];
+      if (!x || x.length !== 2) return;
+      var f = function (v) { return String(v).replace(".", ","); };
+      pezzi.push(n[1] + " " + f(x[0]) + "–" + f(x[1]) + (n[0] === "possesso" ? "%" : ""));
+    });
+    return pezzi.length ? '<span class="val-stat">1° tempo: ' + esc(pezzi.join(" · ")) + "</span>" : "";
+  }
+  function testoRipresa(x) {
+    if (!x) return "";
+    if (!x.misurata) return "ripresa non misurabile";
+    return "alla ripresa " + quota(x.quota) + " (" + x.minuto + "') · " + pctSegno(x.clv, 0);
+  }
+  function testoVerdettoRipresa(rp) {
+    if (!rp) return "";
+    if (!rp.n) return "Confronto alla ripresa: ancora nessuna giocata misurata. Il verdetto arriva dopo " + rp.min_verdetto + ".";
+    var base = "Confronto alla ripresa: " + pctSegno(rp.media, 1) + " su " + rp.n + (rp.n === 1 ? " giocata misurata" : " giocate misurate");
+    if (rp.verdetto === "vero") return base + ". Il valore c'è: il mercato si avvicina al nostro prezzo.";
+    if (rp.verdetto === "no") return base + ". Il valore non c'è: il mercato si allontana dal nostro prezzo.";
+    if (rp.verdetto === "incerto") return base + ". Non ancora chiaro.";
+    return base + ". Il verdetto arriva dopo " + rp.min_verdetto + ".";
+  }
   function cartaValore(r) {
     var href = linkPartita(r.fixture_id);
     var tag = href ? "a" : "div";
@@ -315,7 +341,7 @@
     }
     html += '<div class="val-corpo"><div class="val-sx">';
     html += '<div class="val-riga1">' + (pausa ? "" : '<b class="val-ora">' + oraConGiorno(data(r.data)) + "</b>") +
-      '<span class="val-partita">' + conBandiera(r) + "</span></div>";
+      '<span class="val-partita">' + conBandiera(r) + "</span></div>" + (pausa ? rigaStatPt(r.stat_pt) : "");
     html += '<span class="val-nome">' + esc(nomeValore(r)) + "</span>" +
       '<span class="val-libro">' + libroValore(r) + " " + quota(r.quota) + ' · <b class="lime">' + pctSegno(r.vantaggio, 0) + "</b></span>" +
       // quando e' stata proposta (v20.0): le quote dell'API possono avere qualche ora
@@ -371,7 +397,8 @@
     } else {
       sotto += " · " + libroValore(r) + " " + quota(r.quota);
     }
-    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>' + esc(nomeValore(r)) + "</b><small>" + sotto + "</small></div>" + dx + "</div>";
+    var rip = r.intervallo && r.ripresa ? "<small>" + esc(testoRipresa(r.ripresa)) + "</small>" : "";
+    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>' + esc(nomeValore(r)) + "</b><small>" + sotto + "</small>" + rip + "</div>" + dx + "</div>";
   }
   function rigaSchedina(s, chiusa) {
     var segnoR, dx;
@@ -448,8 +475,10 @@
       ? contaGiocate(pz.n).replace("giocata", "giocata chiusa").replace("giocate", "giocate chiuse") + " · " + pz.vinte +
         (pz.vinte === 1 ? " vinta" : " vinte") + " (attese " + String(pz.attese).replace(".", ",") + ") · " + euroTondo(p) + " a giocata"
       : "Ancora nessuna giocata all'intervallo chiusa · " + euroTondo(p) + " a giocata";
+    var rp = (v.bilancio || {}).ripresa;
     return '<a class="riepilogo carta" href="#/risultati"><div class="riep-testi"><span class="etichetta">All\'intervallo, sulla carta</span>' +
-      '<span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span></div>" +
+      '<span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span>" +
+      (rp ? '<span class="riep-sotto">' + esc(testoVerdettoRipresa(rp)) + "</span>" : "") + "</div>" +
       icona("destra", "freccia") + "</a>";
   }
   function notaLive() {
@@ -1156,7 +1185,9 @@
         "<div><b>" + String(pz.attese).replace(".", ",") + "</b><span>vinte attese</span></div>" +
         '<div><b class="' + (pz.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(pz.rendimento, Math.abs(pz.rendimento) >= 0.995 ? 0 : 1) +
         "</b><span>rendimento</span></div></div>" +
-        '<p class="testo fioco">Non contano per il verdetto: all\'intervallo non c\'è una quota di Pinnacle con cui confrontarle.</p></section>';
+        (b.ripresa ? '<p class="testo">' + esc(testoVerdettoRipresa(b.ripresa)) + "</p>" : "") +
+        '<p class="testo fioco">Non contano per il verdetto: all\'intervallo non c\'è una quota di Pinnacle con cui confrontarle. ' +
+        "Il loro verdetto è il confronto alla ripresa.</p></section>";
     }
 
     // le ultime chiuse
