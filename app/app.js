@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "20.2";
+  var VERSIONE_APP = "20.3";
 
   var stato = {
     dati: null,
@@ -273,11 +273,13 @@
   function linkPartita(fid) {
     return fid != null && trovaPartita(fid) ? "#/partita/" + encodeURIComponent(fid) : null;
   }
-  // prima quelle all'intervallo, che scadono; poi le altre in ordine di orario
+  // prima quelle all'intervallo, che scadono; poi le altre
+  // in ordine di individuazione, la prima trovata in alto (v20.3); a pari
+  // ora prima la partita che comincia prima
   function ordineDaFare(a, b) {
     if (!!a.intervallo !== !!b.intervallo) return a.intervallo ? -1 : 1;
-    if (a.intervallo) return String(a.registrata).localeCompare(String(b.registrata));
-    return data(a.data) - data(b.data);
+    var ta = a.registrata ? data(a.registrata).getTime() : 0, tb = b.registrata ? data(b.registrata).getTime() : 0;
+    return (ta - tb) || (data(a.data) - data(b.data));
   }
   function daFareOggi() {
     var v = stato.valore;
