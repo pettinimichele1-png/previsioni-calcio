@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "19.8";
+  var VERSIONE_APP = "19.9";
 
   var stato = {
     dati: null,
@@ -144,7 +144,8 @@
     return String.fromCodePoint(0x1F1E6 + codice.charCodeAt(0) - 65, 0x1F1E6 + codice.charCodeAt(1) - 65);
   }
   // la partita con la bandiera del paese davanti (Giocate e risultati
-  // esatti, dalla v19.8); con un app.json vecchio, senza campionato, solo il nome
+  // esatti dalla v19.8, Oggi e giocate di valore dalla v19.9); senza
+  // campionato nei dati, solo il nome
   function conBandiera(e) {
     var b = e.campionato ? bandiera(nomeLega(e.campionato).paese) : "";
     return (b ? b + " " : "") + esc(e.partita);
@@ -312,7 +313,7 @@
     }
     html += '<div class="val-corpo"><div class="val-sx">';
     html += '<div class="val-riga1">' + (pausa ? "" : '<b class="val-ora">' + oraConGiorno(data(r.data)) + "</b>") +
-      '<span class="val-partita">' + esc(r.partita) + "</span></div>";
+      '<span class="val-partita">' + conBandiera(r) + "</span></div>";
     html += '<span class="val-nome">' + esc(nomeValore(r)) + "</span>" +
       '<span class="val-libro">' + libroValore(r) + " " + quota(r.quota) + ' · <b class="lime">' + pctSegno(r.vantaggio, 0) + "</b></span></div>" +
       '<div class="val-dx"><span class="val-etich">Minima</span><b class="val-min">' + quota(r.minima) + "</b>" +
@@ -333,7 +334,7 @@
     (s.voci || []).forEach(function (v) {
       var ora = orarioVoce(v);
       var fatto = v.esito === "vinta" ? icona("vinta", "turchese") : v.esito === "persa" ? icona("persa", "arancio") : "";
-      html += '<div class="sch-voce"><div class="sch-sx"><b>' + esc(v.nome) + "</b><small>" + esc(v.partita) +
+      html += '<div class="sch-voce"><div class="sch-sx"><b>' + esc(v.nome) + "</b><small>" + conBandiera(v) +
         (ora ? " · " + ora : "") + '</small></div><span class="sch-q">' + fatto + quota(v.quota) + "</span></div>";
     });
     var esito = s.esito === "vinta" ? "Vinta · " : s.esito === "persa" ? "Persa · " : "";
@@ -359,7 +360,7 @@
       var finita = Date.now() - data(r.data).getTime() > 115 * 60000;
       dx = '<div class="rg-dx"><small>' + (finita ? "risultato in arrivo" : r.intervallo ? "dall'intervallo" : "dalle " + oraConGiorno(data(r.data))) + "</small></div>";
     }
-    var sotto = esc(r.partita);
+    var sotto = conBandiera(r);
     if (chiusa) {
       if (r.risultato) sotto += " · finita " + esc(String(r.risultato).split(" ")[0]);
       if (conData) sotto += " · " + giornoCorto(data(r.data));

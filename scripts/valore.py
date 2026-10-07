@@ -1146,7 +1146,8 @@ def scrivi_app(registro, stato):
             for v in s["voci"]:
                 r = singole.get(v["id"]) or {}
                 voci.append({"partita": r.get("partita", ""), "nome": nome_app(r) if r else v.get("nome", ""),
-                             "quota": v["quota"], "esito": r.get("esito")})
+                             "quota": v["quota"], "esito": r.get("esito"),
+                             "campionato": r.get("campionato", "")})
                 if r.get("data"):
                     inizi.append(r["data"])
             schedina = {"book": s["book"], "quota": s["quota"], "prob": s["prob"],
