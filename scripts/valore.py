@@ -1007,6 +1007,7 @@ def statistiche(registro):
             "famiglie": {f: riassunto([r for r in singole if famiglia(r) == f]) for f in FAMIGLIE},
             "schedine": riassunto(schedine, utile_schedina),
             "clv": clv, "verdetto": verdetto, "min_verdetto": MIN_VERDETTO,
+            "ripresa": verdetto_ripresa(registro),
             "aperte": sum(1 for r in registro if r["tipo"] == "singola" and r["esito"] is None)}
 
 
@@ -1124,6 +1125,7 @@ def voce_app(r):
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
             "intervallo": r.get("ht"), "registrata": r.get("registrata"),
+            "stat_pt": r.get("stat_pt"), "ripresa": r.get("ripresa"),
             "esito": r["esito"], "risultato": r.get("risultato")}
 
 
@@ -1184,6 +1186,18 @@ def scrivi_app(registro, stato):
 FILE_GOL = os.path.join("stato", "valore_gol.json")
 FILE_TEMPI = os.path.join("stato", "valore_tempi.json")
 FILE_INTERVALLO = os.path.join("stato", "intervallo.json")
+# statistiche del primo tempo delle partite controllate all'intervallo (v20.4)
+FILE_STAT_PT = os.path.join("stato", "intervallo_statistiche.json")
+# confronto alla ripresa: la quota di Bet365 fra il 46' e il 50', a punteggio
+# invariato; il verdetto all'intervallo arriva dopo 50 giocate misurate
+RIPRESA_MINUTI = (46, 50)
+MIN_VERDETTO_RIPRESA = 50
+# per togliere il margine alla ripresa: i gruppi di esiti che fanno 1
+GRUPPI_PAUSA = (("fin_1", "fin_X", "fin_2"), ("st_1", "st_X", "st_2"),
+                ("st_casa_si", "st_casa_no"), ("st_ospite_si", "st_ospite_no"),
+                ("fin_over15", "fin_under15"), ("fin_over25", "fin_under25"),
+                ("fin_over35", "fin_under35"), ("fin_gol", "fin_nogol"))
+DOPPIE_PAUSA = {"fin_1X": ("fin_1", "fin_X"), "fin_X2": ("fin_X", "fin_2"), "fin_12": ("fin_1", "fin_2")}
 VANTAGGIO_MIN_INTERVALLO = float(os.environ.get("VANTAGGIO_MIN_INTERVALLO", "0.05"))
 VANTAGGIO_MAX_INTERVALLO = 0.25   # sopra, quasi sempre succede qualcosa che il modello non sa
 QUOTA_GIUSTA_INTERVALLO = (1.20, 6.00)
@@ -1296,15 +1310,18 @@ def avvenuto_pausa(k, gc, ga, htc, hta):
             "st_ospite_si": sf > 0, "st_ospite_no": sf == 0}.get(k)
 
 
-def prob_pausa(lc, lf, htc, hta, mod):
+def prob_pausa(lc, lf, htc, hta, mod, resta=1.0):
     """Le probabilita' di tutti i mercati dell'intervallo: i gol attesi del
-    secondo tempo cambiano secondo come ci si e' arrivati."""
+    secondo tempo cambiano secondo come ci si e' arrivati. resta e' la parte
+    di secondo tempo ancora da giocare (1 all'intervallo): serve al
+    confronto alla ripresa, per togliere l'effetto dei minuti passati."""
     def stato(d):
         return 0 if d <= -2 else 1 if d == -1 else 2 if d == 0 else 3 if d == 1 else 4
     s_c, s_f = mod["quota_pt_casa"], mod["quota_pt_ospite"]
     ritmo = (htc + hta) - (lc * s_c + lf * s_f)
     a = lc * (1 - s_c) * math.exp(mod["stato_casa"][stato(htc - hta)] + mod["ritmo"] * ritmo)
     b = lf * (1 - s_f) * math.exp(mod["stato_ospite"][stato(hta - htc)] + mod["ritmo"] * ritmo)
+    a, b = a * resta, b * resta
     pa, pb = [math.exp(-a)], [math.exp(-b)]
     for k in range(1, 10):
         pa.append(pa[-1] * a / k)
@@ -1407,6 +1424,164 @@ def ultima_al_via():
               f"{prese} partit{'a' if prese == 1 else 'e'}")
 
 
+# ---------------------------------------------------------------
+#  statistiche del primo tempo e confronto alla ripresa (v20.4)
+# ---------------------------------------------------------------
+
+def statistiche_primo_tempo(in_pausa, id_casa, gol, scrivi):
+    """
+    Le statistiche delle partite all'intervallo, chieste durante la pausa,
+    quindi del solo primo tempo: tiri, tiri in porta, angoli, possesso,
+    expected goals dove l'API li ha. Una chiamata per partita, una volta
+    sola. Si salvano tutte in FILE_STAT_PT, anche delle partite senza
+    giocata, per capire poi se le giocate perse avevano un primo tempo
+    "contrario". Restituisce {fid: riassunto per l'app}.
+    """
+    tutte = carica(FILE_STAT_PT, {})
+    nuove = 0
+    for fid, (htc, hta) in in_pausa.items():
+        if fid in tutte:
+            continue
+        try:
+            risp = chiama("fixtures/statistics", {"fixture": fid}).get("response") or []
+        except Exception as e:
+            scrivi(f"statistiche del primo tempo non lette ({e})")
+            continue
+        squadre = {}
+        for blocco in risp:
+            tid = (blocco.get("team") or {}).get("id")
+            squadre[tid] = {str(x.get("type")): x.get("value") for x in blocco.get("statistics") or []}
+        if len(squadre) != 2:
+            continue
+        casa = squadre.get(id_casa.get(fid)) or list(squadre.values())[0]
+        fuori = next(v for k, v in squadre.items() if v is not casa)
+        g = gol.get(fid) or {}
+        tutte[fid] = {"data": g.get("data"), "partita": f"{g.get('casa', '?')} - {g.get('fuori', '?')}",
+                      "campionato": g.get("campionato", ""), "ht": f"{htc}-{hta}",
+                      "letta": datetime.now(FUSO).isoformat(timespec="minutes"),
+                      "casa": casa, "fuori": fuori}
+        nuove += 1
+    if nuove:
+        salva(FILE_STAT_PT, tutte)
+    return {fid: riassunto_pt(tutte[fid]) for fid in in_pausa if fid in tutte}
+
+
+def riassunto_pt(s):
+    """Le statistiche che l'app mostra, [casa, ospite]; senza quelle che mancano."""
+    def numero(v):
+        try:
+            x = round(float(str(v).rstrip("%")), 2)
+        except (TypeError, ValueError):
+            return None
+        return int(x) if x == int(x) else x
+    out = {}
+    for chiave, tipo in (("tiri", "Total Shots"), ("porta", "Shots on Goal"), ("angoli", "Corner Kicks"),
+                         ("possesso", "Ball Possession"), ("xg", "expected_goals")):
+        c, f = numero(s["casa"].get(tipo)), numero(s["fuori"].get(tipo))
+        if c is not None and f is not None:
+            out[chiave] = [c, f]
+    return out
+
+
+def giuste_ripresa(quote):
+    """Le probabilita' giuste di Bet365 alla ripresa, tolto il margine gruppo per gruppo."""
+    out = {}
+    for gruppo in GRUPPI_PAUSA:
+        if all(k in quote for k in gruppo):
+            out.update(potenza({k: quote[k] for k in gruppo}))
+    for k, (x, y) in DOPPIE_PAUSA.items():
+        if x in out and y in out:
+            out[k] = out[x] + out[y]
+    return out
+
+
+def ripresa():
+    """
+    Da cron ogni 5 minuti. Per le giocate fatte all'intervallo: fra il 46'
+    e il 50', se il punteggio e' quello dell'intervallo, la quota di Bet365
+    live per la stessa giocata, tolto il margine. Se il valore era vero, il
+    mercato si e' avvicinato al nostro prezzo. Si toglie l'effetto dei
+    minuti passati col nostro modello: la probabilita' giusta alla ripresa
+    si riporta all'intervallo moltiplicandola per p(intervallo)/p(minuto).
+    Una chiamata (tutte le partite live insieme) per giro, solo se c'e'
+    una giocata da misurare.
+    """
+    registro = carica(FILE_REGISTRO, [])
+    adesso = datetime.now(FUSO)
+    da_fare = [r for r in registro if r["tipo"] == "singola" and r.get("fonte") == "intervallo"
+               and not r.get("ripresa") and r.get("registrata")
+               and timedelta(minutes=5) <= adesso - datetime.fromisoformat(r["registrata"]) <= timedelta(minutes=45)]
+    if not da_fare:
+        return
+    try:
+        live = chiama("odds/live", {})
+    except Exception as e:
+        print(f"  {adesso:%d/%m %H:%M}  errore dall'API (quote live, ripresa): {e}")
+        return
+    per_id = {str((v.get("fixture") or {}).get("id")): v for v in live.get("response") or []}
+    mod = carica(FILE_INTERVALLO, None)
+    gol = carica(FILE_GOL, {})
+    cambiate = 0
+    for r in da_fare:
+        fid = str(r["fixture_id"])
+        voce = per_id.get(fid)
+        if not voce:
+            continue
+        minuto = ((voce.get("fixture") or {}).get("status") or {}).get("elapsed")
+        squadre = voce.get("teams") or {}
+        punteggio = f"{(squadre.get('home') or {}).get('goals')}-{(squadre.get('away') or {}).get('goals')}"
+        if not isinstance(minuto, int) or minuto < RIPRESA_MINUTI[0]:
+            continue                      # non e' ancora ripartita
+        if punteggio != r.get("ht"):
+            r["ripresa"] = {"misurata": False, "motivo": "gol prima della misura", "minuto": minuto}
+        elif minuto > RIPRESA_MINUTI[1]:
+            r["ripresa"] = {"misurata": False, "motivo": "troppo tardi", "minuto": minuto}
+        else:
+            quote = leggi_live(voce)
+            giuste = giuste_ripresa(quote)
+            g = gol.get(fid)
+            if r["mercato"] not in giuste or not mod or not g:
+                if minuto >= RIPRESA_MINUTI[1]:
+                    r["ripresa"] = {"misurata": False, "motivo": "quota non disponibile", "minuto": minuto}
+                else:
+                    continue              # sospesa: si riprova fra 5 minuti
+            else:
+                htc, hta = (int(x) for x in r["ht"].split("-"))
+                resta = max(0.0, (90 - minuto) / 45)
+                p0 = prob_pausa(g["lc"], g["lf"], htc, hta, mod)[r["mercato"]]
+                pm = prob_pausa(g["lc"], g["lf"], htc, hta, mod, resta)[r["mercato"]]
+                p_giusta = giuste[r["mercato"]] * (p0 / pm if pm > 0 else 1)
+                r["ripresa"] = {"misurata": True, "minuto": minuto, "quota": quote.get(r["mercato"]),
+                                "giusta": round(1 / giuste[r["mercato"]], 3),
+                                "clv": round(r["quota"] * p_giusta - 1, 4)}
+        cambiate += 1
+    if cambiate:
+        salva(FILE_REGISTRO, registro)
+        for r in da_fare:
+            x = r.get("ripresa")
+            if x:
+                print(f"  {adesso:%d/%m %H:%M}  ripresa {r['partita']}: " +
+                      (f"{x['minuto']}' quota {x['quota']} giusta {x['giusta']}, confronto {x['clv']:+.1%}"
+                       if x["misurata"] else f"non misurabile ({x['motivo']})"))
+        print("  " + scrivi_app(registro, carica(FILE_STATO, {})))
+
+
+def verdetto_ripresa(registro):
+    """Il confronto alla ripresa delle giocate all'intervallo: media, forbice
+    e verdetto dopo MIN_VERDETTO_RIPRESA giocate misurate."""
+    valori = [r["ripresa"]["clv"] for r in registro if r["tipo"] == "singola"
+              and (r.get("ripresa") or {}).get("misurata") and r["esito"] != "annullata"]
+    out = {"n": len(valori), "min_verdetto": MIN_VERDETTO_RIPRESA, "verdetto": "presto",
+           "non_misurate": sum(1 for r in registro if (r.get("ripresa") or {}).get("misurata") is False)}
+    if valori:
+        m, lo, hi = media_ic(valori)
+        out.update({"media": round(m, 4), "lo": None if lo is None else round(lo, 4),
+                    "hi": None if hi is None else round(hi, 4)})
+        if len(valori) >= MIN_VERDETTO_RIPRESA and lo is not None:
+            out["verdetto"] = "vero" if lo > 0 else ("no" if hi < 0 else "incerto")
+    return out
+
+
 def intervallo():
     """Da cron ogni 5 minuti: le partite di oggi alla pausa, contro Bet365 live."""
     mod = carica(FILE_INTERVALLO, None)
@@ -1438,7 +1613,7 @@ def intervallo():
         except Exception as e:
             scrivi(f"errore dall'API: {e}")
             return
-    in_pausa = {}
+    in_pausa, id_casa = {}, {}
     for f in risposte:
         fid = str((f.get("fixture") or {}).get("id"))
         st = ((f.get("fixture") or {}).get("status") or {}).get("short")
@@ -1464,6 +1639,9 @@ def intervallo():
             scrivi(f"{partita}: espulsione nel primo tempo, la salto")
             continue
         in_pausa[fid] = (int(gh), int(ga))
+        id_casa[fid] = ((f.get("teams") or {}).get("home") or {}).get("id")
+
+    stat_pt = statistiche_primo_tempo(in_pausa, id_casa, gol, scrivi)
 
     if in_pausa:
         try:
@@ -1510,7 +1688,7 @@ def intervallo():
             r = {"id": rid, "tipo": "singola", "fonte": "intervallo", "fixture_id": int(fid),
                  "data": g["data"], "partita": partita, "campionato": g.get("campionato", ""),
                  "mercato": k, "scelta": "", "chiave": None, "ht": f"{htc}-{hta}",
-                 "extra": bool(g.get("extra")),
+                 "extra": bool(g.get("extra")), "stat_pt": stat_pt.get(fid),
                  "nome": f"{nome} (intervallo {htc}-{hta})", "book": LIBRO_LIVE, "quota": q,
                  "commissione": 0, "giusta": round(1 / p, 3),
                  "minima": math.ceil((1 + VANTAGGIO_MIN_INTERVALLO) / p * 100 - 1e-9) / 100,
@@ -1582,6 +1760,10 @@ def main():
                 ultima_al_via()
             except Exception as e:      # neanche l'ultima quota
                 print(f"  {datetime.now(FUSO):%d/%m %H:%M}  ultima quota non riuscita: {e}")
+            try:
+                ripresa()
+            except Exception as e:      # neanche il confronto alla ripresa
+                print(f"  {datetime.now(FUSO):%d/%m %H:%M}  confronto alla ripresa non riuscito: {e}")
             intervallo()
         elif comando == "auto":
             adesso = datetime.now(FUSO)
