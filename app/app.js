@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "20.0";
+  var VERSIONE_APP = "20.1";
 
   var stato = {
     dati: null,
@@ -415,8 +415,90 @@
 
   function notaOggi() {
     return '<p class="nota-info">' + icona("info") + "<span>Gioca solo se sul tuo sito trovi almeno la quota minima: le quote qui " +
-      "possono essere vecchie di qualche ora. Quelle all'intervallo vanno fatte prima che ricominci la partita. " +
+      "possono essere vecchie di qualche ora. Le giocate all'intervallo sono nella sezione Live. " +
       "La giornata va dalle 7 alle 7: le partite della notte restano con la sera prima.</span></p>";
+  }
+
+  // ---------------------------------------------------------------
+  //  LIVE (dalla v20.1): le giocate durante la partita, per ora quelle
+  //  all'intervallo, che prima stavano in Oggi
+  // ---------------------------------------------------------------
+  function pausaDaGiocare() {
+    var v = stato.valore;
+    return ((v && v.oggi) || []).filter(function (r) { return r.intervallo && momentoValore(r) === "giocare"; });
+  }
+  function avvisoLive() {
+    var n = pausaDaGiocare().length;
+    if (!n) return "";
+    return '<a class="riepilogo carta" href="#/live"><div class="riep-testi"><span class="etichetta">Live · all\'intervallo</span>' +
+      '<span class="riep-sotto">' + contaGiocate(n) + " da fare adesso, prima che ricominci la partita</span></div>" +
+      icona("destra", "freccia") + "</a>";
+  }
+  function riepilogoLive(v) {
+    var pz = ((v.bilancio || {}).intervallo) || { n: 0 };
+    var p = puntata(), num = "0,00 €", cls = "";
+    if (pz.n) {
+      var u = pz.utile * p;
+      num = euro(u, true);
+      cls = u > 0.004 ? "turchese" : u < -0.004 ? "arancio" : "";
+    }
+    var sotto = pz.n
+      ? contaGiocate(pz.n).replace("giocata", "giocata chiusa").replace("giocate", "giocate chiuse") + " · " + pz.vinte +
+        (pz.vinte === 1 ? " vinta" : " vinte") + " (attese " + String(pz.attese).replace(".", ",") + ") · " + euroTondo(p) + " a giocata"
+      : "Ancora nessuna giocata all'intervallo chiusa · " + euroTondo(p) + " a giocata";
+    return '<a class="riepilogo carta" href="#/risultati"><div class="riep-testi"><span class="etichetta">All\'intervallo, sulla carta</span>' +
+      '<span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span></div>" +
+      icona("destra", "freccia") + "</a>";
+  }
+  function notaLive() {
+    return '<p class="nota-info">' + icona("info") + "<span>Le quote all'intervallo sono quelle live di Bet365, aggiornate di continuo: " +
+      "gioca prima che ricominci la partita, e solo se sul tuo sito trovi almeno la quota minima. " +
+      "Non contano per il verdetto della prova: all'intervallo non c'è una quota di Pinnacle con cui confrontarle.</span></p>";
+  }
+  function vistaLive() {
+    var v = stato.valore;
+    var html = testa("Live", "Le giocate durante la partita: per ora all'intervallo", campana()) + avvisoFuoriLinea() + '<div class="corpo">';
+    if (!v) {
+      if (!stato.valoreCaricato) return html + '<div class="caricamento">Caricamento…</div></div>';
+      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La pagina si riempie appena valore.py gira sul server.</div>' + notaLive() + "</div>";
+    }
+    html += riepilogoLive(v);
+
+    var lista = (v.oggi || []).filter(function (r) { return r.intervallo; });
+    var gruppi = { giocare: [], corso: [], chiuse: [] };
+    lista.forEach(function (r) { gruppi[momentoValore(r)].push(r); });
+    gruppi.giocare.sort(ordineDaFare);
+
+    html += '<section class="gruppo"><div class="gruppo-testa"><h2>Da giocare adesso</h2><span>' +
+      contaGiocate(gruppi.giocare.length) + "</span></div>";
+    if (!gruppi.giocare.length) {
+      html += '<div class="vuoto piccolo">Adesso nessuna partita all\'intervallo con una quota di valore. Il server controlla ' +
+        "le partite di oggi ogni 5 minuti e manda una notifica appena ne trova una.</div>";
+    }
+    gruppi.giocare.forEach(function (r) { html += cartaValore(r); });
+    html += "</section>";
+
+    var righe = "";
+    var corso = gruppi.corso.slice().sort(function (a, b) { return data(a.data) - data(b.data); });
+    if (corso.length) {
+      righe += rigaApri("live-corso", "In corso", String(corso.length), corso.map(function (r) { return rigaGiocata(r, false); }).join(""));
+    }
+    var chiuse = gruppi.chiuse.slice().sort(function (a, b) { return data(b.data) - data(a.data); });
+    var quando = "oggi";
+    if (!chiuse.length) {
+      quando = "ieri";
+      var giornoPrima = ieri();
+      chiuse = (v.ultime || []).filter(function (r) { return r.intervallo && giornataDi(data(r.data)) === giornoPrima; });
+    }
+    if (chiuse.length) {
+      var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
+      var vinte = decise.filter(function (r) { return r.esito === "vinta"; }).length, soldi = 0;
+      chiuse.forEach(function (r) { soldi += utileValore(r); });
+      var destra = vinte + " su " + decise.length + ' · <b class="' + (soldi > 0.004 ? "turchese" : soldi < -0.004 ? "arancio" : "") + '">' + euro(soldi, true) + "</b>";
+      righe += rigaApri("live-chiuse", "Chiuse " + quando, destra, chiuse.map(function (r) { return rigaGiocata(r, true); }).join(""));
+    }
+    if (righe) html += '<div class="elenco-righe carta">' + righe + "</div>";
+    return html + notaLive() + "</div>";
   }
 
   function rigaApri(chiave, titolo, destra, dentro) {
@@ -442,9 +524,10 @@
       return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La pagina si riempie appena valore.py gira sul server.</div>' + notaOggi() + "</div>";
     }
 
-    html += riepilogoProva(v);
+    html += avvisoLive() + riepilogoProva(v);
 
-    var lista = v.oggi || [];
+    // le giocate all'intervallo stanno in Live (v20.1)
+    var lista = (v.oggi || []).filter(function (r) { return !r.intervallo; });
     var gruppi = { giocare: [], corso: [], chiuse: [] };
     lista.forEach(function (r) { gruppi[momentoValore(r)].push(r); });
     gruppi.giocare.sort(ordineDaFare);
@@ -455,7 +538,7 @@
     if (!gruppi.giocare.length) {
       html += '<div class="vuoto piccolo">' + (lista.length
         ? "Adesso niente da giocare: le giocate di oggi sono già partite."
-        : "Per ora nessun bookmaker paga più del giusto: oggi si salta. Il server ricontrolla più volte durante il giorno, e ogni 5 minuti durante gli intervalli.") + "</div>";
+        : "Per ora nessun bookmaker paga più del giusto: oggi si salta. Il server ricontrolla ogni ora; quelle all'intervallo sono in Live.") + "</div>";
     }
     gruppi.giocare.forEach(function (r) { html += cartaValore(r); });
     html += "</section>";
@@ -479,7 +562,7 @@
     if (!chiuse.length && !schChiusa) {
       quando = "ieri";
       var giornoPrima = ieri();
-      chiuse = (v.ultime || []).filter(function (r) { return giornataDi(data(r.data)) === giornoPrima; });
+      chiuse = (v.ultime || []).filter(function (r) { return !r.intervallo && giornataDi(data(r.data)) === giornoPrima; });
     }
     if (chiuse.length || schChiusa) {
       var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
@@ -1192,6 +1275,8 @@
     var vista = "oggi", html;
     if (h.indexOf("#/partita/") === 0) {
       vista = "partite"; html = stato.dati ? vistaDettaglio(decodeURIComponent(h.slice(10))) : senzaDati();
+    } else if (h === "#/live") {
+      vista = "live"; html = vistaLive();
     } else if (h === "#/partite") {
       vista = "partite"; html = stato.dati ? vistaPartite() : senzaDati();
     } else if (h === "#/giocate") {
@@ -1207,6 +1292,9 @@
       a.classList.toggle("attiva", attiva);
       if (attiva) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    // pallino su Live quando c'e' una giocata all'intervallo da fare
+    var live = document.querySelector('#barra a[data-vista="live"]');
+    if (live) live.classList.toggle("con-avviso", pausaDaGiocare().length > 0);
   }
   function ridisegnaFermo() {
     var y = window.scrollY; disegna(); window.scrollTo(0, y);
@@ -1286,11 +1374,11 @@
     if (document.visibilityState === "visible") carica();
   });
   setInterval(function () { if (document.visibilityState === "visible") carica(); }, 5 * 60 * 1000);
-  // in Oggi il tempo che resta per le giocate all'intervallo scorre da solo:
+  // in Oggi e in Live il tempo che resta per le giocate all'intervallo scorre da solo:
   // si ridisegna solo mentre ce n'e' una aperta, o appena scaduta
   setInterval(function () {
     var h = location.hash || "#/";
-    if (document.visibilityState !== "visible" || (h !== "#/" && h !== "#") || !stato.valore) return;
+    if (document.visibilityState !== "visible" || (h !== "#/" && h !== "#" && h !== "#/live") || !stato.valore) return;
     var adesso = Date.now();
     var aperte = (stato.valore.oggi || []).some(function (r) {
       return r.intervallo && r.registrata && !r.esito && adesso - data(r.registrata).getTime() < 16 * 60000;

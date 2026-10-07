@@ -1533,7 +1533,7 @@ def intervallo():
                     "testo": f"{r['nome'].split(' (intervallo')[0]} a {r['quota']:.2f} su Bet365, "
                              f"giusta {r['giusta']:.2f} ({r['vantaggio']:+.0%}). Minima {r['minima']:.2f}. "
                              "Prova sulla carta.",
-                    "url": "./#/valore", "tag": f"pausa-{r['fixture_id']}"}))
+                    "url": "./#/live", "tag": f"pausa-{r['fixture_id']}"}))
             scrivi(scrivi_app(registro, stato))
     stato["intervallo_fatte"] = fatte
     salva(FILE_STATO, stato)
