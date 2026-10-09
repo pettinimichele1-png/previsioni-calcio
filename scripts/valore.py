@@ -14,8 +14,9 @@ Ogni giorno:
     risultato finale e una sul primo o secondo tempo, con bookmaker,
     quota e QUOTA MINIMA: se sul tuo sito la trovi almeno a quella
     quota, la giocata ha valore anche li';
-  - la schedina del giorno, se su uno stesso bookmaker ci sono almeno
-    due giocate di valore.
+  - le schedine del giorno, alle 9 e alle 15, se su uno stesso bookmaker
+    ci sono almeno due giocate di valore (quella delle 15 su partite
+    diverse da quella delle 9).
 
 Le partite sono quelle dei campionati del nostro modello (previsioni.json)
 piu', dalla v19.6, quelle dei campionati in campionati_valore.py, seguiti
@@ -113,6 +114,8 @@ VANTAGGIO_MIN_RICAVATI = float(os.environ.get("VANTAGGIO_MIN_RICAVATI", "0.05"))
 PUNTATA = float(os.environ.get("PUNTATA", "10"))
 QUOTA_GIUSTA_MIN, QUOTA_GIUSTA_MAX = 1.25, 3.00   # niente sfavorite
 MAX_SCHEDINA = 3
+# due schedine al giorno (v20.6): composte al giro delle 9 e a quello delle 15
+SCHEDINE = (("mattina", 9), ("pomeriggio", 15))
 GIORNI_PROVA = 28
 MIN_VERDETTO = 100
 # ogni ora dalle 7 alle 23: le quote si leggono da quelle del pipeline,
@@ -811,21 +814,35 @@ def giro(notifica=False):
             "pinnacle_ultima": None, "esito": None})
         nuove += 1
 
-    chiave = f"schedina|{oggi.isoformat()}"
-    schedina = next((r for r in registro if r["id"] == chiave), None)
-    if schedina is None and adesso.hour >= 7:
-        s = schedina_del_giorno(giocate)
+    # due schedine al giorno (v20.6), composte al giro delle 9 e a quello delle
+    # 15 con le giocate di valore di quel momento; quella delle 15 senza le
+    # partite gia' usate quel giorno. Se a quell'ora non bastano, non c'e'.
+    # Prima della v20.6 era una sola, fissata alla prima occasione.
+    nate = []
+    di_oggi = [r for r in registro if r["tipo"] == "schedina" and r.get("giorno") == oggi.isoformat()]
+    for nome_s, ora_s in SCHEDINE:
+        chiave = f"schedina|{oggi.isoformat()}|{nome_s}"
+        gia_fatta = any(r["id"] == chiave or (nome_s == "mattina" and r["id"] == f"schedina|{oggi.isoformat()}")
+                        for r in di_oggi)
+        if adesso.hour != ora_s or gia_fatta:
+            continue
+        usate = {int(v["id"].split("|")[0]) for r in di_oggi for v in r["voci"]}
+        s = schedina_del_giorno([c for c in giocate if c["info"]["fixture_id"] not in usate])
         if s:
             libro, voci, quota, prob = s
             schedina = {"id": chiave, "tipo": "schedina", "giorno": oggi.isoformat(),
+                        "nome": nome_s, "ora": f"{ora_s}:20",
                         "book": libro, "quota": round(quota, 2), "prob": round(prob, 4),
                         "voci": [{"id": c["id"], "quota": c["pagano"][libro],
                                   "nome": f"{c['info'].get('casa', '?')} - {c['info'].get('fuori', '?')}: "
                                           + nome_giocata(c, c["info"].get("casa"),
-                                                         c["info"].get("fuori"), breve=True)}
+                                                         c["info"].get("fuori"))}
                                  for c in voci],
                         "data": max(c["info"]["data"] for c in voci), "esito": None}
             registro.append(schedina)
+            di_oggi.append(schedina)
+            nate.append(schedina)
+    schedina = di_oggi[-1] if di_oggi else None
 
     salva(FILE_REGISTRO, registro)
     salva_gol(gol_oggi)
@@ -843,6 +860,9 @@ def giro(notifica=False):
     elif notifica and trovate_ora:
         # i giri dopo quello del mattino avvisano solo delle giocate nuove
         print("  " + notifica_nuove(trovate_ora))
+    if notifica:
+        for s in nate:
+            print("  " + notifica_schedina(s))
     stato["ultimo_giro"] = adesso.isoformat(timespec="minutes")
     salva(FILE_STATO, stato)
     print("  " + scrivi_app(registro, stato))
@@ -921,6 +941,15 @@ def manda_notifica(giocate, schedina, ieri):
     if ieri:
         testo += f". {ieri}"
     return spedisci({"titolo": titolo, "testo": testo + ".", "url": "./#/valore", "tag": "valore"})
+
+
+def notifica_schedina(s):
+    """La schedina appena composta (alle 9 o alle 15)."""
+    n = len(s["voci"])
+    return spedisci({"titolo": f"Schedina delle {s['ora'].split(':')[0]}: quota {s['quota']:.2f} su {s['book']}",
+                     "testo": "; ".join(v["nome"] for v in s["voci"]) +
+                              f". {n} eventi, ognuno almeno alla sua quota minima. Prova sulla carta.",
+                     "url": "./#/", "tag": f"schedina-{s.get('nome', '')}"})
 
 
 def notifica_nuove(nuove):
@@ -1141,9 +1170,8 @@ def scrivi_app(registro, stato):
         di_oggi = sorted((r for r in singole.values()
                           if giornata(leggi_data(r["data"])) == oggi),
                          key=lambda r: leggi_data(r["data"]))
-        s = next((r for r in registro if r["id"] == f"schedina|{oggi.isoformat()}"), None)
-        schedina = None
-        if s:
+        schedine = []
+        for s in (r for r in registro if r["tipo"] == "schedina" and r.get("giorno") == oggi.isoformat()):
             voci, inizi = [], []
             for v in s["voci"]:
                 r = singole.get(v["id"]) or {}
@@ -1152,9 +1180,9 @@ def scrivi_app(registro, stato):
                              "campionato": r.get("campionato", "")})
                 if r.get("data"):
                     inizi.append(r["data"])
-            schedina = {"book": s["book"], "quota": s["quota"], "prob": s["prob"],
-                        "esito": s["esito"], "voci": voci,
-                        "prima": min(inizi, key=leggi_data) if inizi else s.get("data")}
+            schedine.append({"book": s["book"], "quota": s["quota"], "prob": s["prob"],
+                             "esito": s["esito"], "voci": voci, "ora": s.get("ora"),
+                             "prima": min(inizi, key=leggi_data) if inizi else s.get("data")})
         chiuse = sorted((r for r in singole.values() if r["esito"] in ("vinta", "persa", "annullata")),
                         key=lambda r: r["data"], reverse=True)[:20]
         tempi = carica(FILE_TEMPI, {})
@@ -1164,7 +1192,9 @@ def scrivi_app(registro, stato):
             "prova": {"giorno": giorno_prova(stato) if stato.get("inizio") else 1, "di": GIORNI_PROVA},
             "puntata": PUNTATA,
             "oggi": [voce_app(r) for r in di_oggi],
-            "schedina": schedina,
+            # dalla v20.6 due al giorno; "schedina" (la prima) resta per l'app vecchia
+            "schedine": schedine,
+            "schedina": schedine[0] if schedine else None,
             "bilancio": statistiche(registro),
             "ultime": [voce_app(r) for r in chiuse],
             # le quote giuste di primo e secondo tempo, per la pagina di ogni partita

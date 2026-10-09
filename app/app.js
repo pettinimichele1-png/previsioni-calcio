@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "20.5";
+  var VERSIONE_APP = "20.6";
 
   var stato = {
     dati: null,
@@ -359,8 +359,10 @@
     }
     return "";
   }
+  function nomeSchedina(s) { return s.ora ? "Schedina delle " + String(s.ora).split(":")[0] : "Schedina del giorno"; }
   function cartaSchedina(s) {
-    var html = '<article class="schedina carta">';
+    var html = '<article class="schedina carta">' +
+      (s.ora ? '<div class="sch-titolo">' + nomeSchedina(s) + " · tutta su " + esc(s.book) + "</div>" : "");
     (s.voci || []).forEach(function (v) {
       var ora = orarioVoce(v);
       var fatto = v.esito === "vinta" ? icona("vinta", "turchese") : v.esito === "persa" ? icona("persa", "arancio") : "";
@@ -413,7 +415,7 @@
       dx = '<div class="rg-dx"><small>quota ' + quota(s.quota) + "</small></div>";
     }
     var n = (s.voci || []).length;
-    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>Schedina del giorno</b><small>' + n +
+    return '<div class="riga-giocata">' + segnoR + '<div class="rg-testi"><b>' + nomeSchedina(s) + "</b><small>" + n +
       (n === 1 ? " partita" : " partite") + " · " + esc(s.book) + "</small></div>" + dx + "</div>";
   }
 
@@ -562,7 +564,11 @@
     var gruppi = { giocare: [], corso: [], chiuse: [] };
     lista.forEach(function (r) { gruppi[momentoValore(r)].push(r); });
     gruppi.giocare.sort(ordineDaFare);
-    var s = v.schedina, ms = s ? momentoSchedina(s) : null;
+    // dalla v20.6 due schedine al giorno (delle 9 e delle 15); col file vecchio una
+    var sched = v.schedine || (v.schedina ? [v.schedina] : []);
+    var sGiocare = sched.filter(function (x) { return momentoSchedina(x) === "giocare"; });
+    var sCorso = sched.filter(function (x) { return momentoSchedina(x) === "corso"; });
+    var sChiuse = sched.filter(function (x) { return momentoSchedina(x) === "chiuse"; });
 
     html += '<section class="gruppo"><div class="gruppo-testa"><h2>Da giocare adesso</h2><span>' +
       contaGiocate(gruppi.giocare.length) + "</span></div>";
@@ -574,37 +580,40 @@
     gruppi.giocare.forEach(function (r) { html += cartaValore(r); });
     html += "</section>";
 
-    if (s && ms === "giocare") {
-      html += '<section class="gruppo"><div class="gruppo-testa"><h2>Schedina del giorno</h2><span>tutta su ' +
-        esc(s.book) + "</span></div>" + cartaSchedina(s) + "</section>";
+    if (sGiocare.length) {
+      html += '<section class="gruppo"><div class="gruppo-testa"><h2>' + (sGiocare.length > 1 ? "Schedine del giorno" : "Schedina del giorno") +
+        "</h2><span>" + (sGiocare.length > 1 ? sGiocare.length + " schedine" : "tutta su " + esc(sGiocare[0].book)) + "</span></div>" +
+        sGiocare.map(cartaSchedina).join("") + "</section>";
     }
 
     // in corso e chiuse: due righe che si aprono, cosi' la pagina resta corta
     var righe = "";
     var corso = gruppi.corso.slice().sort(function (a, b) { return data(a.data) - data(b.data); });
-    var nCorso = corso.length + (s && ms === "corso" ? 1 : 0);
+    var nCorso = corso.length + sCorso.length;
     if (nCorso) {
       var dentro = corso.map(function (r) { return rigaGiocata(r, false); }).join("") +
-        (s && ms === "corso" ? rigaSchedina(s, false) : "");
+        sCorso.map(function (x) { return rigaSchedina(x, false); }).join("");
       righe += rigaApri("corso", "In corso", String(nCorso), dentro);
     }
     var chiuse = gruppi.chiuse.slice().sort(function (a, b) { return data(b.data) - data(a.data); });
-    var quando = "oggi", schChiusa = s && ms === "chiuse" ? s : null;
-    if (!chiuse.length && !schChiusa) {
+    var quando = "oggi";
+    if (!chiuse.length && !sChiuse.length) {
       quando = "ieri";
       var giornoPrima = ieri();
       chiuse = (v.ultime || []).filter(function (r) { return !r.intervallo && giornataDi(data(r.data)) === giornoPrima; });
     }
-    if (chiuse.length || schChiusa) {
+    if (chiuse.length || sChiuse.length) {
       var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
       var vinte = decise.filter(function (r) { return r.esito === "vinta"; }).length;
       var totale = decise.length, soldi = 0;
       chiuse.forEach(function (r) { soldi += utileValore(r); });
-      if (schChiusa && schChiusa.esito !== "annullata") {
-        totale += 1; vinte += schChiusa.esito === "vinta" ? 1 : 0; soldi += utileSchedina(schChiusa);
-      }
+      sChiuse.forEach(function (x) {
+        if (x.esito === "annullata") return;
+        totale += 1; vinte += x.esito === "vinta" ? 1 : 0; soldi += utileSchedina(x);
+      });
       var destra = vinte + " su " + totale + ' · <b class="' + (soldi > 0.004 ? "turchese" : soldi < -0.004 ? "arancio" : "") + '">' + euro(soldi, true) + "</b>";
-      var dentroC = chiuse.map(function (r) { return rigaGiocata(r, true); }).join("") + (schChiusa ? rigaSchedina(schChiusa, true) : "");
+      var dentroC = chiuse.map(function (r) { return rigaGiocata(r, true); }).join("") +
+        sChiuse.map(function (x) { return rigaSchedina(x, true); }).join("");
       righe += rigaApri("chiuse", "Chiuse " + quando, destra, dentroC);
     }
     if (righe) html += '<div class="elenco-righe carta">' + righe + "</div>";
