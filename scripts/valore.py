@@ -104,6 +104,11 @@ try:
     import quote_giuste as Q     # per i mercati dei tempi che Pinnacle non quota
 except Exception:
     Q = None
+try:
+    from consumo_api import frena  # il freno sulle chiamate (v20.7)
+except Exception:
+    def frena(cosa):
+        return False
 
 BASE_URL = "https://v3.football.api-sports.io"
 API_KEY = os.environ.get("API_FOOTBALL_KEY", "").strip()
@@ -736,7 +741,18 @@ def giro(notifica=False):
                  and r["esito"] is None and leggi_data(r["data"]) > adesso}
     giocate, senza_pinnacle, guasto = [], 0, False
     gol_oggi, tempi_oggi = {}, {}
-    for fid in sorted(set(palinsesto) | in_attesa):
+    ids = sorted(set(palinsesto) | in_attesa)
+    # se il file del pipeline manca o e' vecchio (per esempio perche' il freno
+    # ha fermato i download) e siamo vicini al tetto, niente quote partita per
+    # partita: erano decine di chiamate a ogni giro (v20.7)
+    mancanti = {f for f in ids if str(f) not in dal_pipeline}
+    salta = set()
+    if mancanti and frena(f"le quote di {len(mancanti)} partite una per una"):
+        salta = mancanti
+        guasto = guasto or not dal_pipeline
+    for fid in ids:
+        if fid in salta:
+            continue
         if str(fid) in dal_pipeline:
             # le stesse quote, scaricate dal pipeline da meno di 40 minuti
             voci = [dal_pipeline[str(fid)]]

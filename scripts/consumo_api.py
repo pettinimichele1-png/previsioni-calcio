@@ -11,7 +11,11 @@ l'endpoint "status", che non consuma chiamate: sopra la soglia quei
 download si saltano e si tengono le quote gia' viste. valore.py non
 passa di qui e continua a lavorare.
 
-La soglia si cambia con FRENO_CHIAMATE in ~/.previsioni_env.
+La soglia e' l'87% del limite del piano, letto dal contatore (dalla
+v20.7: con 7.500 al giorno sono 6.500 come prima, con il piano Ultra
+circa 65.000). FRENO_CHIAMATE in ~/.previsioni_env la fissa a mano.
+Anche valore.py lo usa (v20.7): se il file delle quote del pipeline e'
+vecchio perche' frenato, non chiede le quote partita per partita.
 """
 
 import os
@@ -19,27 +23,41 @@ import json
 import urllib.request
 
 API_KEY = os.environ.get("API_FOOTBALL_KEY", "").strip()
-SOGLIA = int(os.environ.get("FRENO_CHIAMATE", "6500"))
+FISSA = os.environ.get("FRENO_CHIAMATE", "").strip()
+QUOTA_LIMITE = 0.87
 
 
-def chiamate_usate():
-    """Chiamate gia' usate oggi, oppure None se il contatore non risponde."""
+def contatore():
+    """(chiamate gia' usate oggi, limite del giorno), oppure (None, None)
+    se il contatore non risponde."""
     if not API_KEY:
-        return None
+        return None, None
     req = urllib.request.Request("https://v3.football.api-sports.io/status",
                                  headers={"x-apisports-key": API_KEY})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             dati = json.loads(r.read().decode("utf-8"))
-        return int(dati["response"]["requests"]["current"])
+        richieste = dati["response"]["requests"]
+        return int(richieste["current"]), int(richieste["limit_day"])
     except Exception:
-        return None
+        return None, None
+
+
+def chiamate_usate():
+    """Chiamate gia' usate oggi, oppure None se il contatore non risponde."""
+    return contatore()[0]
+
+
+def soglia(limite):
+    if FISSA.isdigit():
+        return int(FISSA)
+    return int((limite or 7500) * QUOTA_LIMITE)
 
 
 def frena(cosa):
     """True se oggi si e' vicini al tetto e il download va saltato."""
-    usate = chiamate_usate()
-    if usate is not None and usate >= SOGLIA:
-        print(f"  [freno] gia' {usate} chiamate oggi (soglia {SOGLIA}): salto {cosa}")
+    usate, limite = contatore()
+    if usate is not None and usate >= soglia(limite):
+        print(f"  [freno] gia' {usate} chiamate oggi (soglia {soglia(limite)} su {limite}): salto {cosa}")
         return True
     return False
