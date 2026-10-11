@@ -1052,7 +1052,7 @@ def statistiche(registro):
             "famiglie": {f: riassunto([r for r in singole if famiglia(r) == f]) for f in FAMIGLIE},
             "schedine": riassunto(schedine, utile_schedina),
             "clv": clv, "verdetto": verdetto, "min_verdetto": MIN_VERDETTO,
-            "ripresa": verdetto_ripresa(registro),
+            "chi_ha_ragione": chi_ha_ragione(registro),
             "aperte": sum(1 for r in registro if r["tipo"] == "singola" and r["esito"] is None)}
 
 
@@ -1170,7 +1170,9 @@ def voce_app(r):
             "commissione": r.get("commissione", 0), "giusta": r["giusta"], "minima": r["minima"],
             "vantaggio": r["vantaggio"], "prob": r["prob"], "stimata": bool(r.get("chiave")),
             "intervallo": r.get("ht"), "registrata": r.get("registrata"),
-            "stat_pt": r.get("stat_pt"), "ripresa": r.get("ripresa"),
+            "stat_pt": r.get("stat_pt"),
+            # senza "clv" (v20.9): misurava solo il margine di Bet365
+            "ripresa": {k: v for k, v in (r.get("ripresa") or {}).items() if k != "clv"} or None,
             "esito": r["esito"], "risultato": r.get("risultato")}
 
 
@@ -1234,10 +1236,14 @@ FILE_TEMPI = os.path.join("stato", "valore_tempi.json")
 FILE_INTERVALLO = os.path.join("stato", "intervallo.json")
 # statistiche del primo tempo delle partite controllate all'intervallo (v20.4)
 FILE_STAT_PT = os.path.join("stato", "intervallo_statistiche.json")
-# confronto alla ripresa: la quota di Bet365 fra il 46' e il 50', a punteggio
-# invariato; il verdetto all'intervallo arriva dopo 50 giocate misurate
+# misura alla ripresa: la quota di Bet365 fra il 46' e il 50', a punteggio
+# invariato, senza margine e riportata all'intervallo: e' la probabilita' di
+# Bet365. Il verdetto all'intervallo (v20.9) e' "chi ha ragione": chi prevede
+# meglio gli esiti, noi o Bet365, dopo 250 giocate misurate e chiuse. Il
+# confronto diretto delle quote (v20.4) misurava solo il margine: nei primi
+# minuti del secondo tempo, senza episodi, la quota non si muove.
 RIPRESA_MINUTI = (46, 50)
-MIN_VERDETTO_RIPRESA = 50
+MIN_VERDETTO_CHI = 250
 # per togliere il margine alla ripresa: i gruppi di esiti che fanno 1
 GRUPPI_PAUSA = (("fin_1", "fin_X", "fin_2"), ("st_1", "st_X", "st_2"),
                 ("st_casa_si", "st_casa_no"), ("st_ospite_si", "st_ospite_no"),
@@ -1612,18 +1618,33 @@ def ripresa():
         print("  " + scrivi_app(registro, carica(FILE_STATO, {})))
 
 
-def verdetto_ripresa(registro):
-    """Il confronto alla ripresa delle giocate all'intervallo: media, forbice
-    e verdetto dopo MIN_VERDETTO_RIPRESA giocate misurate."""
-    valori = [r["ripresa"]["clv"] for r in registro if r["tipo"] == "singola"
-              and (r.get("ripresa") or {}).get("misurata") and r["esito"] != "annullata"]
-    out = {"n": len(valori), "min_verdetto": MIN_VERDETTO_RIPRESA, "verdetto": "presto",
-           "non_misurate": sum(1 for r in registro if (r.get("ripresa") or {}).get("misurata") is False)}
-    if valori:
-        m, lo, hi = media_ic(valori)
-        out.update({"media": round(m, 4), "lo": None if lo is None else round(lo, 4),
+def chi_ha_ragione(registro):
+    """
+    Il verdetto delle giocate all'intervallo (v20.9): chi prevede meglio gli
+    esiti, la nostra probabilita' o quella di Bet365 (la quota alla ripresa
+    senza margine, riportata all'intervallo: (1 + clv) / quota). Per ogni
+    giocata chiusa si confronta l'errore (log loss) delle due; positivo =
+    meglio noi. Verdetto dopo MIN_VERDETTO_CHI giocate.
+    """
+    righe = []
+    for r in registro:
+        x = r.get("ripresa") or {}
+        if r["tipo"] != "singola" or not x.get("misurata") or r["esito"] not in ("vinta", "persa"):
+            continue
+        noi = min(max(r["prob"], 1e-6), 1 - 1e-6)
+        loro = min(max((1 + x["clv"]) / r["quota"], 1e-6), 1 - 1e-6)
+        righe.append((r["esito"] == "vinta", noi, loro))
+    out = {"n": len(righe), "min_verdetto": MIN_VERDETTO_CHI, "verdetto": "presto"}
+    if righe:
+        perdita = lambda p, v: -math.log(p if v else 1 - p)
+        diff = [perdita(loro, v) - perdita(noi, v) for v, noi, loro in righe]
+        m, lo, hi = media_ic(diff)
+        out.update({"vinte": sum(1 for v, _, _ in righe if v),
+                    "attese_noi": round(sum(n for _, n, _ in righe), 1),
+                    "attese_bet365": round(sum(l for _, _, l in righe), 1),
+                    "media": round(m, 4), "lo": None if lo is None else round(lo, 4),
                     "hi": None if hi is None else round(hi, 4)})
-        if len(valori) >= MIN_VERDETTO_RIPRESA and lo is not None:
+        if len(righe) >= MIN_VERDETTO_CHI and lo is not None:
             out["verdetto"] = "vero" if lo > 0 else ("no" if hi < 0 else "incerto")
     return out
 

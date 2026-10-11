@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "20.8";
+  var VERSIONE_APP = "20.9";
 
   var stato = {
     dati: null,
@@ -318,16 +318,18 @@
   function testoRipresa(x) {
     if (!x) return "";
     if (!x.misurata) return "ripresa non misurabile";
-    return "alla ripresa " + quota(x.quota) + " (" + x.minuto + "') · " + pctSegno(x.clv, 0);
+    return "Bet365 alla ripresa " + quota(x.quota) + " (" + x.minuto + "')";
   }
-  function testoVerdettoRipresa(rp) {
-    if (!rp) return "";
-    if (!rp.n) return "Confronto alla ripresa: ancora nessuna giocata misurata. Il verdetto arriva dopo " + rp.min_verdetto + ".";
-    var base = "Confronto alla ripresa: " + pctSegno(rp.media, 1) + " su " + rp.n + (rp.n === 1 ? " giocata misurata" : " giocate misurate");
-    if (rp.verdetto === "vero") return base + ". Il valore c'è: il mercato si avvicina al nostro prezzo.";
-    if (rp.verdetto === "no") return base + ". Il valore non c'è: il mercato si allontana dal nostro prezzo.";
-    if (rp.verdetto === "incerto") return base + ". Non ancora chiaro.";
-    return base + ". Il verdetto arriva dopo " + rp.min_verdetto + ".";
+  // il verdetto all'intervallo (v20.9): chi prevede meglio gli esiti, noi o Bet365
+  function testoChiHaRagione(c) {
+    if (!c) return "";
+    if (!c.n) return "Chi ha ragione, noi o Bet365: ancora nessuna giocata misurata e chiusa. Il verdetto arriva dopo " + c.min_verdetto + ".";
+    var base = "Chi ha ragione, noi o Bet365: su " + c.n + (c.n === 1 ? " giocata" : " giocate") + " vinte " + c.vinte +
+      ", secondo noi " + String(c.attese_noi).replace(".", ",") + ", secondo Bet365 " + String(c.attese_bet365).replace(".", ",") + ".";
+    if (c.verdetto === "vero") return base + " Le nostre probabilità sono più precise: il valore c'è.";
+    if (c.verdetto === "no") return base + " Bet365 è più preciso di noi: il valore non c'è.";
+    if (c.verdetto === "incerto") return base + " Non ancora chiaro.";
+    return base + " Ancora presto: il verdetto arriva dopo " + c.min_verdetto + ".";
   }
   function cartaValore(r) {
     var href = linkPartita(r.fixture_id);
@@ -477,10 +479,10 @@
       ? contaGiocate(pz.n).replace("giocata", "giocata chiusa").replace("giocate", "giocate chiuse") + " · " + pz.vinte +
         (pz.vinte === 1 ? " vinta" : " vinte") + " (attese " + String(pz.attese).replace(".", ",") + ") · " + euroTondo(p) + " a giocata"
       : "Ancora nessuna giocata all'intervallo chiusa · " + euroTondo(p) + " a giocata";
-    var rp = (v.bilancio || {}).ripresa;
+    var rp = (v.bilancio || {}).chi_ha_ragione;
     return '<a class="riepilogo carta" href="#/risultati"><div class="riep-testi"><span class="etichetta">All\'intervallo, sulla carta</span>' +
       '<span class="riep-num ' + cls + '">' + num + '</span><span class="riep-sotto">' + sotto + "</span>" +
-      (rp ? '<span class="riep-sotto">' + esc(testoVerdettoRipresa(rp)) + "</span>" : "") + "</div>" +
+      (rp ? '<span class="riep-sotto">' + esc(testoChiHaRagione(rp)) + "</span>" : "") + "</div>" +
       icona("destra", "freccia") + "</a>";
   }
   function notaLive() {
@@ -1194,9 +1196,9 @@
         "<div><b>" + String(pz.attese).replace(".", ",") + "</b><span>vinte attese</span></div>" +
         '<div><b class="' + (pz.rendimento >= 0 ? "turchese" : "arancio") + '">' + pctSegno(pz.rendimento, Math.abs(pz.rendimento) >= 0.995 ? 0 : 1) +
         "</b><span>rendimento</span></div></div>" +
-        (b.ripresa ? '<p class="testo">' + esc(testoVerdettoRipresa(b.ripresa)) + "</p>" : "") +
+        (b.chi_ha_ragione ? '<p class="testo">' + esc(testoChiHaRagione(b.chi_ha_ragione)) + "</p>" : "") +
         '<p class="testo fioco">Non contano per il verdetto: all\'intervallo non c\'è una quota di Pinnacle con cui confrontarle. ' +
-        "Il loro verdetto è il confronto alla ripresa.</p></section>";
+        "Il loro verdetto: chi prevede meglio i risultati, le nostre probabilità o quelle di Bet365 alla ripresa.</p></section>";
     }
 
     // le ultime chiuse
