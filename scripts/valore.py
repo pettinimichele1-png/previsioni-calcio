@@ -1230,6 +1230,10 @@ def scrivi_app(registro, stato):
             "schedina": schedine[0] if schedine else None,
             "bilancio": statistiche(registro),
             "ultime": [voce_app(r) for r in chiuse],
+            # v21.4: tutte le giocate della giornata di ieri, per "Chiuse ieri"
+            # in Oggi e in Live (le 20 "ultime" non bastavano piu')
+            "ieri": [voce_app(r) for r in singole.values()
+                     if giornata(leggi_data(r["data"])) == oggi - timedelta(days=1)],
             # le quote giuste di primo e secondo tempo, per la pagina di ogni partita
             "tempi": {fid: t["p"] for fid, t in tempi.items() if t.get("p")},
             # esito, Under/Over e Gol/NoGol secondo Pinnacle, per la stessa pagina

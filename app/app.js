@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.3";
+  var VERSIONE_APP = "21.4";
 
   var stato = {
     dati: null,
@@ -523,7 +523,8 @@
     if (!chiuse.length) {
       quando = "ieri";
       var giornoPrima = ieri();
-      chiuse = (v.ultime || []).filter(function (r) { return r.intervallo && giornataDi(data(r.data)) === giornoPrima; });
+      // v21.4: valore.json ha tutte le giocate di ieri; col file vecchio le "ultime"
+      chiuse = (v.ieri || v.ultime || []).filter(function (r) { return r.intervallo && r.esito && giornataDi(data(r.data)) === giornoPrima; });
     }
     if (chiuse.length) {
       var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
@@ -602,7 +603,7 @@
     if (!chiuse.length && !sChiuse.length) {
       quando = "ieri";
       var giornoPrima = ieri();
-      chiuse = (v.ultime || []).filter(function (r) { return !r.intervallo && giornataDi(data(r.data)) === giornoPrima; });
+      chiuse = (v.ieri || v.ultime || []).filter(function (r) { return !r.intervallo && r.esito && giornataDi(data(r.data)) === giornoPrima; });
     }
     if (chiuse.length || sChiuse.length) {
       var decise = chiuse.filter(function (r) { return r.esito !== "annullata"; });
