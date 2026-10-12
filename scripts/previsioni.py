@@ -1396,11 +1396,14 @@ def _proposte_giorno(previsioni):
         except (ValueError, OSError):
             pass
 
-    previsioni = con_pinnacle(previsioni)      # v21.1
+    # v21.2: i risultati esatti restano del nostro modello (scelta dell'utente:
+    # i favoriti delle nostre statistiche, non del mercato); alta probabilita'
+    # e sistemi usano le probabilita' di Pinnacle (v21.1)
     esatti, disponibili = _calcola_esatti(previsioni)
-    dati = {"giorno": oggi, "fonte": "pinnacle",
+    da_pinnacle = con_pinnacle(previsioni)
+    dati = {"giorno": oggi, "fonte": "pinnacle", "fonte_esatti": "modello",
             "generato": datetime.now(timezone.utc).isoformat(timespec="minutes"),
-            "giocate": costruisci_giocate(previsioni),
+            "giocate": costruisci_giocate(da_pinnacle),
             "esatti": esatti, "esatti_disponibili": disponibili}
     try:
         with open(FILE_GIOCATE, "w", encoding="utf-8") as f:

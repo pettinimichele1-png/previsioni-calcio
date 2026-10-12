@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.1";
+  var VERSIONE_APP = "21.2";
 
   var stato = {
     dati: null,
@@ -1004,7 +1004,7 @@
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
-    { id: "esatti", nome: "Esatti", testo: "I cinque risultati esatti più probabili di tutto il palinsesto." }
+    { id: "esatti", nome: "Esatti", testo: "I cinque risultati esatti più probabili secondo il nostro modello." }
   ];
 
   function corpoEsatti() {
