@@ -280,7 +280,9 @@ def risultati_per_app(conn):
 def evento_per_app(v):
     return {"partita": f"{v['casa']} – {v['fuori']}", "info": info_partita(v),
             "campionato": v.get("campionato", ""),
-            "esito": v.get("nome") or v["esito"], "p": v["prob"]}
+            "esito": v.get("nome") or v["esito"], "p": v["prob"],
+            # v21.1: la quota di Bet365 dell'evento, o null se e' una nostra stima
+            "quota": v.get("quota")}
 
 
 def giocate_per_app(previsioni, rho):
@@ -299,6 +301,7 @@ def giocate_per_app(previsioni, rho):
         for s in proposte.get(categoria, []):
             fuori[categoria].append({
                 "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"], "prob": s["prob"],
+                "stimate": s.get("stimate"),
                 "eventi": [evento_per_app(v) for v in s["voci"]]})
 
     # nei sistemi gli esiti di una stessa partita si raggruppano, e per

@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.0";
+  var VERSIONE_APP = "21.1";
 
   var stato = {
     dati: null,
@@ -1004,7 +1004,6 @@
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
-    { id: "miste", nome: "Miste", testo: "Schedine attorno a quota 5, 10 e 17, solo con esiti sopra il 30%." },
     { id: "esatti", nome: "Esatti", testo: "I cinque risultati esatti più probabili di tutto il palinsesto." }
   ];
 
@@ -1047,17 +1046,25 @@
         html += '<article class="giocata carta"><div class="giocata-testa"><span>' + esc(titolo) +
           '</span><div class="quota"><small>quota</small><b>' + q + "</b></div></div>";
         (c.eventi || []).forEach(function (e) {
+          // v21.1: accanto alla probabilita' la quota di Bet365, o "stimata" se non c'e'
+          var qe = sistema || e.quota === undefined ? "" : e.quota ? " · Bet365 " + quota(e.quota) : " · quota stimata";
           html += '<div class="evento"><div class="sx"><b>' + conBandiera(e) + "</b><small>" + esc(e.info) +
             '</small></div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
-            (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + "</small></div></div>";
+            (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + qe + "</small></div></div>";
         });
+        if (sistema || c.stimate) {
+          html += '<div class="nota-stima">' + (sistema ? "Quote del sistema stimate da noi" :
+            c.stimate === 1 ? "1 evento con la quota stimata da noi" : c.stimate + " eventi con la quota stimata da noi") +
+            ": sul sito saranno più basse.</div>";
+        }
         var piede = sistema ? "probabilità di vincere almeno una combinazione" : "probabilità che esca tutto";
         html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + pct(c.prob) + "</b></div></article>";
       });
     }
 
-    return html + '<p class="nota-info">' + icona("info") + "<span>Proposte fatte al mattino dal nostro modello, senza un vantaggio dimostrato: " +
-      "il mercato resta più preciso. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, " +
+    return html + '<p class="nota-info">' + icona("info") + "<span>Proposte fatte al mattino con le probabilità ricavate da Pinnacle " +
+      "(prima della v21.1 dal nostro modello), senza un vantaggio dimostrato. Le quote sono quelle di Bet365 dove l'API le passa, " +
+      "altrimenti stimate da noi. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, " +
       "22% su una tripla. Le giocate con vantaggio sono in Oggi.</span></p></div>";
   }
 

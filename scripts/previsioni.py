@@ -925,6 +925,7 @@ MIN_AFFIDABILITA_GIOCATE = 55
 QUOTA_MINIMA_ALTA = 1.45     # sotto non vale la pena giocare
 PROB_MINIMA_MISTA = 0.30     # sotto e' un esito campato per aria
 QUOTE_MISTE = (5.0, 10.0, 17.0)
+MISTE_ATTIVE = False
 MAX_EVENTI_MISTA = 5         # da due a cinque partite, non di piu'
 # Tetto alla quota di ogni singolo esito di una mista: 2.20 vuol dire
 # almeno il 42% di probabilita'. La regola sui componenti controlla i
@@ -946,6 +947,11 @@ RHO_SISTEMI = -0.05          # sostituito dal valore del modello a runtime
 # vale 1.05, e la combinazione piu' bassa del sistema finirebbe sotto
 # 1.10, cioe' una giocata che non vale la pena fare.
 QUOTA_MINIMA_ESITO = 1.10
+# v21.1: in un sistema nessuna partita puo' superare il 93% (prima c'erano
+# sistemi al 100%, con esiti che coprivano ogni risultato)
+UNIONE_MASSIMA = 0.93
+# v21.1: in Alta probabilita' solo eventi con la quota vera di Bet365
+SOLO_QUOTE_VERE = True
 
 # Nelle miste non si gioca contro un favorito chiaro: se una squadra e'
 # data sopra questa soglia, l'esito scelto per quella partita deve
@@ -1133,8 +1139,9 @@ def _schedina(voci, titolo, nota):
     for v in voci:
         prob *= v["prob"]
         quota *= v["quota"] if v["quota"] else _quota_equa(v["prob"])
+    # eventi senza la quota di Bet365: lì la quota e' la nostra stima
     return {"titolo": titolo, "nota": nota, "voci": voci,
-            "prob": prob, "quota": quota}
+            "prob": prob, "quota": quota, "stimate": sum(1 for v in voci if not v["quota"])}
 
 
 def _sistema(gruppi, titolo, nota):
@@ -1200,7 +1207,7 @@ def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=(),
     """
     sicuri = [v for v in _raccogli(previsioni, SEMPLICI + SICURI,
                                    prob_min=0.60)
-              if v["prob"] <= 0.90]
+              if v["prob"] <= 0.90 and (v["quota"] or not SOLO_QUOTE_VERE)]
     sicuri.sort(key=lambda v: -v["prob"])
 
     # Per ogni partita si tengono piu' esiti possibili, non solo il piu'
@@ -1312,6 +1319,65 @@ def _calcola_esatti(previsioni, quanti=5):
     return tutti[:quanti], len(tutti)
 
 
+# --- giocate dalle probabilita' di Pinnacle (v21.1) -------------------
+# Le schedine di Giocate usavano il nostro modello, meno preciso del
+# mercato, e una quota stimata (1 / probabilita') quasi ovunque: la quota
+# vera dei bookmaker c'era solo per l'1X2. Ora le probabilita' vengono
+# dalle quote di Pinnacle (gol attesi, poi tutti i mercati come in
+# quote_giuste.py) e la quota di ogni evento e' quella di Bet365 dove
+# l'API la passa; dove no resta stimata, e l'app lo dice.
+LIBRO_GIOCATE = "Bet365"
+SU_LIBRO = {"1": ("match winner", "home"), "X": ("match winner", "draw"), "2": ("match winner", "away"),
+            "1X": ("double chance", "home/draw"), "12": ("double chance", "home/away"),
+            "X2": ("double chance", "draw/away"),
+            "gol_gol": ("both teams score", "yes"), "no_gol": ("both teams score", "no"),
+            "casa_segna": ("total - home", "over 0.5"), "fuori_segna": ("total - away", "over 0.5")}
+for _l in ("1.5", "2.5", "3.5"):
+    _k = _l.replace(".", "")
+    SU_LIBRO[f"over{_k}"] = ("goals over/under", f"over {_l}")
+    SU_LIBRO[f"under{_k}"] = ("goals over/under", f"under {_l}")
+    for _chi, _m in (("casa", "total - home"), ("fuori", "total - away")):
+        SU_LIBRO[f"{_chi}_over{_k}"] = (_m, f"over {_l}")
+        SU_LIBRO[f"{_chi}_under{_k}"] = (_m, f"under {_l}")
+
+
+def con_pinnacle(previsioni):
+    """
+    Le stesse previsioni, ma con probabilita' e gol attesi ricavati da
+    Pinnacle e le quote di Bet365 per evento. Solo le partite dove
+    Pinnacle c'e'; le quote vengono da QUOTE_GIRO, appena scaricato.
+    """
+    try:
+        import valore as V
+        Q = V.Q
+    except Exception:
+        return []
+    if Q is None:
+        return []
+    cal = Q.carica_calibrazione()
+    voci = leggi_giro().get("voci", {})
+    fuori = []
+    for p in previsioni:
+        voce = voci.get(str(p["fixture_id"]))
+        libri = V.leggi_quote(voce) if voce else {}
+        gp = V.gol_pinnacle(libri["Pinnacle"]) if libri.get("Pinnacle") else None
+        if not gp:
+            continue
+        m = mercati(Q.matrice(gp["lc"], gp["lf"]))
+        grezze, _ = Q.tutte(*gp["p"], gp["po"], gol=(gp["lc"], gp["lf"]), linea=gp["linea"],
+                            quota_pt=(cal or {}).get("quota_primo_tempo"))
+        m.update({k: v for k, v in Q.correggi(grezze, cal).items() if k in TUTTI_I_MERCATI})
+        libro = libri.get(LIBRO_GIOCATE) or {}
+        quote = {}
+        for k, (mercato, esito) in SU_LIBRO.items():
+            q = (libro.get(mercato) or {}).get(esito)
+            if q:
+                quote[f"quota_{k}"] = q
+        fuori.append(dict(p, mercati=m, mercato=quote, affidabilita=100,
+                          gol_attesi_casa=gp["lc"], gol_attesi_fuori=gp["lf"]))
+    return fuori
+
+
 def _proposte_giorno(previsioni):
     """
     Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
@@ -1330,8 +1396,9 @@ def _proposte_giorno(previsioni):
         except (ValueError, OSError):
             pass
 
+    previsioni = con_pinnacle(previsioni)      # v21.1
     esatti, disponibili = _calcola_esatti(previsioni)
-    dati = {"giorno": oggi,
+    dati = {"giorno": oggi, "fonte": "pinnacle",
             "generato": datetime.now(timezone.utc).isoformat(timespec="minutes"),
             "giocate": costruisci_giocate(previsioni),
             "esatti": esatti, "esatti_disponibili": disponibili}
@@ -1412,6 +1479,10 @@ def costruisci_giocate(previsioni):
     proposte["sistemi"] = _costruisci_sistemi(previsioni)
 
     # --- miste a quota mirata ---------------------------------------
+    # spente dalla v21.1 (decisione dell'utente): 4 vinte su 47, e su tanti
+    # eventi il margine del bookmaker si moltiplica
+    if not MISTE_ATTIVE:
+        return proposte
     # Tre proposte con quote crescenti. Per ognuna si aggiungono eventi
     # finche' la quota non si avvicina al bersaglio, partendo da punti
     # diversi della lista per non produrre tre schedine identiche.
@@ -1521,19 +1592,26 @@ def _costruisci_sistemi(previsioni):
         # anche i mercati ad alta probabilita' (l'Under 2.5 di una
         # squadra, per dire) l'unione salirebbe al 99% e la quota del
         # sistema crollerebbe. Quelli servono alle miste, non qui.
+        esatto = (m.get("punteggi_probabili") or [{}])[0].get("risultato")
+        # v21.1: la seconda gamba non deve coprire quello che la prima lascia
+        # fuori (Over 1.5 + Under 2.5 = ogni risultato, sistema al 100%):
+        # si prende la piu' probabile che tiene l'unione sotto UNIONE_MASSIMA
+        def tiene(k):
+            return prob_unione(M, [e for e in (prudente, k, esatto) if e]) <= UNIONE_MASSIMA
         intermedi = [k for k in ("1", "2", "over25", "under25",
                                  "gol_gol", "no_gol", "mg_1_2", "mg_2_3")
-                     if m.get(k, 0) >= 0.35 and abbastanza(k)]
+                     if m.get(k, 0) >= 0.35 and abbastanza(k) and tiene(k)]
         intermedio = max(intermedi, key=lambda k: m[k]) if intermedi else None
-        combo = [k for k in COMBO if m.get(k, 0) >= 0.30 and abbastanza(k)]
+        combo = [k for k in COMBO if m.get(k, 0) >= 0.30 and abbastanza(k) and tiene(k)]
         combo_scelta = max(combo, key=lambda k: m[k]) if combo else None
-        esatto = (m.get("punteggi_probabili") or [{}])[0].get("risultato")
 
         scelta = [e for e in (prudente, intermedio or combo_scelta, esatto)
                   if e]
         if len(scelta) < 2:
             continue
         unione = prob_unione(M, scelta)
+        if unione > UNIONE_MASSIMA:
+            continue
         preparate.append({"p": p, "esiti": scelta, "unione": unione,
                           "quote": [m.get(e) for e in scelta]})
 
@@ -1714,14 +1792,16 @@ def rendimento_schedine():
             return None
 
         cur.execute("""
-            SELECT e.codice, e.esito, f.goals_home, f.goals_away
+            SELECT e.codice, e.esito, f.goals_home, f.goals_away, e.fixture_id
             FROM schedine_eventi e
             JOIN fixtures f ON f.id = e.fixture_id
             WHERE f.goals_home IS NOT NULL AND f.status IN ('FT','AET','PEN')
         """)
-        esiti = {}
-        for codice, esito, gc, ga in cur.fetchall():
-            esiti.setdefault(codice, []).append(esito_avvenuto(esito, gc, ga))
+        esiti, partite = {}, {}
+        for codice, esito, gc, ga, fid in cur.fetchall():
+            a = esito_avvenuto(esito, gc, ga)
+            esiti.setdefault(codice, []).append(a)
+            partite.setdefault(codice, {}).setdefault(fid, []).append(a)
         conn.close()
     except sqlite3.OperationalError:
         return None
@@ -1731,7 +1811,12 @@ def rendimento_schedine():
         avvenuti = esiti.get(codice, [])
         if len(avvenuti) < n_eventi or any(a is None for a in avvenuti):
             continue        # non tutte le partite sono state giocate
-        vinta = all(avvenuti)
+        if categoria == "sistemi":
+            # v21.1: un sistema e' vinto se in OGNI partita si avvera almeno
+            # uno degli esiti scelti (prima si chiedeva che si avverassero tutti)
+            vinta = all(any(x) for x in partite.get(codice, {}).values())
+        else:
+            vinta = all(avvenuti)
         d = per_categoria.setdefault(categoria, {"n": 0, "vinte": 0,
                                                  "ritorno": 0.0,
                                                  "attesa": 0.0})
