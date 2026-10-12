@@ -25,6 +25,7 @@ import math
 import sqlite3
 import urllib.request
 import urllib.parse
+import re
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from nucleo import media_pesata, carica_conservazione, indicatori_squadra
@@ -43,6 +44,13 @@ MAX_CHIAMATE_QUOTE = 200
 # quote grezze dell'ultimo giro, per verifica.py, e quando e' stato
 # scaricato ogni giorno: i giorni lontani si riscaricano ogni 3 ore
 QUOTE_GIRO = "quote_giro.json"
+# all'intervallo (v21.0): tutti i campionati veri, anche senza Pinnacle; il
+# tipo di ogni campionato (League o Cup) si legge una volta al giorno
+FILE_LEGHE = os.path.join("stato", "leghe_tipo.json")
+ESCLUSE_INTERVALLO = re.compile(
+    r"women|femenin|feminin|frauen|femminil|w-league|wk-league|nwsl|wsl|"
+    r"\bu-?1[5-9]\b|\bu-?2[0-3]\b|youth|primavera|reserve|junior|academy|development|"
+    r"revela|sub-?2|friendl", re.I)
 ORE_GIORNI_LONTANI = 3
 MIN_PARTITE = 3
 MAX_GOL = 8
@@ -336,7 +344,75 @@ def leggi_giro():
         return {}
 
 
-def scrivi_giro(voci, completi, extra=()):
+def tipi_leghe():
+    """{id: [tipo, paese, nome]} di tutti i campionati, letto dall'API una
+    volta al giorno (1 chiamata) e tenuto in FILE_LEGHE."""
+    try:
+        with open(FILE_LEGHE, encoding="utf-8") as f:
+            d = json.load(f)
+        if datetime.now(timezone.utc) - datetime.fromisoformat(d["letto"]) < timedelta(days=1):
+            return {int(k): v for k, v in d["leghe"].items()}
+    except (OSError, ValueError, KeyError, TypeError):
+        d = None
+    risposta = chiamata("leagues", {"current": "true"})
+    if not risposta:
+        return {int(k): v for k, v in (d or {}).get("leghe", {}).items()}
+    leghe = {x["league"]["id"]: [x["league"].get("type"), (x.get("country") or {}).get("name"),
+                                 x["league"].get("name")] for x in risposta}
+    try:
+        with open(FILE_LEGHE, "w", encoding="utf-8") as f:
+            json.dump({"letto": datetime.now(timezone.utc).isoformat(), "leghe": leghe}, f, ensure_ascii=False)
+    except OSError:
+        pass
+    return leghe
+
+
+def ammessa_intervallo(lid, tipi):
+    """Un campionato vero (non coppa), non russo, non femminile, giovanile o di riserve."""
+    t = tipi.get(lid)
+    if not t or t[0] != "League" or (t[1] or "") == "Russia":
+        return False
+    return not ESCLUSE_INTERVALLO.search(t[2] or "")
+
+
+def gol_da_voce(voce):
+    """
+    (gol attesi casa, ospite, fonte) dalle quote prima della partita: da
+    Pinnacle se c'e', se no dalla media dei bookmaker (almeno due), tolto
+    il margine a ognuno. None se non bastano. Usa i calcoli di valore.py.
+    """
+    try:
+        import valore as V
+    except Exception:
+        return None
+    libri = V.leggi_quote(voce)
+    if libri.get("Pinnacle"):
+        gp = V.gol_pinnacle(libri["Pinnacle"])
+        if gp:
+            return gp["lc"], gp["lf"], "pinnacle"
+    esito = {"home": [], "draw": [], "away": []}
+    sopra = {}
+    for l in libri.values():
+        mw, ou = l.get("match winner") or {}, l.get("goals over/under") or {}
+        if all(k in mw for k in esito):
+            p = V.potenza({k: mw[k] for k in esito})
+            for k in esito:
+                esito[k].append(p[k])
+        for linea in ("2.5", "3.5", "1.5"):
+            if f"over {linea}" in ou and f"under {linea}" in ou:
+                sopra.setdefault(linea, []).append(V.potenza({"o": ou[f"over {linea}"], "u": ou[f"under {linea}"]})["o"])
+    if len(esito["home"]) < 2 or not sopra:
+        return None
+    linea = "2.5" if "2.5" in sopra else max(sopra, key=lambda k: len(sopra[k]))
+    media = lambda v: sum(v) / len(v)
+    po = media(sopra[linea])
+    giuste = {"match winner": {k: 1 / media(v) for k, v in esito.items()},
+              "goals over/under": {f"over {linea}": 1 / po, f"under {linea}": 1 / (1 - po)}}
+    gp = V.gol_pinnacle(giuste)
+    return (gp["lc"], gp["lf"], "media_bookmaker") if gp else None
+
+
+def scrivi_giro(voci, completi, extra=(), intervallo=()):
     """
     Lascia a verifica.py le quote grezze appena scaricate, cosi' non le
     riscarica: e' lo stesso download, fatto pochi secondi prima.
@@ -354,18 +430,23 @@ def scrivi_giro(voci, completi, extra=()):
                        "ultimo_scarico": ultimi,
                        "voci": voci,
                        # le partite dei campionati solo per valore.py
-                       "partite_extra": list(extra)}, f, ensure_ascii=False)
+                       "partite_extra": list(extra),
+                       # tutte le altre partite, solo per l'intervallo (v21.0):
+                       # gol attesi da Pinnacle o dalla media dei bookmaker
+                       "partite_intervallo": list(intervallo)}, f, ensure_ascii=False)
     except OSError as e:
         print(f"  [quote del giro non salvate: {e}]")
 
 
-def scarica_quote(giorni, id_ammessi, extra=()):
+def scarica_quote(giorni, id_ammessi, extra=(), info_intervallo=None):
     """Quote per giornata: poche chiamate invece di una per partita."""
     quote = {}
     voci = {}
     completi = []
     chiamate = 0
     id_extra = {e["fixture_id"] for e in extra}
+    info_intervallo = info_intervallo or {}
+    intervallo = {}
     for giorno in sorted(giorni):
         pagina = 1
         while chiamate < MAX_CHIAMATE_QUOTE:
@@ -389,6 +470,11 @@ def scarica_quote(giorni, id_ammessi, extra=()):
                 fid = (voce.get("fixture") or {}).get("id")
                 if fid in id_extra:
                     voci[fid] = voce      # solo per valore.py
+                if fid in info_intervallo and fid not in intervallo:
+                    g = gol_da_voce(voce)
+                    if g:
+                        intervallo[fid] = dict(info_intervallo[fid], fixture_id=fid,
+                                               lc=round(g[0], 4), lf=round(g[1], 4), fonte=g[2])
                 if fid in id_ammessi:
                     voci[fid] = voce
                     est = quote_mercati(voce)
@@ -399,7 +485,13 @@ def scarica_quote(giorni, id_ammessi, extra=()):
                 break
             pagina += 1
     print(f"  quote trovate: {len(quote)} (chiamate {chiamate})")
-    scrivi_giro(voci, completi, extra)
+    if info_intervallo:
+        fonti = {}
+        for x in intervallo.values():
+            fonti[x["fonte"]] = fonti.get(x["fonte"], 0) + 1
+        print(f"  partite solo per l'intervallo: {len(intervallo)} su {len(info_intervallo)} "
+              f"con i gol attesi ({', '.join(f'{k} {n}' for k, n in fonti.items()) or 'nessuna'})")
+    scrivi_giro(voci, completi, extra, intervallo.values())
     return quote
 
 
@@ -2086,6 +2178,8 @@ def main():
     print(f"Cerco le partite dei prossimi {GIORNI_AVANTI} giorni...")
 
     extra = []      # partite dei campionati solo per valore.py, oggi e domani
+    info_intervallo = {}   # tutte le altre, solo per l'intervallo (v21.0)
+    tipi_lega = tipi_leghe() if CON_QUOTE else {}
     for scarto in range(GIORNI_AVANTI + 1):
         giorno = (oggi + timedelta(days=scarto)).isoformat()
         tutte = chiamata("fixtures", {"date": giorno})
@@ -2096,6 +2190,16 @@ def main():
                        "casa": p["teams"]["home"]["name"], "fuori": p["teams"]["away"]["name"]}
                       for p in tutte if p["league"]["id"] in CAMPIONATI_VALORE
                       and p["fixture"]["status"]["short"] in ("NS", "TBD")]
+            for p in tutte:
+                lid = p["league"]["id"]
+                if (lid in nomi_lega or lid in CAMPIONATI_VALORE
+                        or p["fixture"]["status"]["short"] not in ("NS", "TBD")
+                        or not ammessa_intervallo(lid, tipi_lega)):
+                    continue
+                info_intervallo[p["fixture"]["id"]] = {
+                    "data": p["fixture"]["date"],
+                    "campionato": f"{p['league'].get('country') or ''} - {p['league'].get('name') or ''}",
+                    "casa": p["teams"]["home"]["name"], "fuori": p["teams"]["away"]["name"]}
         if not partite:
             continue
         print(f"  {giorno}: {len(partite)} partite")
@@ -2195,7 +2299,7 @@ def main():
         else:
             quote = scarica_quote(giorni_da_scaricare(previsioni)
                                   | {e["data"][:10] for e in extra},
-                                  {p["fixture_id"] for p in previsioni}, extra)
+                                  {p["fixture_id"] for p in previsioni}, extra, info_intervallo)
         quote = ricorda_quote(quote, {p["fixture_id"] for p in previsioni})
         for p in previsioni:
             q = quote.get(p["fixture_id"])

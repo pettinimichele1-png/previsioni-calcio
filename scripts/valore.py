@@ -709,11 +709,12 @@ def quote_del_pipeline():
         eta = datetime.now(timezone.utc) - datetime.fromisoformat(d["generato"])
         voci = d["voci"]
         extra = [e for e in d.get("partite_extra") or [] if isinstance(e, dict) and "fixture_id" in e]
+        solo_pausa = [e for e in d.get("partite_intervallo") or [] if isinstance(e, dict) and "fixture_id" in e]
     except (OSError, ValueError, KeyError, TypeError):
-        return {}, []
+        return {}, [], []
     if eta > timedelta(minutes=MINUTI_PIPELINE) or not isinstance(voci, dict):
-        return {}, []
-    return voci, extra
+        return {}, [], []
+    return voci, extra, solo_pausa
 
 
 def giro(notifica=False):
@@ -731,7 +732,7 @@ def giro(notifica=False):
     if not tutte:
         print("  previsioni.json non trovato: lancialo dalla cartella del progetto.")
         return
-    dal_pipeline, extra = quote_del_pipeline()
+    dal_pipeline, extra, solo_pausa = quote_del_pipeline()
     nostre = {p["fixture_id"] for p in tutte}
     tutte = tutte + [dict(e, extra=True) for e in extra if e["fixture_id"] not in nostre]
     palinsesto = {p["fixture_id"]: p for p in tutte
@@ -782,7 +783,7 @@ def giro(notifica=False):
                                   "data": info["data"], "casa": info.get("casa", "?"),
                                   "fuori": info.get("fuori", "?"),
                                   "campionato": info.get("campionato", ""),
-                                  "extra": bool(info.get("extra")),
+                                  "extra": bool(info.get("extra")), "fonte": "pinnacle",
                                   "aggiornato": adesso.isoformat(timespec="minutes")}
         if fid in palinsesto and not palinsesto[fid].get("extra"):
             # le probabilita' per la pagina della partita: le partite dei
@@ -806,6 +807,20 @@ def giro(notifica=False):
                 c["agg"] = voci[0].get("update")
                 giocate.append(c)
     giocate.sort(key=lambda c: (quando(c["info"]), c["info"]["fixture_id"], sul_tempo(c)))
+    # all'intervallo anche tutte le altre partite di oggi (v21.0): i gol attesi
+    # li ha gia' calcolati il pipeline, da Pinnacle o dalla media dei bookmaker
+    for e in solo_pausa:
+        fid = str(e["fixture_id"])
+        try:
+            q = leggi_data(e["data"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if fid in gol_oggi or giornata(q) != oggi or q <= adesso:
+            continue
+        gol_oggi[fid] = {"lc": e["lc"], "lf": e["lf"], "data": e["data"], "casa": e.get("casa", "?"),
+                         "fuori": e.get("fuori", "?"), "campionato": e.get("campionato", ""),
+                         "extra": True, "fonte": e.get("fonte", "media_bookmaker"),
+                         "aggiornato": adesso.isoformat(timespec="minutes")}
 
     # registro: ogni giocata una volta sola, alla quota del momento in cui e' comparsa
     gia = {r["id"] for r in registro}
@@ -1756,6 +1771,8 @@ def intervallo():
                  "data": g["data"], "partita": partita, "campionato": g.get("campionato", ""),
                  "mercato": k, "scelta": "", "chiave": None, "ht": f"{htc}-{hta}",
                  "extra": bool(g.get("extra")), "stat_pt": stat_pt.get(fid),
+                 # da dove vengono i gol attesi di partenza (v21.0): pinnacle o media_bookmaker
+                 "fonte_gol": g.get("fonte", "pinnacle"),
                  "nome": f"{nome} (intervallo {htc}-{hta})", "book": LIBRO_LIVE, "quota": q,
                  "commissione": 0, "giusta": round(1 / p, 3),
                  "minima": math.ceil((1 + VANTAGGIO_MIN_INTERVALLO) / p * 100 - 1e-9) / 100,
