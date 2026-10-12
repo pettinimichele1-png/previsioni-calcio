@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.2";
+  var VERSIONE_APP = "21.3";
 
   var stato = {
     dati: null,
@@ -1004,18 +1004,23 @@
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
-    { id: "esatti", nome: "Esatti", testo: "I cinque risultati esatti più probabili secondo il nostro modello." }
+    { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
 
   function corpoEsatti() {
     var lista = stato.dati.esatti || [];
     var html = '<div class="avviso">' + icona("avviso") +
-      "<span>La parte meno verificata del modello. Anche il punteggio più probabile esce raramente più di una volta su sette.</span></div>";
-    if (!lista.length) html += '<div class="vuoto"><h3>Nessuna partita</h3>Non ci sono partite in programma.</div>';
+      "<span>Anche il punteggio più probabile esce raramente più di una volta su sette. Si propone solo dal 14% in su; " +
+      "accanto, la quota di Bet365: se paga meno del giusto, in media si perde.</span></div>";
+    if (!lista.length) html += '<div class="vuoto"><h3>Nessun risultato esatto</h3>Oggi nessun punteggio arriva al 14% di probabilità.</div>';
     lista.forEach(function (r, i) {
       html += '<div class="esatto carta' + (r.p >= 0.15 ? " netto" : "") + '"><div class="pos' + (i === 0 ? " primo" : "") + '">' + (i + 1) +
         '</div><div class="punteggio">' + esc(r.ris) + '</div><div class="info"><b>' + conBandiera(r) + "</b><small>" + esc(r.info) +
-        "</small><span>stacca il secondo di " + (r.distacco * 100).toFixed(1).replace(".", ",") + ' punti</span></div><div class="perc">' +
+        "</small><span>stacca il secondo di " + (r.distacco * 100).toFixed(1).replace(".", ",") + " punti</span>" +
+        // v21.3: la quota di Bet365 contro il prezzo giusto
+        (r.quota ? '<span>Bet365 ' + quota(r.quota) + " · giusto " + quota(1 / r.p) + ' · <b class="' +
+          (r.vantaggio >= 0 ? "turchese" : "arancio") + '">' + pctSegno(r.vantaggio, 0) + "</b></span>" : "") +
+        '</div><div class="perc">' +
         pct(r.p, 1) + "</div></div>";
     });
     return html;

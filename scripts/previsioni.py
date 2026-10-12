@@ -1276,6 +1276,7 @@ def _alta_probabilita(previsioni, quante, etichetta=None, gia_fatte=(),
 
 
 FILE_GIOCATE = "giocate_giorno.json"
+PROB_MINIMA_ESATTO = 0.14   # v21.3: sotto, il risultato esatto non si propone
 ORA_PROPOSTE = 7          # a che ora del mattino nascono le proposte
 
 
@@ -1300,8 +1301,10 @@ def _calcola_esatti(previsioni, quanti=5):
     tutti = []
     for p in _finestra_giorni(previsioni):
         punteggi = p["mercati"].get("punteggi_probabili") or []
-        if not punteggi:
+        # v21.3: solo i punteggi abbastanza probabili
+        if not punteggi or punteggi[0]["prob"] < PROB_MINIMA_ESATTO:
             continue
+        q = (p.get("quote_esatti") or {}).get(punteggi[0]["risultato"])
         secondo = punteggi[1]["prob"] if len(punteggi) > 1 else 0.0
         tutti.append({
             "fixture_id": p["fixture_id"],
@@ -1309,6 +1312,8 @@ def _calcola_esatti(previsioni, quanti=5):
             "prob": punteggi[0]["prob"],
             "distacco": punteggi[0]["prob"] - secondo,
             "alternativi": punteggi[1:3],
+            # la quota di Bet365 per quel punteggio e quanto paga rispetto al giusto
+            "quota": q, "vantaggio": round(punteggi[0]["prob"] * q - 1, 4) if q else None,
             # solo i campi che servono a mostrarli: cosi' restano validi
             # anche quando la partita e' gia' stata giocata
             "p": {k: p.get(k) for k in ("casa", "fuori", "campionato", "data",
@@ -1373,7 +1378,19 @@ def con_pinnacle(previsioni):
             q = (libro.get(mercato) or {}).get(esito)
             if q:
                 quote[f"quota_{k}"] = q
-        fuori.append(dict(p, mercati=m, mercato=quote, affidabilita=100,
+        # le quote di Bet365 sui risultati esatti ("1:0" -> "1-0"), v21.3
+        esatti = {}
+        for b in (voce.get("bookmakers") or []):
+            if b.get("name") != LIBRO_GIOCATE:
+                continue
+            for bet in b.get("bets") or []:
+                if bet.get("name") in ("Exact Score", "Correct Score"):
+                    for x in bet.get("values") or []:
+                        try:
+                            esatti[str(x.get("value")).replace(":", "-")] = float(x.get("odd"))
+                        except (TypeError, ValueError):
+                            pass
+        fuori.append(dict(p, mercati=m, mercato=quote, affidabilita=100, quote_esatti=esatti,
                           gol_attesi_casa=gp["lc"], gol_attesi_fuori=gp["lf"]))
     return fuori
 
@@ -1396,12 +1413,12 @@ def _proposte_giorno(previsioni):
         except (ValueError, OSError):
             pass
 
-    # v21.2: i risultati esatti restano del nostro modello (scelta dell'utente:
-    # i favoriti delle nostre statistiche, non del mercato); alta probabilita'
-    # e sistemi usano le probabilita' di Pinnacle (v21.1)
-    esatti, disponibili = _calcola_esatti(previsioni)
+    # v21.3: anche i risultati esatti di nuovo da Pinnacle (piu' precisi del
+    # modello anche sui punteggi: 11,6% contro 10,8% sull'archivio), solo dal
+    # 14% in su e con la quota di Bet365 accanto
     da_pinnacle = con_pinnacle(previsioni)
-    dati = {"giorno": oggi, "fonte": "pinnacle", "fonte_esatti": "modello",
+    esatti, disponibili = _calcola_esatti(da_pinnacle)
+    dati = {"giorno": oggi, "fonte": "pinnacle", "fonte_esatti": "pinnacle",
             "generato": datetime.now(timezone.utc).isoformat(timespec="minutes"),
             "giocate": costruisci_giocate(da_pinnacle),
             "esatti": esatti, "esatti_disponibili": disponibili}

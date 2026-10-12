@@ -343,7 +343,8 @@ def esatti_per_app(previsioni):
     scelti, _ = P.esatti_correnti(previsioni)
     return [{"ris": d["risultato"], "p": d["prob"], "distacco": d["distacco"],
              "partita": f"{d['p']['casa']} – {d['p']['fuori']}",
-             "info": info_partita(d["p"]), "campionato": d["p"].get("campionato", "")}
+             "info": info_partita(d["p"]), "campionato": d["p"].get("campionato", ""),
+             "quota": d.get("quota"), "vantaggio": d.get("vantaggio")}
             for d in scelti]
 
 
