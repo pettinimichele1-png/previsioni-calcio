@@ -1295,6 +1295,45 @@ FILE_STAT_PT = os.path.join("stato", "intervallo_statistiche.json")
 # delle partite con le statistiche del primo tempo, per verificarla
 FILE_ANALISI = os.path.join("stato", "intervallo_analisi.json")
 FILE_RISULTATI_PT = os.path.join("stato", "intervallo_risultati.json")
+# il modello con le statistiche del primo tempo (modello_primo_tempo.py),
+# solo se ha passato la prova; serve solo all'analisi, non alle giocate
+FILE_MODELLO_STAT = os.path.join("stato", "intervallo_stat.json")
+NOMI_STAT = {"Shots on Goal": "porta", "Total Shots": "tiri", "Corner Kicks": "angoli"}
+
+
+def gol_con_statistiche(g, htc, hta, grezze, ms):
+    """
+    I gol attesi del secondo tempo col modello delle statistiche, o None
+    se mancano dati. grezze: le statistiche del primo tempo come le salva
+    statistiche_primo_tempo() ({"casa": {tipo: valore}, "fuori": {...}}).
+    """
+    if not ms or not grezze:
+        return None
+    voci = ms.get("voci") or []
+    num = {}
+    for chi in ("casa", "fuori"):
+        d = {}
+        for tipo, v in (grezze.get(chi) or {}).items():
+            k = NOMI_STAT.get(tipo)
+            if k:
+                try:
+                    d[k] = float(str(v).rstrip("%"))
+                except (TypeError, ValueError):
+                    pass
+        if any(k not in d for k in voci):
+            return None
+        num[chi] = d
+    t, s_c, s_f = ms["theta"], ms["quota_pt_casa"], ms["quota_pt_ospite"]
+
+    def stato(d):
+        return 0 if d <= -2 else 1 if d == -1 else 2 if d == 0 else 3 if d == 1 else 4
+    ritmo = (htc + hta) - (g["lc"] * s_c + g["lf"] * s_f)
+    ec = t[stato(htc - hta)] + t[10] * ritmo
+    ef = t[5 + stato(hta - htc)] + t[10] * ritmo
+    for i, k in enumerate(voci):
+        ec += t[11 + 2 * i] * num["casa"][k] / 5.0 + t[12 + 2 * i] * num["fuori"][k] / 5.0
+        ef += t[11 + 2 * i] * num["fuori"][k] / 5.0 + t[12 + 2 * i] * num["casa"][k] / 5.0
+    return g["lc"] * (1 - s_c) * math.exp(ec), g["lf"] * (1 - s_f) * math.exp(ef)
 CHIAVI_ANALISI = ("st_casa_si", "st_ospite_si", "fin_1", "fin_X", "fin_2",
                   "fin_over15", "fin_over25", "fin_over35", "fin_gol")
 RISULTATI_OGNI = timedelta(minutes=15)
@@ -1444,7 +1483,11 @@ def prob_pausa(lc, lf, htc, hta, mod, resta=1.0):
     di secondo tempo ancora da giocare (1 all'intervallo): serve al
     confronto alla ripresa, per togliere l'effetto dei minuti passati."""
     a, b = gol_secondo_tempo(lc, lf, htc, hta, mod)
-    a, b = a * resta, b * resta
+    return prob_da_gol(a * resta, b * resta, htc, hta)
+
+
+def prob_da_gol(a, b, htc, hta):
+    """I mercati dell'intervallo dai gol attesi del secondo tempo."""
     pa, pb = [math.exp(-a)], [math.exp(-b)]
     for k in range(1, 10):
         pa.append(pa[-1] * a / k)
@@ -1626,13 +1669,23 @@ def analizza(in_pausa, gol, mod, stat_pt, id_casa=None, id_fuori=None):
     Pinnacle servira' a verificare il modello del primo tempo dal vivo."""
     id_casa, id_fuori = id_casa or {}, id_fuori or {}
     tutte = carica(FILE_ANALISI, {})
+    ms = carica(FILE_MODELLO_STAT, None)
+    grezze = carica(FILE_STAT_PT, {}) if ms else {}
     nuove = 0
     for fid, (htc, hta) in in_pausa.items():
         g = gol.get(fid)
         if fid in tutte or not g or not mod:
             continue
         a, b = gol_secondo_tempo(g["lc"], g["lf"], htc, hta, mod)
-        prob = prob_pausa(g["lc"], g["lf"], htc, hta, mod)
+        modello = "punteggio"
+        try:
+            con_stat = gol_con_statistiche(g, htc, hta, grezze.get(fid), ms)
+        except (KeyError, IndexError, TypeError, ValueError):
+            con_stat = None
+        if con_stat:
+            a, b = con_stat
+            modello = "statistiche"
+        prob = prob_da_gol(a, b, htc, hta)
         tutte[fid] = {"data": g["data"], "partita": f"{g['casa']} - {g['fuori']}",
                       "campionato": g.get("campionato", ""), "ht": f"{htc}-{hta}",
                       "letta": datetime.now(FUSO).isoformat(timespec="minutes"),
@@ -1642,7 +1695,8 @@ def analizza(in_pausa, gol, mod, stat_pt, id_casa=None, id_fuori=None):
                       "casa": g["casa"], "fuori": g["fuori"], "lc": g["lc"], "lf": g["lf"],
                       "attesi_pt": [round(g["lc"] * mod["quota_pt_casa"], 2),
                                     round(g["lf"] * mod["quota_pt_ospite"], 2)],
-                      "id_casa": id_casa.get(fid), "id_fuori": id_fuori.get(fid)}
+                      "id_casa": id_casa.get(fid), "id_fuori": id_fuori.get(fid),
+                      "modello": modello}
         nuove += 1
     if nuove:
         limite = datetime.now(timezone.utc) - timedelta(days=60)

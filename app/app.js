@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.6";
+  var VERSIONE_APP = "21.7";
 
   var stato = {
     dati: null,
@@ -771,7 +771,8 @@
     html += '<section class="blocco elenco">' + listaApri(gruppiFinale(r), true) + "</section>";
 
     return html + '<p class="nota-piccola centro">Accanto a ogni percentuale la quota giusta: se il tuo bookmaker paga di più, ti paga più del dovuto. ' +
-      "Il calcolo parte dai gol attesi prima della partita e li corregge con il primo tempo (punteggio e ritmo). " +
+      "Il calcolo parte dai gol attesi prima della partita e li corregge con il primo tempo (" +
+      (a.modello === "statistiche" ? "punteggio, ritmo e statistiche: tiri, tiri in porta, angoli" : "punteggio e ritmo") + "). " +
       "Non fa parte delle giocate di valore né della prova sulla carta." + (r.fin ? " ✓ = è uscito." : "") + "</p>";
   }
   // la scheda di una partita nell'elenco: si tocca per aprire l'analisi

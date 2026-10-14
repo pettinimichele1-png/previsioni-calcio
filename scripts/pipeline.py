@@ -195,6 +195,12 @@ def main():
         esegui("esporta_app.py", "dati per l'app")
         esegui("notifiche.py", "notifiche", ["invia"])
         esegui("quote_extra.py", "quote su corner e cartellini")
+        # storico dell'intervallo (v21.7): calendari e statistiche del primo
+        # tempo delle partite nuove; il lunedi' si rifa' la prova del modello
+        # del primo tempo, che si aggiorna solo se passa
+        if esegui("storico_intervallo.py", "storico dell'intervallo", ["aggiorna"]):
+            if datetime.now().weekday() == 0:
+                esegui("modello_primo_tempo.py", "modello del primo tempo")
 
     elif modalita == "previsioni":
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])
