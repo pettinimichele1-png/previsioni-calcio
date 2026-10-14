@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.7";
+  var VERSIONE_APP = "21.8";
 
   var stato = {
     dati: null,

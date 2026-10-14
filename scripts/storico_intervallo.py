@@ -18,9 +18,10 @@ dei suoi 45 campionati si copiano da li' senza chiamate. Le altre:
   - i 16 campionati europei di football-data.co.uk, stagione 2025/26,
     che hanno le quote di Pinnacle per imparare il modello (1 chiamata a
     campionato per il calendario);
-  - i campionati che vediamo davvero all'intervallo fuori dal modello
-    (dalle statistiche e dalle analisi gia' raccolte e da
-    campionati_valore.py), stagione in corso.
+  - tutti gli altri campionati che l'app analizza: quelli aggiunti per
+    le giocate di valore (campionati_valore.py) e, dalla v21.8, tutti
+    quelli che l'intervallo puo' analizzare (leghe_intervallo()),
+    stagione in corso.
 Le statistiche costano 1 chiamata a partita (fixtures/statistics con
 half=true). Ci si ferma sopra META' del limite giornaliero, per lasciare
 tutto il resto al pipeline e a valore.py.
@@ -165,6 +166,30 @@ def leghe_viste():
     return ids
 
 
+def leghe_intervallo():
+    """
+    (dalla v21.8) Tutti i campionati che l'intervallo puo' analizzare: quelli
+    veri ammessi da previsioni.ammessa_intervallo (niente coppe, Russia,
+    femminili, giovanili, riserve) che l'API copre con le quote, con la
+    loro stagione in corso. 1 chiamata (leagues?current=true).
+    {id: stagione}; vuoto se l'API non risponde.
+    """
+    try:
+        risp = chiama("leagues", {"current": "true"}).get("response") or []
+        import previsioni as P
+    except Exception as e:
+        print(f"  elenco dei campionati non letto: {e}")
+        return {}
+    tipi = {x["league"]["id"]: [x["league"]["type"], x["country"]["name"], x["league"]["name"]] for x in risp}
+    out = {}
+    for x in risp:
+        lid = x["league"]["id"]
+        st = (x.get("seasons") or [{}])[0]
+        if P.ammessa_intervallo(lid, tipi) and (st.get("coverage") or {}).get("odds"):
+            out[lid] = int(st.get("year") or STAGIONE)
+    return out
+
+
 def calendario(c, solo_vecchi=True):
     """Calendari via API: 1 chiamata per campionato e stagione."""
     n = da_db_modello(c)
@@ -173,13 +198,17 @@ def calendario(c, solo_vecchi=True):
         "SELECT DISTINCT lega FROM partite WHERE stagione = ?", (STAGIONE,))}
     lavori = [(l, STAGIONE_PINNACLE) for l in LEGHE_PINNACLE]
     lavori += [(l, STAGIONE) for l in sorted(leghe_viste() - nel_modello)]
+    # v21.8: tutti i campionati dell'intervallo, non solo quelli gia' visti
+    gia = {l for l, _ in lavori} | nel_modello
+    lavori += [(l, st) for l, st in sorted(leghe_intervallo().items()) if l not in gia]
     oggi = datetime.now(timezone.utc).date().isoformat()
     fatte = 0
     for lega, stagione in lavori:
         letto = c.execute("SELECT letto FROM calendari WHERE lega=? AND stagione=?",
                           (lega, stagione)).fetchone()
         # una stagione finita si legge una volta; quella in corso una volta al giorno
-        if letto and (stagione < STAGIONE or letto[0][:10] == oggi):
+        if letto and ((lega, stagione) in [(l, STAGIONE_PINNACLE) for l in LEGHE_PINNACLE]
+                      or letto[0][:10] == oggi):
             continue
         try:
             risp = chiama("fixtures", {"league": lega, "season": stagione}).get("response") or []
@@ -238,7 +267,7 @@ def statistiche(c, massimo):
         SELECT p.fid, p.lega, p.stagione FROM partite p LEFT JOIN statistiche s ON s.fid = p.fid
         WHERE p.data >= '2025-07-01' AND (s.fid IS NULL OR (s.esito = 'vuote'
               AND s.letta < datetime(p.data, '+1 day') AND p.data < datetime('now', '-1 day')))
-        ORDER BY (p.stagione = ?) DESC, p.data DESC""", (STAGIONE,)).fetchall()
+        ORDER BY (p.stagione >= ?) DESC, p.data DESC""", (STAGIONE,)).fetchall()
     print(f"  statistiche da leggere: al massimo {min(massimo, len(da_fare))} di {len(da_fare)}")
     fatte = vuote = saltate = 0
     for fid, lega, stagione in da_fare:
@@ -290,7 +319,7 @@ def statistiche(c, massimo):
 #  per valore.py: come reagisce una squadra all'intervallo
 # ---------------------------------------------------------------
 
-def reazioni(team_id, prima_di, stagione=STAGIONE, percorso=ARCHIVIO):
+def reazioni(team_id, prima_di, stagione=None, percorso=ARCHIVIO):
     """
     Le partite della squadra in questa stagione, prima della data data,
     divise per come era all'intervallo (sotto, pari, avanti). Per ognuna:
@@ -301,6 +330,10 @@ def reazioni(team_id, prima_di, stagione=STAGIONE, percorso=ARCHIVIO):
         return None
     c = sqlite3.connect(f"file:{percorso}?mode=ro", uri=True, timeout=30)
     try:
+        if stagione is None:
+            # la stagione in corso della squadra (2026, o 2027 dove si conta cosi')
+            stagione = c.execute("""SELECT MAX(stagione) FROM partite WHERE (casa_id = ? OR fuori_id = ?)
+                AND stagione >= ?""", (team_id, team_id, STAGIONE)).fetchone()[0] or STAGIONE
         righe = c.execute("""SELECT lega, casa_id, ht_c, ht_f, ft_c, ft_f FROM partite
             WHERE stagione = ? AND data < ? AND (casa_id = ? OR fuori_id = ?)""",
                           (stagione, prima_di, team_id, team_id)).fetchall()
@@ -343,8 +376,8 @@ def id_squadra(nome, percorso=ARCHIVIO):
         return None
     c = sqlite3.connect(f"file:{percorso}?mode=ro", uri=True, timeout=30)
     try:
-        r = c.execute("""SELECT casa_id FROM partite WHERE casa = ? AND stagione = ?
-            UNION SELECT fuori_id FROM partite WHERE fuori = ? AND stagione = ?""",
+        r = c.execute("""SELECT casa_id FROM partite WHERE casa = ? AND stagione >= ?
+            UNION SELECT fuori_id FROM partite WHERE fuori = ? AND stagione >= ?""",
                       (nome, STAGIONE, nome, STAGIONE)).fetchall()
     finally:
         c.close()
