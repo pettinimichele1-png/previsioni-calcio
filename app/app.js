@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.0";
+  var VERSIONE_APP = "22.1";
 
   var stato = {
     dati: null,
@@ -214,13 +214,14 @@
   }
   // due esiti opposti con la barra: il piu' probabile in chiaro. Con le
   // quote giuste accanto quando le percentuali vengono dal mercato.
-  function coppia(nA, a, nB, b, conQuote) {
+  // siA/siB (analisi dell'intervallo, v22.1): true se a partita finita e' uscito
+  function coppia(nA, a, nB, b, conQuote, siA, siB) {
     var pari = Math.abs(a - b) < 0.02, vinceA = a >= b;
-    function lato(nome, p, vince) {
-      return '<span class="' + (vince && !pari ? "vince" : "") + '">' + esc(nome) + " <b>" + pct(p) + "</b>" +
+    function lato(nome, p, vince, si) {
+      return '<span class="' + (vince && !pari ? "vince" : "") + (si ? " uscito" : "") + '">' + esc(nome) + " <b>" + pct(p) + "</b>" +
         (conQuote ? ' <span class="fioco">' + quota(1 / p) + "</span>" : "") + "</span>";
     }
-    return '<div class="coppia"><div class="coppia-testi">' + lato(nA, a, vinceA) + lato(nB, b, !vinceA) + "</div>" +
+    return '<div class="coppia"><div class="coppia-testi">' + lato(nA, a, vinceA, siA) + lato(nB, b, !vinceA, siB) + "</div>" +
       '<div class="barra2"><div class="' + (pari ? "pari" : (vinceA ? "forte" : "")) + '" style="width:' + (a * 100).toFixed(1) + '%"></div>' +
       '<div class="' + (pari ? "pari" : (!vinceA ? "forte" : "")) + '" style="width:' + (b * 100).toFixed(1) + '%"></div></div></div>';
   }
@@ -228,7 +229,7 @@
   function tessere(voci, conQuote) {
     var massimo = Math.max.apply(null, voci.map(function (x) { return x.p; }));
     return '<div class="griglia3">' + voci.map(function (x) {
-      return '<div class="tessera piccola' + (x.p === massimo ? " primo" : "") + '"' + (x.lungo ? ' title="' + esc(x.lungo) + '"' : "") + ">" +
+      return '<div class="tessera piccola' + (x.p === massimo ? " primo" : "") + (x.si ? " uscito" : "") + '"' + (x.lungo ? ' title="' + esc(x.lungo) + '"' : "") + ">" +
         "<small>" + esc(x.n) + "</small><b>" + pct(x.p) + "</b>" +
         (conQuote ? '<span class="eq">' + quota(1 / x.p) + "</span>" : "") + "</div>";
     }).join("") + "</div>";
@@ -578,7 +579,7 @@
   // una voce: nome, probabilita', e il segno se a partita finita e' uscita
   function voceA(r, nome, f) {
     var p = r.prob(f), si = r.si(f);
-    return { n: nome + (si ? " ✓" : ""), p: Math.max(p, 0.0001) };
+    return { n: nome + (si ? " ✓" : ""), p: Math.max(p, 0.0001), si: !!si };
   }
   function coppieA(r, elenco) {
     var v = [];
@@ -595,7 +596,7 @@
     return celle.map(function (c) {
       var nome = finale ? (r.ht[0] + c.i) + "-" + (r.ht[1] + c.j) : c.i + "-" + c.j;
       var si = r.esito ? r.esito[0] === c.i && r.esito[1] === c.j : false;
-      return { n: nome + (si ? " ✓" : ""), p: c.p };
+      return { n: nome + (si ? " ✓" : ""), p: c.p, si: si };
     });
   }
   function gruppiSecondoTempo(r, a) {
@@ -754,7 +755,7 @@
     var g = a.gol_2t, tot2 = Math.max(g[0] + g[1], 0.0001);
     var prossimo = [
       { n: casa, p: g[0] / tot2 * (1 - Math.exp(-tot2)) },
-      { n: "Nessuno", p: Math.exp(-tot2) },
+      { n: "Nessuno", p: Math.exp(-tot2), si: r.esito ? r.esito[0] + r.esito[1] === 0 : false },
       { n: fuori, p: g[1] / tot2 * (1 - Math.exp(-tot2)) }];
     html += '<section class="blocco carta"><div class="blocco-testa"><h2>Secondo tempo</h2><span>gol attesi ' + quota(g[0]) + " – " + quota(g[1]) + "</span></div>" +
       '<span class="sotto-t">Chi segna il prossimo gol</span>' + tessere(prossimo, true) + "</section>";
@@ -765,11 +766,12 @@
     var dc = { "1X": e.p["1"] + e.p.X, "12": e.p["1"] + e.p["2"], "X2": e.p.X + e.p["2"] };
     html += '<section class="blocco carta"><div class="blocco-testa"><h2>Risultato finale</h2><span>con il ' + esc(a.ht) + " di adesso</span></div>" +
       '<div class="griglia3">' + ["1", "X", "2"].map(function (k) {
-        return '<div class="tessera' + (e.p[k] === maxE ? " primo" : "") + '"><small>' + k + (e.uscito === k ? " ✓" : "") + "</small><b>" + pct(e.p[k]) +
+        return '<div class="tessera' + (e.p[k] === maxE ? " primo" : "") + (e.uscito === k ? " uscito" : "") + '"><small>' + k + (e.uscito === k ? " ✓" : "") + "</small><b>" + pct(e.p[k]) +
           '</b><span class="eq">' + quota(1 / Math.max(e.p[k], 0.0001)) + "</span></div>";
       }).join("") + "</div>" + barra3(e.p) +
       '<div class="doppie">' + ["1X", "12", "X2"].map(function (k) {
-        return "<div><small>" + k + "</small><b>" + pct(dc[k]) + '</b><span class="eq">' + quota(1 / Math.max(dc[k], 0.0001)) + "</span></div>";
+        var si = e.uscito && k.indexOf(e.uscito) >= 0;
+        return "<div" + (si ? ' class="uscito"' : "") + "><small>" + k + (si ? " ✓" : "") + "</small><b>" + pct(dc[k]) + '</b><span class="eq">' + quota(1 / Math.max(dc[k], 0.0001)) + "</span></div>";
       }).join("") + "</div></section>";
     html += '<section class="blocco elenco">' + listaApri(gruppiFinale(r), true) + "</section>";
 
@@ -1156,7 +1158,7 @@
   function corpoGruppo(g, conQuote) {
     if (g.f === "coppie") {
       var html = "";
-      for (var i = 0; i + 1 < g.v.length; i += 2) html += coppia(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p, conQuote);
+      for (var i = 0; i + 1 < g.v.length; i += 2) html += coppia(g.v[i].n, g.v[i].p, g.v[i + 1].n, g.v[i + 1].p, conQuote, g.v[i].si, g.v[i + 1].si);
       return '<div class="coppie">' + html + "</div>";
     }
     return tessere(g.v, true);

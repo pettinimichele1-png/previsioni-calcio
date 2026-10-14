@@ -1707,7 +1707,7 @@ def analizza(in_pausa, gol, mod, stat_pt, id_casa=None, id_fuori=None):
 def risultati_primo_tempo():
     """
     Da cron, al massimo ogni 15 minuti: i risultati finali delle partite di
-    cui abbiamo le statistiche del primo tempo, per verificare l'analisi e,
+    cui abbiamo le statistiche del primo tempo o l'analisi, per l'app e,
     piu' avanti, costruire il modello del primo tempo. A gruppi di 20, al
     massimo MAX_CHIAMATE_RISULTATI chiamate a giro (recupera anche quelle
     raccolte prima della v21.5). Scrive solo FILE_RISULTATI_PT.
@@ -1717,7 +1717,9 @@ def risultati_primo_tempo():
     ultima = stato.get("ultimi_risultati_pt")
     if ultima and adesso - leggi_data(ultima) < RISULTATI_OGNI:
         return False
-    stat = carica(FILE_STAT_PT, {})
+    # v22.1: anche le partite analizzate senza statistiche (campionati dove
+    # l'API non le ha), altrimenti nell'analisi non arriva mai il finale
+    stat = dict(carica(FILE_ANALISI, {}), **carica(FILE_STAT_PT, {}))
     ris = carica(FILE_RISULTATI_PT, {})
     da_fare = []
     for fid, x in stat.items():
