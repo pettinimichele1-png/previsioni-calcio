@@ -1192,8 +1192,14 @@ def voce_app(r):
 
 
 def analisi_app(oggi):
-    """Le analisi dell'intervallo della giornata, col risultato finale se c'e'."""
+    """Le analisi dell'intervallo della giornata, col risultato finale se
+    c'e' e, dalla v21.6, come reagiscono le due squadre (dallo storico)."""
     ris = carica(FILE_RISULTATI_PT, {})
+    gol = carica(FILE_GOL, {})
+    try:
+        from storico_intervallo import reazioni, id_squadra
+    except Exception:
+        reazioni = id_squadra = None
     fuori = []
     for fid, x in carica(FILE_ANALISI, {}).items():
         try:
@@ -1201,7 +1207,20 @@ def analisi_app(oggi):
                 continue
         except (KeyError, TypeError, ValueError):
             continue
-        fuori.append(dict(x, fixture_id=int(fid), finale=ris.get(fid)))
+        x = dict(x, fixture_id=int(fid), finale=ris.get(fid))
+        # le analisi della v21.5 non avevano i gol attesi della vigilia
+        g = gol.get(fid)
+        if "lc" not in x and g:
+            x.update(lc=g["lc"], lf=g["lf"], casa=g["casa"], fuori=g["fuori"])
+        if reazioni and not x.get("id_casa") and x.get("casa"):
+            x["id_casa"], x["id_fuori"] = id_squadra(x["casa"]), id_squadra(x.get("fuori"))
+        if reazioni and x.get("id_casa"):
+            try:
+                x["reazioni"] = {"casa": reazioni(x["id_casa"], x["data"]),
+                                 "fuori": reazioni(x.get("id_fuori"), x["data"])}
+            except Exception:
+                pass
+        fuori.append(x)
     return sorted(fuori, key=lambda x: x.get("letta", ""), reverse=True)
 
 
@@ -1599,10 +1618,13 @@ def giuste_ripresa(quote):
     return out
 
 
-def analizza(in_pausa, gol, mod, stat_pt):
+def analizza(in_pausa, gol, mod, stat_pt, id_casa=None, id_fuori=None):
     """L'analisi dell'intervallo di ogni partita in pausa, una volta sola:
-    punteggio, statistiche del primo tempo, gol attesi e probabilita' del
-    secondo tempo. Non c'entra con le giocate di valore."""
+    punteggio, statistiche del primo tempo, gol attesi prima della partita
+    (lc, lf) e nel secondo tempo, probabilita'. Non c'entra con le giocate
+    di valore. Dalla v21.6 si tiene 60 giorni: con i gol attesi di
+    Pinnacle servira' a verificare il modello del primo tempo dal vivo."""
+    id_casa, id_fuori = id_casa or {}, id_fuori or {}
     tutte = carica(FILE_ANALISI, {})
     nuove = 0
     for fid, (htc, hta) in in_pausa.items():
@@ -1616,10 +1638,14 @@ def analizza(in_pausa, gol, mod, stat_pt):
                       "letta": datetime.now(FUSO).isoformat(timespec="minutes"),
                       "gol_2t": [round(a, 2), round(b, 2)],
                       "prob": {k: round(prob[k], 4) for k in CHIAVI_ANALISI},
-                      "stat_pt": stat_pt.get(fid), "fonte_gol": g.get("fonte", "pinnacle")}
+                      "stat_pt": stat_pt.get(fid), "fonte_gol": g.get("fonte", "pinnacle"),
+                      "casa": g["casa"], "fuori": g["fuori"], "lc": g["lc"], "lf": g["lf"],
+                      "attesi_pt": [round(g["lc"] * mod["quota_pt_casa"], 2),
+                                    round(g["lf"] * mod["quota_pt_ospite"], 2)],
+                      "id_casa": id_casa.get(fid), "id_fuori": id_fuori.get(fid)}
         nuove += 1
     if nuove:
-        limite = datetime.now(timezone.utc) - timedelta(days=3)
+        limite = datetime.now(timezone.utc) - timedelta(days=60)
         tutte = {k: x for k, x in tutte.items() if leggi_data(x["data"]) >= limite}
         salva(FILE_ANALISI, tutte)
 
@@ -1804,7 +1830,7 @@ def intervallo():
         except Exception as e:
             scrivi(f"errore dall'API: {e}")
             return
-    in_pausa, id_casa = {}, {}
+    in_pausa, id_casa, id_fuori = {}, {}, {}
     for f in risposte:
         fid = str((f.get("fixture") or {}).get("id"))
         st = ((f.get("fixture") or {}).get("status") or {}).get("short")
@@ -1831,10 +1857,11 @@ def intervallo():
             continue
         in_pausa[fid] = (int(gh), int(ga))
         id_casa[fid] = ((f.get("teams") or {}).get("home") or {}).get("id")
+        id_fuori[fid] = ((f.get("teams") or {}).get("away") or {}).get("id")
 
     stat_pt = statistiche_primo_tempo(in_pausa, id_casa, gol, scrivi)
     try:
-        analizza(in_pausa, gol, mod, stat_pt)
+        analizza(in_pausa, gol, mod, stat_pt, id_casa, id_fuori)
     except Exception as e:      # l'analisi non deve mai fermare le giocate
         scrivi(f"analisi dell'intervallo non riuscita: {e}")
 
