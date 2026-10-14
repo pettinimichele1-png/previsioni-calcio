@@ -254,7 +254,24 @@ def sotto_il_tetto():
     return True
 
 
+def leghe_con_statistiche():
+    """
+    (v21.9, scelta dell'utente) I campionati di cui si leggono le statistiche
+    del primo tempo: quelli del modello, quelli aggiunti per il valore, i 16
+    di football-data e quelli comparsi davvero all'intervallo (si
+    aggiungono da soli). Degli altri si tengono solo i calendari, che
+    bastano per le reazioni delle squadre.
+    """
+    ids = set(LEGHE_PINNACLE) | leghe_viste()
+    if os.path.exists(DB_MODELLO):
+        m = sqlite3.connect(f"file:{DB_MODELLO}?mode=ro", uri=True, timeout=60)
+        ids |= {r[0] for r in m.execute("SELECT DISTINCT league_id FROM fixtures")}
+        m.close()
+    return ids
+
+
 def statistiche(c, massimo):
+    ammesse = leghe_con_statistiche()
     # campionato e stagione dove l'API non ha le statistiche: dopo
     # PROVE_A_VUOTO partite tutte senza, si smette di chiederle
     prove = {}
@@ -270,6 +287,8 @@ def statistiche(c, massimo):
         ORDER BY (p.stagione >= ?) DESC, p.data DESC""", (STAGIONE,)).fetchall()
     print(f"  statistiche da leggere: al massimo {min(massimo, len(da_fare))} di {len(da_fare)}")
     fatte = vuote = saltate = 0
+    da_fare = [x for x in da_fare if x[1] in ammesse]
+    print(f"  di cui nei campionati che compaiono all'intervallo: {len(da_fare)}")
     for fid, lega, stagione in da_fare:
         if fatte >= massimo:
             break
