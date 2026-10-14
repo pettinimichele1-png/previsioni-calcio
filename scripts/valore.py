@@ -1191,6 +1191,20 @@ def voce_app(r):
             "esito": r["esito"], "risultato": r.get("risultato")}
 
 
+def analisi_app(oggi):
+    """Le analisi dell'intervallo della giornata, col risultato finale se c'e'."""
+    ris = carica(FILE_RISULTATI_PT, {})
+    fuori = []
+    for fid, x in carica(FILE_ANALISI, {}).items():
+        try:
+            if giornata(leggi_data(x["data"])) != oggi:
+                continue
+        except (KeyError, TypeError, ValueError):
+            continue
+        fuori.append(dict(x, fixture_id=int(fid), finale=ris.get(fid)))
+    return sorted(fuori, key=lambda x: x.get("letta", ""), reverse=True)
+
+
 def scrivi_app(registro, stato):
     """Scrive valore.json accanto all'app, che lo mostra in Oggi, in Risultati
     e nella pagina di ogni partita."""
@@ -1225,6 +1239,8 @@ def scrivi_app(registro, stato):
             "prova": {"giorno": giorno_prova(stato) if stato.get("inizio") else 1, "di": GIORNI_PROVA},
             "puntata": PUNTATA,
             "oggi": [voce_app(r) for r in di_oggi],
+            # analisi dell'intervallo di oggi (v21.5), le piu' recenti prima
+            "analisi": analisi_app(oggi),
             # dalla v20.6 due al giorno; "schedina" (la prima) resta per l'app vecchia
             "schedine": schedine,
             "schedina": schedine[0] if schedine else None,
@@ -1255,6 +1271,15 @@ FILE_TEMPI = os.path.join("stato", "valore_tempi.json")
 FILE_INTERVALLO = os.path.join("stato", "intervallo.json")
 # statistiche del primo tempo delle partite controllate all'intervallo (v20.4)
 FILE_STAT_PT = os.path.join("stato", "intervallo_statistiche.json")
+# analisi dell'intervallo (v21.5): per ogni partita in pausa le probabilita'
+# del secondo tempo, separate dalle giocate di valore; e i risultati finali
+# delle partite con le statistiche del primo tempo, per verificarla
+FILE_ANALISI = os.path.join("stato", "intervallo_analisi.json")
+FILE_RISULTATI_PT = os.path.join("stato", "intervallo_risultati.json")
+CHIAVI_ANALISI = ("st_casa_si", "st_ospite_si", "fin_1", "fin_X", "fin_2",
+                  "fin_over15", "fin_over25", "fin_over35", "fin_gol")
+RISULTATI_OGNI = timedelta(minutes=15)
+MAX_CHIAMATE_RISULTATI = 10
 # misura alla ripresa: la quota di Bet365 fra il 46' e il 50', a punteggio
 # invariato, senza margine e riportata all'intervallo: e' la probabilita' di
 # Bet365. Il verdetto all'intervallo (v20.9) e' "chi ha ragione": chi prevede
@@ -1381,17 +1406,25 @@ def avvenuto_pausa(k, gc, ga, htc, hta):
             "st_ospite_si": sf > 0, "st_ospite_no": sf == 0}.get(k)
 
 
-def prob_pausa(lc, lf, htc, hta, mod, resta=1.0):
-    """Le probabilita' di tutti i mercati dell'intervallo: i gol attesi del
-    secondo tempo cambiano secondo come ci si e' arrivati. resta e' la parte
-    di secondo tempo ancora da giocare (1 all'intervallo): serve al
-    confronto alla ripresa, per togliere l'effetto dei minuti passati."""
+def gol_secondo_tempo(lc, lf, htc, hta, mod):
+    """I gol attesi di casa e ospite nel secondo tempo, dai gol attesi della
+    partita e dal punteggio all'intervallo (chi e' sotto spinge, chi e'
+    avanti si copre; un primo tempo piu' ricco del previsto alza il ritmo)."""
     def stato(d):
         return 0 if d <= -2 else 1 if d == -1 else 2 if d == 0 else 3 if d == 1 else 4
     s_c, s_f = mod["quota_pt_casa"], mod["quota_pt_ospite"]
     ritmo = (htc + hta) - (lc * s_c + lf * s_f)
     a = lc * (1 - s_c) * math.exp(mod["stato_casa"][stato(htc - hta)] + mod["ritmo"] * ritmo)
     b = lf * (1 - s_f) * math.exp(mod["stato_ospite"][stato(hta - htc)] + mod["ritmo"] * ritmo)
+    return a, b
+
+
+def prob_pausa(lc, lf, htc, hta, mod, resta=1.0):
+    """Le probabilita' di tutti i mercati dell'intervallo: i gol attesi del
+    secondo tempo cambiano secondo come ci si e' arrivati. resta e' la parte
+    di secondo tempo ancora da giocare (1 all'intervallo): serve al
+    confronto alla ripresa, per togliere l'effetto dei minuti passati."""
+    a, b = gol_secondo_tempo(lc, lf, htc, hta, mod)
     a, b = a * resta, b * resta
     pa, pb = [math.exp(-a)], [math.exp(-b)]
     for k in range(1, 10):
@@ -1566,6 +1599,78 @@ def giuste_ripresa(quote):
     return out
 
 
+def analizza(in_pausa, gol, mod, stat_pt):
+    """L'analisi dell'intervallo di ogni partita in pausa, una volta sola:
+    punteggio, statistiche del primo tempo, gol attesi e probabilita' del
+    secondo tempo. Non c'entra con le giocate di valore."""
+    tutte = carica(FILE_ANALISI, {})
+    nuove = 0
+    for fid, (htc, hta) in in_pausa.items():
+        g = gol.get(fid)
+        if fid in tutte or not g or not mod:
+            continue
+        a, b = gol_secondo_tempo(g["lc"], g["lf"], htc, hta, mod)
+        prob = prob_pausa(g["lc"], g["lf"], htc, hta, mod)
+        tutte[fid] = {"data": g["data"], "partita": f"{g['casa']} - {g['fuori']}",
+                      "campionato": g.get("campionato", ""), "ht": f"{htc}-{hta}",
+                      "letta": datetime.now(FUSO).isoformat(timespec="minutes"),
+                      "gol_2t": [round(a, 2), round(b, 2)],
+                      "prob": {k: round(prob[k], 4) for k in CHIAVI_ANALISI},
+                      "stat_pt": stat_pt.get(fid), "fonte_gol": g.get("fonte", "pinnacle")}
+        nuove += 1
+    if nuove:
+        limite = datetime.now(timezone.utc) - timedelta(days=3)
+        tutte = {k: x for k, x in tutte.items() if leggi_data(x["data"]) >= limite}
+        salva(FILE_ANALISI, tutte)
+
+
+def risultati_primo_tempo():
+    """
+    Da cron, al massimo ogni 15 minuti: i risultati finali delle partite di
+    cui abbiamo le statistiche del primo tempo, per verificare l'analisi e,
+    piu' avanti, costruire il modello del primo tempo. A gruppi di 20, al
+    massimo MAX_CHIAMATE_RISULTATI chiamate a giro (recupera anche quelle
+    raccolte prima della v21.5). Scrive solo FILE_RISULTATI_PT.
+    """
+    stato = carica(FILE_STATO, {})
+    adesso = datetime.now(timezone.utc)
+    ultima = stato.get("ultimi_risultati_pt")
+    if ultima and adesso - leggi_data(ultima) < RISULTATI_OGNI:
+        return False
+    stat = carica(FILE_STAT_PT, {})
+    ris = carica(FILE_RISULTATI_PT, {})
+    da_fare = []
+    for fid, x in stat.items():
+        try:
+            inizio = leggi_data(x["data"])
+        except Exception:
+            continue
+        if fid not in ris and adesso - inizio > FINE_PARTITA:
+            da_fare.append(fid)
+    if not da_fare:
+        return False
+    stato["ultimi_risultati_pt"] = adesso.isoformat(timespec="minutes")
+    salva(FILE_STATO, stato)
+    for i in range(0, min(len(da_fare), 20 * MAX_CHIAMATE_RISULTATI), 20):
+        try:
+            dati = chiama("fixtures", {"ids": "-".join(da_fare[i:i + 20])})
+        except Exception:
+            break
+        for f in dati.get("response") or []:
+            fid = str((f.get("fixture") or {}).get("id"))
+            st = ((f.get("fixture") or {}).get("status") or {}).get("short")
+            ft = (f.get("score") or {}).get("fulltime") or {}
+            if st in ("FT", "AET", "PEN") and ft.get("home") is not None:
+                ris[fid] = f"{ft['home']}-{ft['away']}"
+            elif st in ("PST", "CANC", "ABD", "AWD", "WO"):
+                ris[fid] = "annullata"
+            elif adesso - leggi_data(stat[fid]["data"]) > timedelta(days=2):
+                ris[fid] = "non disponibile"
+        time.sleep(0.3)
+    salva(FILE_RISULTATI_PT, ris)
+    return True
+
+
 def ripresa():
     """
     Da cron ogni 5 minuti. Per le giocate fatte all'intervallo: fra il 46'
@@ -1728,6 +1833,10 @@ def intervallo():
         id_casa[fid] = ((f.get("teams") or {}).get("home") or {}).get("id")
 
     stat_pt = statistiche_primo_tempo(in_pausa, id_casa, gol, scrivi)
+    try:
+        analizza(in_pausa, gol, mod, stat_pt)
+    except Exception as e:      # l'analisi non deve mai fermare le giocate
+        scrivi(f"analisi dell'intervallo non riuscita: {e}")
 
     if in_pausa:
         try:
@@ -1848,6 +1957,12 @@ def main():
                 ultima_al_via()
             except Exception as e:      # neanche l'ultima quota
                 print(f"  {datetime.now(FUSO):%d/%m %H:%M}  ultima quota non riuscita: {e}")
+            try:
+                if risultati_primo_tempo():
+                    st = carica(FILE_STATO, {})
+                    print("  " + scrivi_app(carica(FILE_REGISTRO, []), st))
+            except Exception as e:      # i risultati per l'analisi, mai bloccanti
+                print(f"  {datetime.now(FUSO):%d/%m %H:%M}  risultati del primo tempo non riusciti: {e}")
             try:
                 ripresa()
             except Exception as e:      # neanche il confronto alla ripresa

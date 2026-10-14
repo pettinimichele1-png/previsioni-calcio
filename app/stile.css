@@ -399,3 +399,19 @@ a.val:active { background: var(--carta2); }
 /* Live: pallino quando c'e' una giocata all'intervallo da fare (v20.1) */
 #barra a.con-avviso::after { content: ""; position: absolute; top: 2px; left: 50%; margin-left: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--arancio); box-shadow: 0 0 0 2px var(--barra); }
 #barra svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* analisi dell'intervallo (v21.5) */
+.an-spiega { font-size: 12px; color: var(--testo3); margin: 4px 0 10px; }
+.an-carta { padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+.righe-dentro .an-carta { margin: 8px; }
+.an-testa { display: flex; flex-direction: column; gap: 2px; }
+.an-partita { font-weight: 600; overflow-wrap: anywhere; }
+.an-ris { font-size: 12px; color: var(--testo2); }
+.an-gol { font-size: 13px; }
+.an-griglia { display: grid; grid-template-columns: 1fr; gap: 2px; }
+.an-voce { display: flex; align-items: baseline; gap: 8px; font-size: 13px; padding: 3px 6px; border-radius: 8px; }
+.an-voce span { flex: 1; min-width: 0; }
+.an-voce b { font-weight: 600; }
+.an-voce i { font-style: normal; color: var(--testo3); width: 3.4em; text-align: right; }
+.an-voce.an-si { background: rgba(45, 190, 170, .14); }
+.an-voce.an-no { opacity: .55; }

@@ -20,6 +20,8 @@ stato/valore_tempi.json
 stato/valore.lock
 stato/intervallo.json
 stato/intervallo_statistiche.json
+stato/intervallo_analisi.json
+stato/intervallo_risultati.json
 stato/leghe_tipo.json
 stato/calibrazione_mercati.*
 /quote_giro.json

@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.4";
+  var VERSIONE_APP = "21.5";
 
   var stato = {
     dati: null,
@@ -534,7 +534,67 @@
       righe += rigaApri("live-chiuse", "Chiuse " + quando, destra, chiuse.map(function (r) { return rigaGiocata(r, true); }).join(""));
     }
     if (righe) html += '<div class="elenco-righe carta">' + righe + "</div>";
-    return html + notaLive() + "</div>";
+    return html + notaLive() + sezioneAnalisi(v) + "</div>";
+  }
+
+  // analisi dell'intervallo (v21.5): per ogni partita all'intervallo cosa
+  // dice il calcolo sul secondo tempo. Solo informazione per giocare da se':
+  // niente quote dei bookmaker, niente "valore"
+  var VOCI_ANALISI = [["st_casa_si", "Segna la squadra di casa"], ["st_ospite_si", "Segna la squadra ospite"],
+    ["fin_1", "Finale 1"], ["fin_X", "Finale X"], ["fin_2", "Finale 2"],
+    ["fin_over15", "Over 1,5"], ["fin_over25", "Over 2,5"], ["fin_over35", "Over 3,5"], ["fin_gol", "Gol (segnano tutte e due)"]];
+  function avvenutoAnalisi(k, ht, fin) {
+    var c = fin[0], f = fin[1], tot = c + f;
+    return {
+      st_casa_si: c > ht[0], st_ospite_si: f > ht[1], fin_1: c > f, fin_X: c === f, fin_2: c < f,
+      fin_over15: tot > 1.5, fin_over25: tot > 2.5, fin_over35: tot > 3.5, fin_gol: c > 0 && f > 0
+    }[k];
+  }
+  function cartaAnalisi(a) {
+    var ht = String(a.ht || "").split("-").map(Number);
+    var fin = /^\d+-\d+$/.test(a.finale || "") ? a.finale.split("-").map(Number) : null;
+    var g = a.gol_2t || [];
+    var html = '<div class="carta an-carta"><div class="an-testa"><span class="an-partita">' + conBandiera(a) + "</span>" +
+      '<span class="an-ris">' + esc(a.ht) + " all'intervallo" + (fin ? " · finale " + esc(a.finale) : "") + "</span></div>";
+    html += rigaStatPt(a.stat_pt);
+    if (g.length === 2) {
+      html += '<div class="an-gol">Gol attesi nel 2° tempo: casa ' + quota(g[0]) + " · ospite " + quota(g[1]) + "</div>";
+    }
+    html += '<div class="an-griglia">';
+    VOCI_ANALISI.forEach(function (n) {
+      var p = a.prob && a.prob[n[0]];
+      if (p == null) return;
+      var cls = fin ? (avvenutoAnalisi(n[0], ht, fin) ? " an-si" : " an-no") : "";
+      html += '<div class="an-voce' + cls + '"><span>' + n[1] + "</span><b>" + pct(p) + "</b><i>" +
+        (p > 0.001 ? quota(1 / p) : "–") + "</i></div>";
+    });
+    html += "</div>";
+    if (a.fonte_gol && a.fonte_gol !== "pinnacle") {
+      html += '<div class="nota-stima">Gol attesi prima della partita dalla media dei bookmaker: Pinnacle non la quota.</div>';
+    }
+    return html + "</div>";
+  }
+  function sezioneAnalisi(v) {
+    var lista = v.analisi;
+    if (!lista) return "";                      // valore.json di prima della v21.5
+    var html = '<section class="gruppo"><div class="gruppo-testa"><h2>Analisi dell\'intervallo</h2><span>' +
+      (lista.length === 1 ? "1 partita" : lista.length + " partite") + "</span></div>" +
+      '<p class="an-spiega">Per ogni partita all\'intervallo: le probabilità del secondo tempo, dal punteggio e dalle forze ' +
+      "viste prima della partita, e a destra la quota giusta. Una quota del bookmaker più alta di quella giusta " +
+      "paga più del dovuto. È solo un'analisi: non fa parte delle giocate di valore né della prova sulla carta.</p>";
+    if (!lista.length) {
+      return html + '<div class="vuoto piccolo">Oggi ancora nessuna partita all\'intervallo.</div></section>';
+    }
+    var adesso = Date.now(), recenti = [], prima = [];
+    lista.forEach(function (a) {
+      (a.letta && adesso - data(a.letta) < 25 * 60000 ? recenti : prima).push(a);
+    });
+    recenti.forEach(function (a) { html += cartaAnalisi(a); });
+    if (prima.length) {
+      html += '<div class="elenco-righe carta">' + rigaApri("live-analisi", "Analizzate prima", String(prima.length),
+        prima.map(cartaAnalisi).join("")) + "</div>";
+    }
+    return html + "</section>";
   }
 
   function rigaApri(chiave, titolo, destra, dentro) {
