@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.1";
+  var VERSIONE_APP = "22.2";
 
   var stato = {
     dati: null,
@@ -593,6 +593,10 @@
   }
   function esattiA(r, quanti, finale) {
     var celle = r.celle.slice().sort(function (x, y) { return y.p - x.p; }).slice(0, quanti);
+    // v22.2: a partita finita, il risultato uscito c'e' sempre, anche se meno probabile
+    if (r.esito && !celle.some(function (c) { return c.i === r.esito[0] && c.j === r.esito[1]; })) {
+      r.celle.forEach(function (c) { if (c.i === r.esito[0] && c.j === r.esito[1]) celle.push(c); });
+    }
     return celle.map(function (c) {
       var nome = finale ? (r.ht[0] + c.i) + "-" + (r.ht[1] + c.j) : c.i + "-" + c.j;
       var si = r.esito ? r.esito[0] === c.i && r.esito[1] === c.j : false;
@@ -622,6 +626,41 @@
       { chiave: "an-st-esatti", t: "Risultato esatto del secondo tempo", sotto: "I sei più probabili", senzaConta: true, gruppi: [
         { t: "Risultato esatto del secondo tempo", f: "tessere", v: esattiA(r, 6, false) }] }
     ];
+  }
+  // v22.2: a partita finita, sotto il titolo di ogni riga cosa e' uscito,
+  // cosi' si vede anche a riga chiusa
+  function nomiUsciti(gruppi) {
+    var n = [];
+    gruppi.forEach(function (g) { g.v.forEach(function (x) { if (x.si) n.push(String(x.n).replace(" ✓", "")); }); });
+    return n;
+  }
+  function conUsciti(righe, r, testi) {
+    if (!r.esito) return righe;
+    righe.forEach(function (x) {
+      var t = testi[x.chiave];
+      if (t == null) {
+        var n = nomiUsciti(x.gruppi);
+        t = n.length ? n.join(", ") : "nessuno di questi";
+      }
+      x.sotto = "✓ " + t;
+      x.senzaConta = true;
+    });
+    return righe;
+  }
+  function testiSecondoTempo(r) {
+    if (!r.esito) return {};
+    var i = r.esito[0], j = r.esito[1], tot = i + j;
+    return {
+      "an-st-esito": (i > j ? "1" : i === j ? "X" : "2") + " · secondo tempo " + i + "-" + j,
+      "an-st-gol": "secondo tempo " + i + "-" + j + (tot === 1 ? ", 1 gol" : ", " + tot + " gol"),
+      "an-st-quanti": tot === 1 ? "1 gol" : tot + " gol",
+      "an-st-esatti": i + "-" + j
+    };
+  }
+  function testiFinale(r) {
+    if (!r.fin) return {};
+    var tot = r.fin[0] + r.fin[1];
+    return { "an-fin-gol": "finita " + r.fin[0] + "-" + r.fin[1] + ", " + tot + " gol", "an-fin-esatti": r.fin[0] + "-" + r.fin[1] };
   }
   function gruppiFinale(r) {
     var hc = r.ht[0], hf = r.ht[1];
@@ -754,12 +793,13 @@
     // 4. il secondo tempo
     var g = a.gol_2t, tot2 = Math.max(g[0] + g[1], 0.0001);
     var prossimo = [
-      { n: casa, p: g[0] / tot2 * (1 - Math.exp(-tot2)) },
+      { n: casa, p: g[0] / tot2 * (1 - Math.exp(-tot2)), si: a.primo_2t === "casa" },
       { n: "Nessuno", p: Math.exp(-tot2), si: r.esito ? r.esito[0] + r.esito[1] === 0 : false },
-      { n: fuori, p: g[1] / tot2 * (1 - Math.exp(-tot2)) }];
+      { n: fuori, p: g[1] / tot2 * (1 - Math.exp(-tot2)), si: a.primo_2t === "fuori" }];
+    prossimo.forEach(function (x) { if (x.si) x.n += " ✓"; });
     html += '<section class="blocco carta"><div class="blocco-testa"><h2>Secondo tempo</h2><span>gol attesi ' + quota(g[0]) + " – " + quota(g[1]) + "</span></div>" +
       '<span class="sotto-t">Chi segna il prossimo gol</span>' + tessere(prossimo, true) + "</section>";
-    html += '<section class="blocco elenco">' + listaApri(gruppiSecondoTempo(r, { casa: casa, fuori: fuori }), true) + "</section>";
+    html += '<section class="blocco elenco">' + listaApri(conUsciti(gruppiSecondoTempo(r, { casa: casa, fuori: fuori }), r, testiSecondoTempo(r)), true) + "</section>";
 
     // 5. il risultato finale
     var e = esitoFinaleA(r), maxE = Math.max(e.p["1"], e.p.X, e.p["2"]);
@@ -773,7 +813,7 @@
         var si = e.uscito && k.indexOf(e.uscito) >= 0;
         return "<div" + (si ? ' class="uscito"' : "") + "><small>" + k + (si ? " ✓" : "") + "</small><b>" + pct(dc[k]) + '</b><span class="eq">' + quota(1 / Math.max(dc[k], 0.0001)) + "</span></div>";
       }).join("") + "</div></section>";
-    html += '<section class="blocco elenco">' + listaApri(gruppiFinale(r), true) + "</section>";
+    html += '<section class="blocco elenco">' + listaApri(conUsciti(gruppiFinale(r), r, testiFinale(r)), true) + "</section>";
 
     return html + '<p class="nota-piccola centro">Accanto a ogni percentuale la quota giusta: se il tuo bookmaker paga di più, ti paga più del dovuto. ' +
       "Il calcolo parte dai gol attesi prima della partita e li corregge con il primo tempo (" +

@@ -1195,6 +1195,7 @@ def analisi_app(oggi):
     """Le analisi dell'intervallo della giornata, col risultato finale se
     c'e' e, dalla v21.6, come reagiscono le due squadre (dallo storico)."""
     ris = carica(FILE_RISULTATI_PT, {})
+    primi = carica(FILE_PRIMO_2T, {})
     gol = carica(FILE_GOL, {})
     try:
         from storico_intervallo import reazioni, id_squadra
@@ -1207,7 +1208,7 @@ def analisi_app(oggi):
                 continue
         except (KeyError, TypeError, ValueError):
             continue
-        x = dict(x, fixture_id=int(fid), finale=ris.get(fid))
+        x = dict(x, fixture_id=int(fid), finale=ris.get(fid), primo_2t=primi.get(fid))
         # le analisi della v21.5 non avevano i gol attesi della vigilia
         g = gol.get(fid)
         if "lc" not in x and g:
@@ -1295,6 +1296,7 @@ FILE_STAT_PT = os.path.join("stato", "intervallo_statistiche.json")
 # delle partite con le statistiche del primo tempo, per verificarla
 FILE_ANALISI = os.path.join("stato", "intervallo_analisi.json")
 FILE_RISULTATI_PT = os.path.join("stato", "intervallo_risultati.json")
+FILE_PRIMO_2T = os.path.join("stato", "intervallo_primo2t.json")   # v22.2
 # il modello con le statistiche del primo tempo (modello_primo_tempo.py),
 # solo se ha passato la prova; serve solo all'analisi, non alle giocate
 FILE_MODELLO_STAT = os.path.join("stato", "intervallo_stat.json")
@@ -1719,8 +1721,11 @@ def risultati_primo_tempo():
         return False
     # v22.1: anche le partite analizzate senza statistiche (campionati dove
     # l'API non le ha), altrimenti nell'analisi non arriva mai il finale
-    stat = dict(carica(FILE_ANALISI, {}), **carica(FILE_STAT_PT, {}))
+    analisi = carica(FILE_ANALISI, {})
+    stat = dict(analisi, **carica(FILE_STAT_PT, {}))
     ris = carica(FILE_RISULTATI_PT, {})
+    primi = carica(FILE_PRIMO_2T, {})
+    primi_gol_mancanti = {f for f in analisi if "-" in str(ris.get(f, "")) and f not in primi}
     da_fare = []
     for fid, x in stat.items():
         try:
@@ -1728,6 +1733,10 @@ def risultati_primo_tempo():
         except Exception:
             continue
         if fid not in ris and adesso - inizio > FINE_PARTITA:
+            da_fare.append(fid)
+        # v22.2: chi ha segnato per primo nel secondo tempo, per le analisi
+        # degli ultimi due giorni che hanno il finale ma non questo dato
+        elif (fid in primi_gol_mancanti and adesso - inizio < timedelta(days=2)):
             da_fare.append(fid)
     if not da_fare:
         return False
@@ -1744,13 +1753,54 @@ def risultati_primo_tempo():
             ft = (f.get("score") or {}).get("fulltime") or {}
             if st in ("FT", "AET", "PEN") and ft.get("home") is not None:
                 ris[fid] = f"{ft['home']}-{ft['away']}"
+                try:
+                    chi = primo_gol_secondo_tempo(f)
+                except Exception:
+                    chi = None
+                if chi:
+                    primi[fid] = chi
             elif st in ("PST", "CANC", "ABD", "AWD", "WO"):
                 ris[fid] = "annullata"
             elif adesso - leggi_data(stat[fid]["data"]) > timedelta(days=2):
                 ris[fid] = "non disponibile"
         time.sleep(0.3)
     salva(FILE_RISULTATI_PT, ris)
+    salva(FILE_PRIMO_2T, primi)
     return True
+
+
+def primo_gol_secondo_tempo(f):
+    """
+    "casa", "fuori" o "nessuno": chi ha segnato il primo gol del secondo
+    tempo, dalla cronaca della partita (fixtures?ids la contiene). None se
+    la cronaca non torna col punteggio (gol mancanti o autogol ambigui).
+    """
+    sc = f.get("score") or {}
+    ht, ft = sc.get("halftime") or {}, sc.get("fulltime") or {}
+    attesi = (ft["home"] - ht["home"], ft["away"] - ht["away"])
+    if attesi == (0, 0):
+        return "nessuno"
+    casa_id = ((f.get("teams") or {}).get("home") or {}).get("id")
+    gol = []
+    for e in f.get("events") or []:
+        t = e.get("time") or {}
+        if e.get("type") != "Goal" or "Missed" in str(e.get("detail")) or (t.get("elapsed") or 0) < 46:
+            continue
+        di_casa = (e.get("team") or {}).get("id") == casa_id
+        gol.append((t.get("elapsed") or 0, t.get("extra") or 0, di_casa, e.get("detail") == "Own Goal"))
+    gol.sort()
+    # l'API a volte attribuisce l'autogol alla squadra di chi l'ha fatto:
+    # si prova cosi' com'e' e girato, e si tiene la lettura che torna
+    for gira in (False, True):
+        conta = [0, 0]
+        lati = []
+        for _, _, di_casa, autogol in gol:
+            casa = (not di_casa) if (gira and autogol) else di_casa
+            conta[0 if casa else 1] += 1
+            lati.append(casa)
+        if tuple(conta) == attesi:
+            return "casa" if lati[0] else "fuori"
+    return None
 
 
 def ripresa():
