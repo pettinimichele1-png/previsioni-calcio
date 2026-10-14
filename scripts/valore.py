@@ -1870,7 +1870,18 @@ def intervallo():
             continue
         if 40 <= minuti <= 85 and fid not in fatte:
             candidati.append(fid)
-    if not candidati:
+    # v22.0: le partite gia' analizzate in pausa si ricontrollano finche' non
+    # ricominciano, cosi' l'app sa quando togliere "all'intervallo adesso"
+    analisi = carica(FILE_ANALISI, {})
+    da_seguire = set()
+    for fid, x in analisi.items():
+        try:
+            if not x.get("ripresa") and adesso - leggi_data(x["letta"]) < timedelta(minutes=30):
+                da_seguire.add(fid)
+        except (KeyError, TypeError, ValueError):
+            continue
+    seguite = [f for f in da_seguire if f not in candidati]
+    if not candidati and not seguite:
         return        # nessuna partita puo' essere all'intervallo: niente chiamate
 
     def scrivi(testo):
@@ -1878,16 +1889,23 @@ def intervallo():
 
     # l'API accetta al massimo 20 partite per chiamata: a gruppi di 20
     risposte = []
-    for i in range(0, len(candidati), 20):
+    da_chiedere = candidati + seguite
+    for i in range(0, len(da_chiedere), 20):
         try:
-            risposte += chiama("fixtures", {"ids": "-".join(candidati[i:i + 20])}).get("response") or []
+            risposte += chiama("fixtures", {"ids": "-".join(da_chiedere[i:i + 20])}).get("response") or []
         except Exception as e:
             scrivi(f"errore dall'API: {e}")
             return
     in_pausa, id_casa, id_fuori = {}, {}, {}
+    riprese = 0
     for f in risposte:
         fid = str((f.get("fixture") or {}).get("id"))
         st = ((f.get("fixture") or {}).get("status") or {}).get("short")
+        if fid in da_seguire and st and st != "HT":
+            analisi[fid]["ripresa"] = datetime.now(FUSO).isoformat(timespec="minutes")
+            riprese += 1
+        if fid in seguite:
+            continue          # gia' vista in pausa: serviva solo sapere se e' ripresa
         if st in FINITE:
             fatte[fid] = st
         if st != "HT" or fid not in gol:
@@ -1913,6 +1931,9 @@ def intervallo():
         id_casa[fid] = ((f.get("teams") or {}).get("home") or {}).get("id")
         id_fuori[fid] = ((f.get("teams") or {}).get("away") or {}).get("id")
 
+    if riprese:
+        salva(FILE_ANALISI, analisi)
+    scritta = False
     stat_pt = statistiche_primo_tempo(in_pausa, id_casa, gol, scrivi)
     try:
         analizza(in_pausa, gol, mod, stat_pt, id_casa, id_fuori)
@@ -1991,6 +2012,10 @@ def intervallo():
                              "Prova sulla carta.",
                     "url": "./#/live", "tag": f"pausa-{r['fixture_id']}"}))
             scrivi(scrivi_app(registro, stato))
+            scritta = True
+    # v22.0: l'app vede subito le partite appena in pausa e quelle riprese
+    if (in_pausa or riprese) and not scritta:
+        scrivi(scrivi_app(carica(FILE_REGISTRO, []), stato))
     stato["intervallo_fatte"] = fatte
     salva(FILE_STATO, stato)
 

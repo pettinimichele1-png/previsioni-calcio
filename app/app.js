@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "21.9";
+  var VERSIONE_APP = "22.0";
 
   var stato = {
     dati: null,
@@ -245,6 +245,9 @@
     var ora = Date.now();
     if (r.intervallo) {
       var nata = r.registrata ? data(r.registrata).getTime() : 0;
+      // v22.0: appena il server vede la partita ripresa, non si gioca piu'
+      var an = r.fixture_id != null ? trovaAnalisi(r.fixture_id) : null;
+      if (an && an.ripresa) return "corso";
       return ora - nata < 15 * 60000 ? "giocare" : "corso";
     }
     return data(r.data).getTime() > ora ? "giocare" : "corso";
@@ -799,7 +802,8 @@
     if (!lista.length) return html + '<div class="vuoto piccolo">Oggi ancora nessuna partita all\'intervallo. Il server le controlla ogni 5 minuti.</div>';
     var adesso = Date.now(), recenti = [], prima = [];
     lista.forEach(function (a) {
-      (a.letta && adesso - data(a.letta) < 25 * 60000 ? recenti : prima).push(a);
+      // v22.0: in pausa finche' il server non la vede ripresa (e comunque al massimo 25 minuti)
+      (!a.ripresa && a.letta && adesso - data(a.letta) < 25 * 60000 ? recenti : prima).push(a);
     });
     html += '<section class="gruppo"><div class="gruppo-testa"><h2>All\'intervallo adesso</h2><span>' +
       (recenti.length === 1 ? "1 partita" : recenti.length + " partite") + "</span></div>";
