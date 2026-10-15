@@ -117,6 +117,12 @@ VANTAGGIO_MAX = 0.15     # sopra e' quasi sempre una quota vecchia o sbagliata
 # sui mercati ricavati il prezzo giusto e' una stima nostra: serve piu' margine
 VANTAGGIO_MIN_RICAVATI = float(os.environ.get("VANTAGGIO_MIN_RICAVATI", "0.05"))
 PUNTATA = float(os.environ.get("PUNTATA", "10"))
+# v22.3, decisione dell'utente (15/10/2026): niente piu' giocate di valore,
+# ne' prima della partita ne' all'intervallo (verdetto dell'intervallo
+# negativo). Il giro continua a scrivere i gol attesi della vigilia (per
+# l'analisi dell'intervallo in Live) e le quote giuste dei tempi (pagina
+# della partita); il registro della prova resta com'e'. True le riaccende.
+GIOCATE_ATTIVE = False
 QUOTA_GIUSTA_MIN, QUOTA_GIUSTA_MAX = 1.25, 3.00   # niente sfavorite
 MAX_SCHEDINA = 3
 # due schedine al giorno (v20.6): composte al giro delle 9 e a quello delle 15
@@ -822,6 +828,8 @@ def giro(notifica=False):
                          "extra": True, "fonte": e.get("fonte", "media_bookmaker"),
                          "aggiornato": adesso.isoformat(timespec="minutes")}
 
+    if not GIOCATE_ATTIVE:
+        giocate = []
     # registro: ogni giocata una volta sola, alla quota del momento in cui e' comparsa
     gia = {r["id"] for r in registro}
     nuove = 0
@@ -855,7 +863,7 @@ def giro(notifica=False):
         chiave = f"schedina|{oggi.isoformat()}|{nome_s}"
         gia_fatta = any(r["id"] == chiave or (nome_s == "mattina" and r["id"] == f"schedina|{oggi.isoformat()}")
                         for r in di_oggi)
-        if adesso.hour != ora_s or gia_fatta:
+        if adesso.hour != ora_s or gia_fatta or not GIOCATE_ATTIVE:
             continue
         usate = {int(v["id"].split("|")[0]) for r in di_oggi for v in r["voci"]}
         s = schedina_del_giorno([c for c in giocate if c["info"]["fixture_id"] not in usate])
@@ -885,13 +893,15 @@ def giro(notifica=False):
 
     # la notifica del mattino, una volta al giorno; se l'API ha dato problemi
     # non si manda un "nessuna giocata" falso: ci riprova il giro dopo
-    if notifica and not guasto and stato.get("notificato") != oggi.isoformat():
+    if not GIOCATE_ATTIVE:
+        pass                        # niente notifiche delle giocate (v22.3)
+    elif notifica and not guasto and stato.get("notificato") != oggi.isoformat():
         print("  " + manda_notifica(giocate, schedina, riassunto_ieri(registro, oggi)))
         stato["notificato"] = oggi.isoformat()
     elif notifica and trovate_ora:
         # i giri dopo quello del mattino avvisano solo delle giocate nuove
         print("  " + notifica_nuove(trovate_ora))
-    if notifica:
+    if notifica and GIOCATE_ATTIVE:
         for s in nate:
             print("  " + notifica_schedina(s))
     stato["ultimo_giro"] = adesso.isoformat(timespec="minutes")
@@ -1992,7 +2002,7 @@ def intervallo():
     except Exception as e:      # l'analisi non deve mai fermare le giocate
         scrivi(f"analisi dell'intervallo non riuscita: {e}")
 
-    if in_pausa:
+    if in_pausa and GIOCATE_ATTIVE:
         try:
             live = chiama("odds/live", {})
         except Exception as e:

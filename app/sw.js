@@ -5,8 +5,8 @@
  * e in index.html il numero dopo "?v=" di app.js e stile.css: cosi' il
  * telefono non puo' tenersi la copia vecchia nella sua memoria.
  */
-const VERSIONE = "previsioni-22.2";
-const GUSCIO = ["./", "./index.html", "./stile.css?v=22.2", "./app.js?v=22.2",
+const VERSIONE = "previsioni-22.3";
+const GUSCIO = ["./", "./index.html", "./stile.css?v=22.3", "./app.js?v=22.3",
                 "./manifest.webmanifest", "./icona-180.png",
                 "./icona-192.png", "./icona-512.png"];
 

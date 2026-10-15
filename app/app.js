@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.2";
+  var VERSIONE_APP = "22.3";
 
   var stato = {
     dati: null,
@@ -496,11 +496,10 @@
   }
   function vistaLive(analisi) {
     var v = stato.valore;
-    var html = testa("Live", "Le giocate durante la partita: per ora all'intervallo", campana()) + avvisoFuoriLinea() + '<div class="corpo">' +
-      segmentiLive(analisi ? "analisi" : "vantaggio");
+    var html = testa("Live", "Le partite all'intervallo: cosa può succedere nel secondo tempo", campana()) + avvisoFuoriLinea() + '<div class="corpo">';
     if (!v) {
       if (!stato.valoreCaricato) return html + '<div class="caricamento">Caricamento…</div></div>';
-      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La pagina si riempie appena valore.py gira sul server.</div>' + notaLive() + "</div>";
+      return html + '<div class="vuoto"><h3>Ancora nessun dato</h3>La pagina si riempie appena il server legge le partite all\'intervallo.</div></div>';
     }
     if (analisi) return html + corpoAnalisi(v) + "</div>";
     html += riepilogoLive(v);
@@ -733,7 +732,7 @@
   }
   function vistaAnalisi(id) {
     var a = trovaAnalisi(id);
-    var indietro = '<a class="indietro" href="#/live/analisi">' + icona("sinistra") + "Analisi intervallo</a>";
+    var indietro = '<a class="indietro" href="#/live">' + icona("sinistra") + "Live</a>";
     if (!a) return indietro + '<div class="vuoto"><h3>Partita non trovata</h3>Le analisi restano solo per la giornata.</div>';
     var r = calcoloAnalisi(a);
     var lega = nomeLega(a.campionato || "");
@@ -817,8 +816,8 @@
 
     return html + '<p class="nota-piccola centro">Accanto a ogni percentuale la quota giusta: se il tuo bookmaker paga di più, ti paga più del dovuto. ' +
       "Il calcolo parte dai gol attesi prima della partita e li corregge con il primo tempo (" +
-      (a.modello === "statistiche" ? "punteggio, ritmo e statistiche: tiri, tiri in porta, angoli" : "punteggio e ritmo") + "). " +
-      "Non fa parte delle giocate di valore né della prova sulla carta." + (r.fin ? " ✓ = è uscito." : "") + "</p>";
+      (a.modello === "statistiche" ? "punteggio, ritmo e statistiche: tiri, tiri in porta, angoli" : "punteggio e ritmo") + ")." +
+      (r.fin ? " ✓ = è uscito." : "") + "</p>";
   }
   // la scheda di una partita nell'elenco: si tocca per aprire l'analisi
   function cartaAnalisi(a) {
@@ -838,8 +837,8 @@
   function corpoAnalisi(v) {
     var lista = v.analisi;
     var html = '<p class="an-spiega">Le partite di oggi arrivate all\'intervallo. Per ognuna, cosa dice il calcolo sul secondo tempo e ' +
-      "sul risultato finale, partendo da quello che diceva Pinnacle prima della partita. È solo un'analisi, per giocare da te: " +
-      "non fa parte delle giocate di valore né della prova sulla carta.</p>";
+      "sul risultato finale, partendo da quello che diceva Pinnacle prima della partita. Accanto a ogni esito la quota giusta: " +
+      "se il tuo bookmaker paga di più, ti paga più del dovuto.</p>";
     if (!lista) return html + '<div class="vuoto piccolo">L\'analisi arriva con il prossimo aggiornamento del server.</div>';
     if (!lista.length) return html + '<div class="vuoto piccolo">Oggi ancora nessuna partita all\'intervallo. Il server le controlla ogni 5 minuti.</div>';
     var adesso = Date.now(), recenti = [], prima = [];
@@ -857,6 +856,11 @@
         '<div class="an-dentro">' + prima.map(cartaAnalisi).join("") + "</div>") + "</div>";
     }
     return html;
+  }
+  // le partite all'intervallo in questo momento (pallino su Live)
+  function inPausaAdesso() {
+    var lista = (stato.valore && stato.valore.analisi) || [], adesso = Date.now();
+    return lista.filter(function (a) { return !a.ripresa && a.letta && adesso - data(a.letta) < 25 * 60000; });
   }
   function segmentiLive(quale) {
     return '<div class="segmenti">' +
@@ -1322,7 +1326,7 @@
       '</span><span class="contro">contro</span><span class="nome">' + esc(m.fuori) + "</span></h1>" +
       '<div class="quando">' + GIORNI_LUNGHI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " · <b>" + oraDi(d) + "</b></div></div>";
 
-    html += bloccoValore(m) + bloccoEsito(m) + bloccoGol(m) + bloccoTempi(m) + bloccoAltri(m) + bloccoFiducia(m);
+    html += bloccoEsito(m) + bloccoGol(m) + bloccoTempi(m) + bloccoAltri(m) + bloccoFiducia(m);
     return html + '<p class="nota-piccola centro">Sono probabilità, non certezze: un esito al 60% non si verifica quattro volte su dieci.</p>';
   }
 
@@ -1398,7 +1402,7 @@
     return html + '<p class="nota-info">' + icona("info") + "<span>Proposte fatte al mattino con le probabilità ricavate da Pinnacle " +
       "(prima della v21.1 dal nostro modello), senza un vantaggio dimostrato. Le quote sono quelle di Bet365 dove l'API le passa, " +
       "altrimenti stimate da noi. Nelle multiple il margine del bookmaker si moltiplica: circa 7% su una singola, 14% su una doppia, " +
-      "22% su una tripla. Le giocate con vantaggio sono in Oggi.</span></p></div>";
+      "22% su una tripla.</span></p></div>";
   }
 
   // ---------------------------------------------------------------
@@ -1574,7 +1578,7 @@
         var lo = v.intervallo[0], hi = v.intervallo[1];
         var verdetto = lo > 0 ? "Battiamo il mercato" : (hi < 0 ? "Il mercato è migliore" : "Non distinguibile");
         var frase = lo > 0 ? "Su " + v.con_quote + " partite con quote siamo avanti in modo dimostrato."
-          : hi < 0 ? "Su " + v.con_quote + " partite con quote il mercato è più preciso di noi, in modo dimostrato. Per questo le giocate di valore partono dalle quote di Pinnacle."
+          : hi < 0 ? "Su " + v.con_quote + " partite con quote il mercato è più preciso di noi, in modo dimostrato."
           : "Su " + v.con_quote + " partite con quote " + (v.vantaggio >= 0 ? "siamo leggermente avanti" : "siamo leggermente indietro") +
             ", ma la fascia di incertezza attraversa lo zero: ancora troppo presto per dire chi è migliore.";
         var posiz = function (x) { return Math.max(2, Math.min(98, 50 + x / 0.06 * 50)); };
@@ -1633,12 +1637,10 @@
     return html + '<p class="nota-piccola">Ogni partita e ogni schedina restano salvate: contano tutte nei totali qui sopra, anche se non vengono elencate.<br><br>App versione ' + VERSIONE_APP + "</p>";
   }
 
+  // v22.3: tolta "Sulla carta" (la prova delle giocate di valore): resta il modello
   function vistaRisultati() {
-    var html = testa("Risultati", "Come stanno andando le giocate") + avvisoFuoriLinea() + '<div class="corpo">' +
-      '<div class="segmenti"><button class="segmento' + (stato.risultati === "carta" ? " attivo" : "") + '" data-risultati="carta" aria-pressed="' + (stato.risultati === "carta") + '">Sulla carta</button>' +
-      '<button class="segmento' + (stato.risultati === "modello" ? " attivo" : "") + '" data-risultati="modello" aria-pressed="' + (stato.risultati === "modello") + '">Il modello</button></div>';
-    html += stato.risultati === "modello" ? corpoModello() : corpoCarta();
-    return html + "</div>";
+    return testa("Risultati", "Come sta andando il nostro modello") + avvisoFuoriLinea() + '<div class="corpo">' +
+      corpoModello() + "</div>";
   }
 
   // ---------------------------------------------------------------
@@ -1656,12 +1658,11 @@
     else if (h === "#/esatti") { stato.scheda = "esatti"; h = sostituisci("#/giocate"); }
     else if (h === "#/verifica") { stato.risultati = "modello"; h = sostituisci("#/risultati"); }
 
-    var vista = "oggi", html;
+    var vista = "partite", html;
     if (h.indexOf("#/partita/") === 0) {
       vista = "partite"; html = stato.dati ? vistaDettaglio(decodeURIComponent(h.slice(10))) : senzaDati();
-    } else if (h === "#/live") {
-      vista = "live"; html = vistaLive(false);
-    } else if (h === "#/live/analisi") {
+    } else if (h === "#/live" || h === "#/live/analisi") {
+      // v22.3: Live e' solo l'analisi dell'intervallo (giocate di valore tolte)
       vista = "live"; html = vistaLive(true);
     } else if (h.indexOf("#/live/analisi/") === 0) {
       vista = "live"; html = stato.valore ? vistaAnalisi(decodeURIComponent(h.slice(15))) : vistaLive(true);
@@ -1672,7 +1673,8 @@
     } else if (h === "#/risultati") {
       vista = "risultati"; html = vistaRisultati();
     } else {
-      html = !stato.dati && !stato.valore && stato.valoreCaricato && stato.datiCaricati ? senzaDati() : vistaOggi();
+      // v22.3: senza le giocate di valore l'app si apre su Partite
+      vista = "partite"; html = stato.dati ? vistaPartite() : senzaDati();
     }
     schermo.innerHTML = html;
     document.querySelectorAll("#barra a").forEach(function (a) {
@@ -1680,9 +1682,9 @@
       a.classList.toggle("attiva", attiva);
       if (attiva) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    // pallino su Live quando c'e' una giocata all'intervallo da fare
+    // pallino su Live quando c'e' una partita all'intervallo adesso (v22.3)
     var live = document.querySelector('#barra a[data-vista="live"]');
-    if (live) live.classList.toggle("con-avviso", pausaDaGiocare().length > 0);
+    if (live) live.classList.toggle("con-avviso", inPausaAdesso().length > 0);
   }
   function ridisegnaFermo() {
     var y = window.scrollY; disegna(); window.scrollTo(0, y);
@@ -1762,16 +1764,12 @@
     if (document.visibilityState === "visible") carica();
   });
   setInterval(function () { if (document.visibilityState === "visible") carica(); }, 5 * 60 * 1000);
-  // in Oggi e in Live il tempo che resta per le giocate all'intervallo scorre da solo:
-  // si ridisegna solo mentre ce n'e' una aperta, o appena scaduta
+  // in Live le partite passano da "all'intervallo adesso" a "analizzate prima"
+  // col tempo: si ridisegna ogni mezzo minuto mentre c'e' una partita in pausa
   setInterval(function () {
     var h = location.hash || "#/";
-    if (document.visibilityState !== "visible" || (h !== "#/" && h !== "#" && h.indexOf("#/live") !== 0) || !stato.valore) return;
-    var adesso = Date.now();
-    var aperte = (stato.valore.oggi || []).some(function (r) {
-      return r.intervallo && r.registrata && !r.esito && adesso - data(r.registrata).getTime() < 16 * 60000;
-    });
-    if (aperte) ridisegnaFermo();
+    if (document.visibilityState !== "visible" || h.indexOf("#/live") !== 0 || !stato.valore) return;
+    if (inPausaAdesso().length) ridisegnaFermo();
   }, 30 * 1000);
 
   // ---------------------------------------------------------------
@@ -1840,7 +1838,7 @@
       }).then(function () {
         stato.notifiche = "attive";
         ridisegnaFermo();
-        avviso("Notifiche attivate: le giocate di valore del mattino, quelle all'intervallo e le partite che cambiano molto con le formazioni ufficiali.");
+        avviso("Notifiche attivate: le partite che cambiano molto con le formazioni ufficiali.");
       });
     }).catch(function () {
       avviso("Non sono riuscito ad attivare le notifiche. Controlla la connessione e riprova.");
