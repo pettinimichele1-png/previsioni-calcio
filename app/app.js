@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.3";
+  var VERSIONE_APP = "22.4";
 
   var stato = {
     dati: null,
@@ -730,6 +730,121 @@
     for (var i = 0; i < lista.length; i++) if (String(lista[i].fixture_id) === String(id)) return lista[i];
     return null;
   }
+  // ---------------------------------------------------------------
+  //  le tre giocate dell'intervallo (v22.4): la piu' sicura (70-90%),
+  //  un'equilibrata (50-70%) e una rischiosa (30-50%), scelte fra i
+  //  mercati che i bookmaker offrono all'intervallo, con la quota giusta
+  // ---------------------------------------------------------------
+  var LIVELLI = [
+    { k: "sicura", nome: "Più sicura", segno: "★", da: 0.70, a: 0.90 },
+    { k: "equilibrata", nome: "Equilibrata", segno: "●", da: 0.50, a: 0.70 },
+    { k: "rischiosa", nome: "Rischiosa", segno: "◆", da: 0.30, a: 0.50 }
+  ];
+  function candidateIntervallo(r, casa, fuori) {
+    var hc = r.ht[0], hf = r.ht[1];
+    function fc(i) { return hc + i; }
+    function ff(j) { return hf + j; }
+    var c = [
+      [casa + " vince", function (i, j) { return fc(i) > ff(j); }],
+      ["Pareggio", function (i, j) { return fc(i) === ff(j); }],
+      [fuori + " vince", function (i, j) { return fc(i) < ff(j); }],
+      [casa + " o pareggio (1X)", function (i, j) { return fc(i) >= ff(j); }],
+      [fuori + " o pareggio (X2)", function (i, j) { return fc(i) <= ff(j); }],
+      ["Non finisce pari (12)", function (i, j) { return fc(i) !== ff(j); }],
+      [casa + " vince il 2° tempo", function (i, j) { return i > j; }],
+      ["2° tempo in pareggio", function (i, j) { return i === j; }],
+      [fuori + " vince il 2° tempo", function (i, j) { return i < j; }],
+      ["Almeno un gol nel 2° tempo", function (i, j) { return i + j > 0; }],
+      ["Almeno 2 gol nel 2° tempo", function (i, j) { return i + j > 1; }],
+      ["Al massimo un gol nel 2° tempo", function (i, j) { return i + j < 2; }],
+      [casa + " segna nel 2° tempo", function (i) { return i > 0; }],
+      [fuori + " segna nel 2° tempo", function (i, j) { return j > 0; }],
+      [casa + " non segna nel 2° tempo", function (i) { return i === 0; }],
+      [fuori + " non segna nel 2° tempo", function (i, j) { return j === 0; }],
+      ["Gol (segnano tutte e due)", function (i, j) { return fc(i) > 0 && ff(j) > 0; }],
+      ["NoGol", function (i, j) { return !(fc(i) > 0 && ff(j) > 0); }]
+    ];
+    [1, 2, 3, 4, 5].forEach(function (k) {
+      c.push(["Over " + k + ".5 finale", function (i, j) { return hc + hf + i + j > k; }]);
+      c.push(["Under " + k + ".5 finale", function (i, j) { return hc + hf + i + j <= k; }]);
+    });
+    return c.map(function (x) { return { nome: x[0], p: r.prob(x[1]), si: r.si(x[1]) }; });
+  }
+  function consigliAnalisi(a, r) {
+    var nomi = String(a.partita || "").split(" - ");
+    var casa = a.casa || nomi[0] || "Casa", fuori = a.fuori || nomi[1] || "Ospite";
+    var tutte = candidateIntervallo(r, casa, fuori);
+    return LIVELLI.map(function (l) {
+      var dentro = tutte.filter(function (x) { return x.p >= l.da && x.p < l.a; });
+      if (!dentro.length) return null;
+      // la piu' probabile della sua fascia
+      var x = dentro.sort(function (u, v) { return v.p - u.p; })[0];
+      return { livello: l, nome: x.nome, p: x.p, si: x.si };
+    }).filter(function (x) { return x; });
+  }
+  function htmlConsigli(lista, grande) {
+    if (!lista.length) return '<div class="vuoto piccolo">Nessuna giocata fra il 30% e il 90%: la partita è quasi decisa.</div>';
+    return '<div class="an-consigli' + (grande ? " grande" : "") + '">' + lista.map(function (c) {
+      var esito = c.si === true ? " an-si" : c.si === false ? " an-no" : "";
+      return '<div class="an-cons lv-' + c.livello.k + esito + '"><span class="an-liv">' + c.livello.segno + " " + c.livello.nome +
+        "</span><span class=\"an-nome\">" + esc(c.nome) + (c.si === true ? " ✓" : "") + "</span><b>" + pct(c.p) + "</b>" +
+        '<span class="an-q">' + quota(1 / c.p) + "</span></div>";
+    }).join("") + "</div>";
+  }
+  // quando riprende (circa): il server la vede in pausa entro 5 minuti
+  // dall'inizio dell'intervallo, che dura un quarto d'ora
+  function statoPausa(a) {
+    if (a.finale && a.finale.indexOf("-") > 0) return "finita " + a.finale;
+    if (a.ripresa) return "ripresa";
+    if (!a.letta) return "";
+    var t = data(a.letta).getTime() + 12 * 60000;
+    return t > Date.now() ? "riprende verso le " + oraDi(new Date(t)) : "ripresa";
+  }
+  // il perche', in poche righe semplici
+  function perche(a, r, casa, fuori) {
+    var frasi = [];
+    if (a.lc != null && a.lf != null) {
+      var pc = poissonLista(a.lc, 10), pf = poissonLista(a.lf, 10), p1 = 0, p2 = 0;
+      for (var i = 0; i <= 10; i++) for (var j = 0; j <= 10; j++) {
+        if (i > j) p1 += pc[i] * pf[j];
+        if (i < j) p2 += pc[i] * pf[j];
+      }
+      var fav = p1 >= p2 ? casa : fuori, pf2 = Math.max(p1, p2);
+      frasi.push(Math.abs(p1 - p2) < 0.08 ? "Prima della partita era equilibrata."
+        : "Prima della partita " + fav + " era " + (pf2 > 0.6 ? "nettamente " : "") + "favorito (" + pct(pf2) + " di vincere).");
+    }
+    var diff = r.ht[0] - r.ht[1], att = a.attesi_pt;
+    var vivo = "";
+    if (att && att.length === 2) {
+      var sc = r.ht[0] + r.ht[1] - att[0] - att[1];
+      vivo = sc >= 0.8 ? ", con più gol del previsto" : sc <= -0.8 ? ", con meno gol del previsto" : "";
+    }
+    frasi.push("All'intervallo " + (diff === 0 ? "è " + a.ht : (diff > 0 ? casa : fuori) + " è avanti " + (diff > 0 ? a.ht : r.ht[1] + "-" + r.ht[0])) + vivo + ".");
+    var rz = a.reazioni || {}, sotto = diff > 0 ? fuori : diff < 0 ? casa : null;
+    var rs = diff > 0 ? rz.fuori : diff < 0 ? rz.casa : null;
+    var x = rs && rs.stati && rs.stati.sotto;
+    if (sotto && x && x.n >= 2) {
+      frasi.push(sotto + ", quando quest'anno era sotto all'intervallo: " + x.v + (x.v === 1 ? " vinta, " : " vinte, ") + x.x + " pari, " +
+        x.p + (x.p === 1 ? " persa" : " perse") + " su " + x.n + ".");
+    }
+    var g = a.gol_2t || [0, 0];
+    frasi.push("Il calcolo si aspetta " + quota(g[0] + g[1], 1).replace(".", ",") + " gol nel secondo tempo (" + casa + " " +
+      quota(g[0], 1).replace(".", ",") + ", " + fuori + " " + quota(g[1], 1).replace(".", ",") + ").");
+    return frasi.join(" ");
+  }
+  // una sezione a tendina della pagina della partita
+  function tendine(parti) {
+    var html = '<div class="carta lista-apri an-tendine">';
+    parti.forEach(function (p) {
+      var aperta = !!stato.mercati[p.chiave];
+      html += '<button class="riga-apri" data-mercato="' + p.chiave + '" aria-expanded="' + aperta + '">' +
+        '<span class="ra-testi"><span class="ra-t1">' + esc(p.t) + '</span><span class="ra-t2">' + esc(p.sotto) + "</span></span>" +
+        icona(aperta ? "su" : "giu") + "</button>";
+      if (aperta) html += '<div class="an-aperta">' + p.html + "</div>";
+    });
+    return html + "</div>";
+  }
+
   function vistaAnalisi(id) {
     var a = trovaAnalisi(id);
     var indietro = '<a class="indietro" href="#/live">' + icona("sinistra") + "Live</a>";
@@ -739,10 +854,18 @@
     var nomi = String(a.partita || "").split(" - ");
     var casa = a.casa || nomi[0] || "Casa", fuori = a.fuori || nomi[1] || "Ospite";
     var html = indietro + '<div class="eroe"><div class="riga"><span class="lega">' + bandiera(lega.paese) + " " + esc(lega.nome) +
-      (lega.paese ? " · " + esc(lega.paese) : "") + '</span><span class="badge">' + (r && r.fin ? "FINITA " + esc(a.finale) : "INTERVALLO " + esc(a.ht)) +
+      (lega.paese ? " · " + esc(lega.paese) : "") + '</span><span class="badge">' + (r && r.fin ? "FINITA " + esc(a.finale) : esc(statoPausa(a).toUpperCase() || "INTERVALLO " + a.ht)) +
       '</span></div><h1 class="nomi"><span class="nome">' + esc(casa) + '</span><span class="contro">' + esc(a.ht) +
       ' all\'intervallo</span><span class="nome">' + esc(fuori) + "</span></h1></div>";
     if (!r) return html + '<div class="vuoto">Per questa partita mancano i gol attesi: niente calcolo.</div>';
+
+    // v22.4: in alto cosa giocare e perche'; sotto tutto il resto a tendina
+    html += '<section class="blocco carta"><div class="blocco-testa"><h2>Cosa giocare</h2><span>' +
+      (r.fin ? "a partita finita" : "con la quota giusta") + "</span></div>" + htmlConsigli(consigliAnalisi(a, r), true) +
+      '<p class="an-testo an-perche"><b>Perché.</b> ' + esc(perche(a, r, casa, fuori)) + "</p>" +
+      '<p class="nota">La quota accanto è quella giusta secondo il calcolo: se il tuo sito paga di più, conviene; se paga meno, a lungo andare si perde.</p></section>';
+    var corpo = html, parti = [];
+    html = "";
 
     // 1. prima della partita
     if (a.lc != null && a.lf != null) {
@@ -762,6 +885,8 @@
         }).join("") + "</div>" + coppia("Over 2.5", o25, "Under 2.5", 1 - o25, true) + coppia("Gol", gg, "NoGol", 1 - gg, true) +
         '<p class="nota">Gol attesi: ' + esc(casa) + " " + quota(a.lc) + " · " + esc(fuori) + " " + quota(a.lf) + ". " +
         (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "Pinnacle non quotava la partita: gol attesi dalla media dei bookmaker." : "Ricavati dalle quote di Pinnacle, senza margine.") + "</p></section>";
+      parti.push({ chiave: "an-p-prima", t: "Prima della partita", sotto: "Cosa diceva " + (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "il mercato" : "Pinnacle"), html: html });
+      html = "";
     }
 
     // 2. il primo tempo
@@ -780,6 +905,8 @@
     html += '<p class="an-testo">' + (diff === 0 ? "In parità: di solito le due squadre continuano col loro passo."
       : esc(diff > 0 ? fuori : casa) + " è sotto" + (Math.abs(diff) > 1 ? " di " + Math.abs(diff) + " gol" : "") +
         ": in media chi è sotto spinge di più e chi è avanti si copre, e il calcolo ne tiene conto.") + "</p></section>";
+    parti.push({ chiave: "an-p-pt", t: "Il primo tempo", sotto: "Statistiche e gol rispetto alle attese", html: html });
+    html = "";
 
     // 3. come reagiscono le due squadre
     var rz = a.reazioni || {};
@@ -788,6 +915,8 @@
       righeReazione(fuori, rz.fuori, diff > 0 ? "sotto" : diff === 0 ? "pari" : "avanti") +
       '<p class="nota">In evidenza la situazione di adesso. Sono poche partite per squadra: è un\'indicazione, non entra nel calcolo ' +
       "finché non si dimostra che lo migliora.</p></section>";
+    parti.push({ chiave: "an-p-reaz", t: "Come reagiscono le squadre", sotto: "Storico della stagione: sotto, pari, avanti", html: html });
+    html = "";
 
     // 4. il secondo tempo
     var g = a.gol_2t, tot2 = Math.max(g[0] + g[1], 0.0001);
@@ -799,6 +928,8 @@
     html += '<section class="blocco carta"><div class="blocco-testa"><h2>Secondo tempo</h2><span>gol attesi ' + quota(g[0]) + " – " + quota(g[1]) + "</span></div>" +
       '<span class="sotto-t">Chi segna il prossimo gol</span>' + tessere(prossimo, true) + "</section>";
     html += '<section class="blocco elenco">' + listaApri(conUsciti(gruppiSecondoTempo(r, { casa: casa, fuori: fuori }), r, testiSecondoTempo(r)), true) + "</section>";
+    parti.push({ chiave: "an-p-st", t: "Secondo tempo: tutti gli esiti", sotto: "Prossimo gol, esito, gol, risultato esatto", html: html });
+    html = "";
 
     // 5. il risultato finale
     var e = esitoFinaleA(r), maxE = Math.max(e.p["1"], e.p.X, e.p["2"]);
@@ -813,25 +944,20 @@
         return "<div" + (si ? ' class="uscito"' : "") + "><small>" + k + (si ? " ✓" : "") + "</small><b>" + pct(dc[k]) + '</b><span class="eq">' + quota(1 / Math.max(dc[k], 0.0001)) + "</span></div>";
       }).join("") + "</div></section>";
     html += '<section class="blocco elenco">' + listaApri(conUsciti(gruppiFinale(r), r, testiFinale(r)), true) + "</section>";
+    parti.push({ chiave: "an-p-fin", t: "Risultato finale: tutti gli esiti", sotto: "Esito, Under/Over, esatti, combinazioni", html: html });
 
-    return html + '<p class="nota-piccola centro">Accanto a ogni percentuale la quota giusta: se il tuo bookmaker paga di più, ti paga più del dovuto. ' +
+    return corpo + '<section class="blocco elenco"><h2>L\'analisi della partita</h2>' + tendine(parti) + "</section>" + '<p class="nota-piccola centro">Accanto a ogni percentuale la quota giusta: se il tuo bookmaker paga di più, ti paga più del dovuto. ' +
       "Il calcolo parte dai gol attesi prima della partita e li corregge con il primo tempo (" +
       (a.modello === "statistiche" ? "punteggio, ritmo e statistiche: tiri, tiri in porta, angoli" : "punteggio e ritmo") + ")." +
       (r.fin ? " ✓ = è uscito." : "") + "</p>";
   }
   // la scheda di una partita nell'elenco: si tocca per aprire l'analisi
+  // la scheda di una partita nell'elenco (v22.4): le tre giocate; si tocca per l'analisi
   function cartaAnalisi(a) {
-    var r = calcoloAnalisi(a), g = a.gol_2t || [];
+    var r = calcoloAnalisi(a);
     var html = '<a class="carta an-carta" href="#/live/analisi/' + encodeURIComponent(a.fixture_id) + '"><div class="an-testa"><span class="an-partita">' +
-      conBandiera(a) + "</span>" + '<span class="an-ris">' + esc(a.ht) + " all'intervallo" + (a.finale && a.finale.indexOf("-") > 0 ? " · finale " + esc(a.finale) : "") + "</span></div>";
-    html += rigaStatPt(a.stat_pt);
-    if (g.length === 2) html += '<div class="an-gol">Gol attesi nel 2° tempo: casa ' + quota(g[0]) + " · ospite " + quota(g[1]) + "</div>";
-    if (r) {
-      var e = esitoFinaleA(r), ht = r.ht;
-      var o = r.prob(function (i, j) { return ht[0] + ht[1] + i + j > 2; });
-      html += '<div class="an-riassunto">Finale: 1 <b>' + pct(e.p["1"]) + "</b> · X <b>" + pct(e.p.X) + "</b> · 2 <b>" + pct(e.p["2"]) +
-        "</b> · Over 2,5 <b>" + pct(o) + "</b></div>";
-    }
+      conBandiera(a) + "</span>" + '<span class="an-ris"><b>' + esc(a.ht) + "</b> all'intervallo · " + esc(statoPausa(a)) + "</span></div>";
+    html += r ? htmlConsigli(consigliAnalisi(a, r), false) : '<div class="vuoto piccolo">Mancano i gol attesi: niente calcolo.</div>';
     return html + '<span class="an-apri">Analisi completa' + icona("destra") + "</span></a>";
   }
   function corpoAnalisi(v) {

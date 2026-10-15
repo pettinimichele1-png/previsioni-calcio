@@ -424,3 +424,24 @@ a.segmento { display: flex; align-items: center; justify-content: center; text-d
 .tessera.uscito { background: rgba(79, 209, 197, .22); border-color: var(--turchese); }
 .doppie > div.uscito { background: rgba(79, 209, 197, .22); border: 1px solid var(--turchese); border-radius: 10px; }
 .coppia-testi span.uscito { color: var(--turchese); font-weight: 700; }
+/* le tre giocate dell'intervallo (v22.4) */
+.an-consigli { display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
+.an-cons { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "liv liv liv" "nome p q"; align-items: baseline; column-gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--carta2); border-left: 3px solid var(--testo3); }
+.an-cons .an-liv { grid-area: liv; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--testo3); }
+.an-cons .an-nome { grid-area: nome; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.an-cons b { grid-area: p; font-family: var(--titolo); font-size: 20px; font-weight: 800; }
+.an-cons .an-q { grid-area: q; font-size: 13px; color: var(--testo2); font-variant-numeric: tabular-nums; min-width: 2.6em; text-align: right; }
+.an-consigli.grande .an-cons { padding: 12px; }
+.an-consigli.grande .an-nome { font-size: 16px; }
+.an-consigli.grande b { font-size: 26px; }
+.an-cons.lv-sicura { border-left-color: var(--turchese); }
+.an-cons.lv-sicura .an-liv { color: var(--turchese); }
+.an-cons.lv-equilibrata { border-left-color: var(--lime); }
+.an-cons.lv-equilibrata .an-liv { color: var(--lime); }
+.an-cons.lv-rischiosa { border-left-color: var(--arancio); }
+.an-cons.lv-rischiosa .an-liv { color: var(--arancio); }
+.an-cons.an-si { background: rgba(79, 209, 197, .22); }
+.an-cons.an-no { opacity: .5; }
+.an-perche { margin-top: 10px; }
+.an-tendine .an-aperta { padding: 0 8px 8px; }
+.an-tendine .an-aperta .blocco { margin: 0; }
