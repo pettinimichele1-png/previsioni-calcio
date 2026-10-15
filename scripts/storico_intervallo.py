@@ -55,6 +55,7 @@ LEGHE_PINNACLE = (39, 40, 140, 141, 135, 136, 78, 79, 61, 62, 88, 144, 94, 203, 
 STAGIONE_PINNACLE = 2025
 QUOTA_MASSIMA = 0.5          # del limite giornaliero di chiamate
 PROVE_A_VUOTO = 12
+SMORZA = 6                   # partite "medie" aggiunte a ogni squadra nella stima
 FINITE = ("FT", "AET", "PEN")
 VOCI = {"Shots on Goal": "porta", "Total Shots": "tiri", "Corner Kicks": "angoli",
         "Ball Possession": "possesso", "expected_goals": "xg", "Shots insidebox": "area",
@@ -170,8 +171,8 @@ def leghe_intervallo():
     """
     (dalla v21.8) Tutti i campionati che l'intervallo puo' analizzare: quelli
     veri ammessi da previsioni.ammessa_intervallo (niente coppe, Russia,
-    femminili, giovanili, riserve) che l'API copre con le quote, con la
-    loro stagione in corso. 1 chiamata (leagues?current=true).
+    femminili, giovanili, riserve), con la loro stagione in corso; dalla
+    v22.5 anche quelli senza quote nell'API. 1 chiamata (leagues?current=true).
     {id: stagione}; vuoto se l'API non risponde.
     """
     try:
@@ -185,7 +186,8 @@ def leghe_intervallo():
     for x in risp:
         lid = x["league"]["id"]
         st = (x.get("seasons") or [{}])[0]
-        if P.ammessa_intervallo(lid, tipi) and (st.get("coverage") or {}).get("odds"):
+        # v22.5: anche senza quote nell'API, per stimare i gol attesi dallo storico
+        if P.ammessa_intervallo(lid, tipi):
             out[lid] = int(st.get("year") or STAGIONE)
     return out
 
@@ -387,6 +389,46 @@ def reazioni(team_id, prima_di, stagione=None, percorso=ARCHIVIO):
             x["lega_fatti"] = round(m[1] / m[0], 2)
             x["lega_subiti"] = round(m[2] / m[0], 2)
     return {"partite": len(righe), "stati": out}
+
+
+def gol_attesi_stima(lega, casa_id, fuori_id, prima_di, percorso=ARCHIVIO):
+    """
+    (v22.5) I gol attesi di una partita senza quote, stimati dallo storico
+    della stagione del suo campionato: quanto segna e subisce ogni squadra
+    (in casa e fuori insieme), tirato verso la media del campionato con
+    SMORZA partite finte, per non fidarsi di due o tre partite. (lc, lf) o
+    None se il campionato ha meno di 20 partite o una squadra meno di 3.
+    """
+    if not (lega and casa_id and fuori_id) or not os.path.exists(percorso):
+        return None
+    c = sqlite3.connect(f"file:{percorso}?mode=ro", uri=True, timeout=30)
+    try:
+        st = c.execute("SELECT MAX(stagione) FROM partite WHERE lega = ? AND stagione >= ?",
+                       (lega, STAGIONE)).fetchone()[0]
+        righe = c.execute("""SELECT casa_id, fuori_id, ft_c, ft_f FROM partite
+            WHERE lega = ? AND stagione = ? AND data < ?""", (lega, st, prima_di)).fetchall() if st else []
+    finally:
+        c.close()
+    if len(righe) < 20:
+        return None
+    gol_casa = sum(r[2] for r in righe) / len(righe)
+    gol_fuori = sum(r[3] for r in righe) / len(righe)
+    mu = (gol_casa + gol_fuori) / 2
+    fatti, subiti, n = {}, {}, {}
+    for hc, ha, gc, ga in righe:
+        for t, f, s_ in ((hc, gc, ga), (ha, ga, gc)):
+            fatti[t] = fatti.get(t, 0) + f
+            subiti[t] = subiti.get(t, 0) + s_
+            n[t] = n.get(t, 0) + 1
+    if n.get(casa_id, 0) < 3 or n.get(fuori_id, 0) < 3 or mu <= 0:
+        return None
+
+    def att(t):
+        return (fatti[t] + SMORZA * mu) / (n[t] + SMORZA) / mu
+
+    def dif(t):
+        return (subiti[t] + SMORZA * mu) / (n[t] + SMORZA) / mu
+    return gol_casa * att(casa_id) * dif(fuori_id), gol_fuori * att(fuori_id) * dif(casa_id)
 
 
 def id_squadra(nome, percorso=ARCHIVIO):

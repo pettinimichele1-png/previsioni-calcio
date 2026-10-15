@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.4";
+  var VERSIONE_APP = "22.5";
 
   var stato = {
     dati: null,
@@ -862,6 +862,7 @@
     // v22.4: in alto cosa giocare e perche'; sotto tutto il resto a tendina
     html += '<section class="blocco carta"><div class="blocco-testa"><h2>Cosa giocare</h2><span>' +
       (r.fin ? "a partita finita" : "con la quota giusta") + "</span></div>" + htmlConsigli(consigliAnalisi(a, r), true) +
+      (a.fonte_gol === "stima" ? '<div class="nota-stima">Per questa partita non c\'erano quote prima del via: i gol attesi sono stimati da noi dallo storico della stagione, quindi le percentuali sono meno precise.</div>' : "") +
       '<p class="an-testo an-perche"><b>Perché.</b> ' + esc(perche(a, r, casa, fuori)) + "</p>" +
       '<p class="nota">La quota accanto è quella giusta secondo il calcolo: se il tuo sito paga di più, conviene; se paga meno, a lungo andare si perde.</p></section>';
     var corpo = html, parti = [];
@@ -878,14 +879,15 @@
       }
       var maxPre = Math.max(pre["1"], pre.X, pre["2"]);
       html += '<section class="blocco carta"><div class="blocco-testa"><h2>Prima della partita</h2><span>' +
-        (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "media dei bookmaker" : "Pinnacle") + "</span></div>" +
+        (a.fonte_gol === "stima" ? "stima nostra" : a.fonte_gol && a.fonte_gol !== "pinnacle" ? "media dei bookmaker" : "Pinnacle") + "</span></div>" +
         '<div class="griglia3">' + ["1", "X", "2"].map(function (k) {
           return '<div class="tessera' + (pre[k] === maxPre ? " primo" : "") + '"><small>' + k + "</small><b>" + pct(pre[k]) +
             '</b><span class="eq">' + quota(1 / pre[k]) + "</span></div>";
         }).join("") + "</div>" + coppia("Over 2.5", o25, "Under 2.5", 1 - o25, true) + coppia("Gol", gg, "NoGol", 1 - gg, true) +
         '<p class="nota">Gol attesi: ' + esc(casa) + " " + quota(a.lc) + " · " + esc(fuori) + " " + quota(a.lf) + ". " +
-        (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "Pinnacle non quotava la partita: gol attesi dalla media dei bookmaker." : "Ricavati dalle quote di Pinnacle, senza margine.") + "</p></section>";
-      parti.push({ chiave: "an-p-prima", t: "Prima della partita", sotto: "Cosa diceva " + (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "il mercato" : "Pinnacle"), html: html });
+        (a.fonte_gol === "stima" ? "Nessuna quota per questa partita: gol attesi stimati da noi, da quanto le due squadre segnano e subiscono in questa stagione. Meno precisi delle quote."
+          : a.fonte_gol && a.fonte_gol !== "pinnacle" ? "Pinnacle non quotava la partita: gol attesi dalla media dei bookmaker." : "Ricavati dalle quote di Pinnacle, senza margine.") + "</p></section>";
+      parti.push({ chiave: "an-p-prima", t: "Prima della partita", sotto: a.fonte_gol === "stima" ? "Stima nostra, senza quote" : "Cosa diceva " + (a.fonte_gol && a.fonte_gol !== "pinnacle" ? "il mercato" : "Pinnacle"), html: html });
       html = "";
     }
 
@@ -958,6 +960,7 @@
     var html = '<a class="carta an-carta" href="#/live/analisi/' + encodeURIComponent(a.fixture_id) + '"><div class="an-testa"><span class="an-partita">' +
       conBandiera(a) + "</span>" + '<span class="an-ris"><b>' + esc(a.ht) + "</b> all'intervallo · " + esc(statoPausa(a)) + "</span></div>";
     html += r ? htmlConsigli(consigliAnalisi(a, r), false) : '<div class="vuoto piccolo">Mancano i gol attesi: niente calcolo.</div>';
+    if (a.fonte_gol === "stima") html += '<div class="nota-stima">Senza quote prima della partita: percentuali stimate da noi, meno precise.</div>';
     return html + '<span class="an-apri">Analisi completa' + icona("destra") + "</span></a>";
   }
   function corpoAnalisi(v) {

@@ -367,10 +367,15 @@ def tipi_leghe():
     return leghe
 
 
+# competizioni che l'API chiama coppa ma che sono campionati: ammesse
+# all'intervallo per scelta dell'utente, una per una (v22.5)
+COPPE_AMMESSE = {1202}      # Australia - Australian Championship
+
+
 def ammessa_intervallo(lid, tipi):
     """Un campionato vero (non coppa), non russo, non femminile, giovanile o di riserve."""
     t = tipi.get(lid)
-    if not t or t[0] != "League" or (t[1] or "") == "Russia":
+    if not t or (t[0] != "League" and int(lid) not in COPPE_AMMESSE) or (t[1] or "") == "Russia":
         return False
     return not ESCLUSE_INTERVALLO.search(t[2] or "")
 
@@ -438,7 +443,33 @@ def scrivi_giro(voci, completi, extra=(), intervallo=()):
         print(f"  [quote del giro non salvate: {e}]")
 
 
-def scarica_quote(giorni, id_ammessi, extra=(), info_intervallo=None):
+def stima_senza_quote(info_stima, intervallo):
+    """
+    (v22.5) Le partite di oggi e domani dei campionati ammessi all'intervallo
+    che non hanno quote nell'API: gol attesi stimati dallo storico della
+    stagione (storico_intervallo.gol_attesi_stima), fonte "stima". Servono
+    solo all'analisi dell'intervallo; valore.py le usa solo se non ha i gol
+    attesi da Pinnacle.
+    """
+    try:
+        from storico_intervallo import gol_attesi_stima
+    except Exception:
+        return 0
+    nuove = 0
+    for fid, info in info_stima.items():
+        if fid in intervallo:
+            continue
+        try:
+            g = gol_attesi_stima(info.get("lega"), info.get("id_casa"), info.get("id_fuori"), info["data"])
+        except Exception:
+            g = None
+        if g:
+            intervallo[fid] = dict(info, fixture_id=fid, lc=round(g[0], 4), lf=round(g[1], 4), fonte="stima")
+            nuove += 1
+    return nuove
+
+
+def scarica_quote(giorni, id_ammessi, extra=(), info_intervallo=None, info_stima=None):
     """Quote per giornata: poche chiamate invece di una per partita."""
     quote = {}
     voci = {}
@@ -485,12 +516,14 @@ def scarica_quote(giorni, id_ammessi, extra=(), info_intervallo=None):
                 break
             pagina += 1
     print(f"  quote trovate: {len(quote)} (chiamate {chiamate})")
+    if info_stima:
+        print(f"  partite senza quote con i gol attesi stimati dallo storico: {stima_senza_quote(info_stima, intervallo)}")
     if info_intervallo:
         fonti = {}
         for x in intervallo.values():
             fonti[x["fonte"]] = fonti.get(x["fonte"], 0) + 1
-        print(f"  partite solo per l'intervallo: {len(intervallo)} su {len(info_intervallo)} "
-              f"con i gol attesi ({', '.join(f'{k} {n}' for k, n in fonti.items()) or 'nessuna'})")
+        print(f"  partite per l'intervallo con i gol attesi: {len(intervallo)} "
+              f"({', '.join(f'{k} {n}' for k, n in fonti.items()) or 'nessuna'})")
     scrivi_giro(voci, completi, extra, intervallo.values())
     return quote
 
@@ -2284,6 +2317,7 @@ def main():
 
     extra = []      # partite dei campionati solo per valore.py, oggi e domani
     info_intervallo = {}   # tutte le altre, solo per l'intervallo (v21.0)
+    info_stima = {}        # tutte quelle ammesse all'intervallo, per la stima senza quote (v22.5)
     tipi_lega = tipi_leghe() if CON_QUOTE else {}
     for scarto in range(GIORNI_AVANTI + 1):
         giorno = (oggi + timedelta(days=scarto)).isoformat()
@@ -2297,6 +2331,13 @@ def main():
                       and p["fixture"]["status"]["short"] in ("NS", "TBD")]
             for p in tutte:
                 lid = p["league"]["id"]
+                if (p["fixture"]["status"]["short"] in ("NS", "TBD")
+                        and (lid in nomi_lega or lid in CAMPIONATI_VALORE or ammessa_intervallo(lid, tipi_lega))):
+                    info_stima[p["fixture"]["id"]] = {
+                        "data": p["fixture"]["date"],
+                        "campionato": f"{p['league'].get('country') or ''} - {p['league'].get('name') or ''}",
+                        "casa": p["teams"]["home"]["name"], "fuori": p["teams"]["away"]["name"],
+                        "lega": lid, "id_casa": p["teams"]["home"]["id"], "id_fuori": p["teams"]["away"]["id"]}
                 if (lid in nomi_lega or lid in CAMPIONATI_VALORE
                         or p["fixture"]["status"]["short"] not in ("NS", "TBD")
                         or not ammessa_intervallo(lid, tipi_lega)):
@@ -2404,7 +2445,7 @@ def main():
         else:
             quote = scarica_quote(giorni_da_scaricare(previsioni)
                                   | {e["data"][:10] for e in extra},
-                                  {p["fixture_id"] for p in previsioni}, extra, info_intervallo)
+                                  {p["fixture_id"] for p in previsioni}, extra, info_intervallo, info_stima)
         quote = ricorda_quote(quote, {p["fixture_id"] for p in previsioni})
         for p in previsioni:
             q = quote.get(p["fixture_id"])
