@@ -1428,6 +1428,122 @@ def con_pinnacle(previsioni):
     return fuori
 
 
+# --- schedine ragionate (v22.6) -------------------------------------
+# Due schedine al giorno, a quota mirata, costruite come le farebbe una
+# persona che guarda l'analisi: una sola giocata per partita, coerente con
+# quello che dicono le quote di Pinnacle (chi e' favorito vince o segna,
+# le partite chiuse vanno sui pochi gol, quelle aperte sui gol), mai contro
+# un favorito chiaro, e fra le giocate sensate quella che Bet365 paga piu'
+# vicino al prezzo giusto (il margine pesa meno). Solo partite con la
+# quota vera di Bet365 e non ancora iniziate. Prendono il posto delle
+# vecchie "miste" (spente dalla v21.1), richieste di nuovo dall'utente
+# con questo criterio.
+RAGIONATE = (
+    # titolo, quota minima, quota massima, probabilita' minima e massima di ogni giocata, giocate al massimo
+    ("Quota 5-10", 5.0, 10.0, 0.60, 0.88, 7),
+    ("Quota oltre 20", 20.0, 40.0, 0.47, 0.80, 8),
+)
+MARGINE_MASSIMO_RAGIONATE = 0.05   # Bet365 al massimo il 5% sotto il prezzo giusto
+MERCATI_RAGIONATE = ["1", "2", "1X", "X2", "12", "over15", "over25", "under25", "under35",
+                     "gol_gol", "no_gol", "casa_segna", "fuori_segna",
+                     "casa_over15", "fuori_over15", "casa_under15", "fuori_under15",
+                     "casa_under25", "fuori_under25"]
+
+
+def motivo_giocata(p, esito):
+    """Il perche' di una giocata, in poche parole, dai gol attesi di Pinnacle."""
+    lc, lf = p.get("gol_attesi_casa"), p.get("gol_attesi_fuori")
+    if not lc or not lf:
+        return ""
+    attesi = f"gol attesi {lc:.1f}-{lf:.1f}".replace(".", ",")
+    tot = lc + lf
+    if lc / lf >= 1.8:
+        quadro = f"{p['casa']} nettamente favorito"
+    elif lf / lc >= 1.8:
+        quadro = f"{p['fuori']} nettamente favorito"
+    elif lc / lf >= 1.25:
+        quadro = f"{p['casa']} favorito"
+    elif lf / lc >= 1.25:
+        quadro = f"{p['fuori']} favorito"
+    else:
+        quadro = "partita equilibrata"
+    if esito.startswith(("over", "gol_gol")) or esito.endswith(("over15",)):
+        ritmo = ", partita da gol" if tot >= 2.7 else ""
+    elif esito.startswith(("under", "no_gol")) or "under" in esito:
+        ritmo = ", partita da pochi gol" if tot <= 2.6 else ""
+    else:
+        ritmo = ""
+    return f"{quadro}{ritmo} ({attesi})"
+
+
+def _giocate_sensate(previsioni, pmin, pmax):
+    """Per ogni partita, le giocate coerenti con l'analisi: {fixture_id: [voci]}."""
+    adesso = datetime.now(timezone.utc)
+    per_partita = {}
+    for p in previsioni:
+        try:
+            if datetime.fromisoformat(p["data"]) <= adesso + timedelta(minutes=10):
+                continue
+        except (KeyError, TypeError, ValueError):
+            continue
+        m, mk = p["mercati"], p.get("mercato") or {}
+        for k in MERCATI_RAGIONATE:
+            q, pr = mk.get(f"quota_{k}"), m.get(k)
+            if not q or pr is None or not pmin <= pr <= pmax:
+                continue
+            if not _col_favorito(p, k):
+                continue                 # mai contro un favorito chiaro
+            vantaggio = pr * q - 1
+            if vantaggio < -MARGINE_MASSIMO_RAGIONATE:
+                continue                 # Bet365 la paga troppo poco
+            v = _voce(p, k, pr, q)
+            v["nome"] = v["nome"].replace("Casa", p["casa"]).replace("Ospite", p["fuori"])
+            if k == "1":
+                v["nome"] = f"{p['casa']} vince"
+            elif k == "2":
+                v["nome"] = f"{p['fuori']} vince"
+            elif k in ("1X", "X2"):
+                v["nome"] = f"{p['casa'] if k == '1X' else p['fuori']} o pareggio ({k})"
+            v["vantaggio"] = vantaggio
+            v["motivo"] = motivo_giocata(p, k)
+            per_partita.setdefault(p["fixture_id"], []).append(v)
+    return per_partita
+
+
+def _schedine_ragionate(previsioni):
+    """Le due schedine ragionate del giorno (vedi RAGIONATE)."""
+    fuori = []
+    for titolo, qmin, qmax, pmin, pmax, massimo in RAGIONATE:
+        per_partita = _giocate_sensate(previsioni, pmin, pmax)
+        # di ogni partita la giocata pagata meglio rispetto al giusto;
+        # a parita', la piu' probabile
+        migliori = [max(lista, key=lambda v: (round(v["vantaggio"], 3), v["prob"]))
+                    for lista in per_partita.values()]
+        migliori.sort(key=lambda v: (-v["vantaggio"], -v["prob"]))
+        voci, quota = [], 1.0
+        for v in migliori:
+            if quota >= qmin or len(voci) >= massimo:
+                break
+            voci.append(v)
+            quota *= v["quota"]
+        if quota > qmax and voci:
+            # l'ultima giocata ha sforato: si prova a sostituirla con una
+            # delle rimaste che faccia stare la quota nella fascia
+            senza = quota / voci[-1]["quota"]
+            rimaste = [v for v in migliori if v not in voci]
+            adatte = [v for v in rimaste if qmin <= senza * v["quota"] <= qmax]
+            if adatte:
+                voci[-1] = max(adatte, key=lambda v: (v["vantaggio"], v["prob"]))
+                quota = senza * voci[-1]["quota"]
+        if not (qmin <= quota <= qmax) or len(voci) < 2:
+            continue
+        voci.sort(key=lambda v: v["data"])
+        fuori.append(_schedina(voci, f"{titolo} - {len(voci)} partite",
+                               "Una giocata per partita, coerente con l'analisi, pagata da Bet365 "
+                               "vicino al prezzo giusto."))
+    return fuori
+
+
 def _proposte_giorno(previsioni):
     """
     Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
@@ -1442,6 +1558,13 @@ def _proposte_giorno(previsioni):
                 salvate = json.load(f)
             if (salvate.get("giorno") == oggi and salvate.get("giocate")
                     and "esatti" in salvate):
+                # v22.6: le schedine ragionate si aggiungono a quelle gia'
+                # fissate stamattina, senza cambiare le altre
+                if "ragionate" not in salvate["giocate"]:
+                    salvate["giocate"]["ragionate"] = _schedine_ragionate(
+                        _solo_primo_giorno(_finestra_giorni(con_pinnacle(previsioni))))
+                    with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
+                        json.dump(salvate, f, ensure_ascii=False)
                 return salvate
         except (ValueError, OSError):
             pass
@@ -1478,7 +1601,7 @@ def esatti_correnti(previsioni):
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
-                "sistemi": [], "miste": []}
+                "sistemi": [], "miste": [], "ragionate": []}
     previsioni = _finestra_giorni(previsioni)
 
     # --- singole: le migliori per vantaggio stimato ----------------
@@ -1530,6 +1653,12 @@ def costruisci_giocate(previsioni):
 
     # --- sistemi integrali ------------------------------------------
     proposte["sistemi"] = _costruisci_sistemi(previsioni)
+
+    # --- schedine ragionate (v22.6), solo con le partite di oggi -------
+    proposte["ragionate"] = _schedine_ragionate(_solo_primo_giorno(previsioni))
+    if not proposte["ragionate"]:
+        proposte.setdefault("note", {})["ragionate"] = (
+            "Oggi non ci sono abbastanza partite con giocate sensate e pagate vicino al prezzo giusto.")
 
     # --- miste a quota mirata ---------------------------------------
     # spente dalla v21.1 (decisione dell'utente): 4 vinte su 47, e su tanti

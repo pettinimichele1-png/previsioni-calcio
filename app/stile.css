@@ -445,3 +445,5 @@ a.segmento { display: flex; align-items: center; justify-content: center; text-d
 .an-perche { margin-top: 10px; }
 .an-tendine .an-aperta { padding: 0 8px 8px; }
 .an-tendine .an-aperta .blocco { margin: 0; }
+/* il perche' di una giocata nelle schedine ragionate (v22.6) */
+.evento .sx small.motivo { color: var(--testo2); white-space: normal; line-height: 1.3; }

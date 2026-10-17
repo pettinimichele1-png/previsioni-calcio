@@ -61,12 +61,18 @@ def trova(nome):
             return percorso
     return None
 
-CATEGORIE = ("alta", "valore", "sistemi", "miste")
+CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate")
 
 # Una partita senza risultato dopo tre giorni e' rinviata o persa per
 # strada: la schedina che la contiene viene annullata, invece di restare
 # in sospeso per sempre e bloccare i conteggi.
 GIORNI_ANNULLAMENTO = 3
+
+
+def giornata(d):
+    """La giornata delle giocate: dalle 7 alle 7 del giorno dopo (come nell'app)."""
+    d = d.astimezone(FUSO)
+    return d.date() - timedelta(days=1) if d.hour < 7 else d.date()
 
 
 def giorno_locale(iso):
@@ -238,6 +244,36 @@ def partita_per_app(p):
     return fuori
 
 
+def partite_solo_quote(previsioni):
+    """
+    (v22.6) Le partite dei campionati che il nostro modello non segue ma
+    di cui abbiamo le quote (campionati_valore.py, oggi e domani): stessa
+    forma delle altre, ma con le sole probabilita' di Pinnacle e
+    "solo_quote" perche' l'app non parli del nostro modello.
+    """
+    nostre = {p["fixture_id"] for p in previsioni}
+    try:
+        extra = [dict(e, affidabilita=100) for e in P.leggi_giro().get("partite_extra", [])
+                 if e.get("fixture_id") not in nostre]
+        da_pinnacle = P.con_pinnacle(extra)
+    except Exception as e:
+        print(f"  partite dei campionati aggiunti non preparate: {e}")
+        return []
+    fuori = []
+    for p in da_pinnacle:
+        try:
+            x = partita_per_app(dict(p, mercato=None, formazioni="nessuna"))
+        except (KeyError, TypeError):
+            continue
+        x["mercato"] = {k: p["mercati"][k] for k in ("1", "X", "2")}
+        x["mercato"].update(margine=0, bookmaker="Pinnacle")
+        x["affidabilita"] = None
+        x["storia"] = None
+        x["solo_quote"] = True
+        fuori.append(x)
+    return fuori
+
+
 # ---------------------------------------------------------------
 #  RISULTATI RECENTI, per chiudere da sole le giocate registrate
 # ---------------------------------------------------------------
@@ -282,7 +318,9 @@ def evento_per_app(v):
             "campionato": v.get("campionato", ""),
             "esito": v.get("nome") or v["esito"], "p": v["prob"],
             # v21.1: la quota di Bet365 dell'evento, o null se e' una nostra stima
-            "quota": v.get("quota")}
+            "quota": v.get("quota"),
+            # v22.6: il perche' della giocata (schedine ragionate)
+            "motivo": v.get("motivo")}
 
 
 def giocate_per_app(previsioni, rho):
@@ -297,7 +335,7 @@ def giocate_per_app(previsioni, rho):
             "mercato": v.get("mercato"), "vantaggio": v.get("vantaggio"),
             "eventi": [evento_per_app(v)]})
 
-    for categoria in ("alta", "valore", "miste"):
+    for categoria in ("alta", "valore", "miste", "ragionate"):
         for s in proposte.get(categoria, []):
             fuori[categoria].append({
                 "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"], "prob": s["prob"],
@@ -357,7 +395,7 @@ def schedine_per_app(conn):
              "categorie": {}, "ieri": []}
     cur = conn.cursor()
     try:
-        cur.execute("SELECT codice, categoria, titolo, quota, prob FROM schedine")
+        cur.execute("SELECT codice, categoria, titolo, quota, prob, proposta_il FROM schedine")
         schedine = cur.fetchall()
         cur.execute("""
             SELECT e.codice, e.fixture_id, e.esito, e.casa, e.fuori,
@@ -382,16 +420,28 @@ def schedine_per_app(conn):
             "gc": gc, "ga": ga, "data": data, "giocata": giocata,
             "persa": not giocata and passata})
 
-    ieri = datetime.now(FUSO).date() - timedelta(days=1)
+    # v22.6: "ieri" e' la giornata delle giocate di ieri (dalle 7 alle 7):
+    # prima delle 7 i risultati di ieri non sono ancora arrivati
+    ieri = giornata(datetime.now(FUSO)) - timedelta(days=1)
     totale = {"n": 0, "vinte": 0, "attesa": 0.0}
     categorie = {}
     di_ieri = []
 
     annullate = 0
-    for codice, categoria, titolo, quota, prob in schedine:
+    for codice, categoria, titolo, quota, prob, proposta_il in schedine:
         ev = eventi.get(codice, [])
         if not ev:
             continue
+        # v22.6: una partita rinviata, sospesa o senza data non entra mai
+        # nell'archivio: se la schedina e' vecchia si annulla lo stesso,
+        # invece di restare "in attesa" per sempre
+        try:
+            vecchia = datetime.fromisoformat(proposta_il).astimezone(FUSO) < limite - timedelta(days=2)
+        except (TypeError, ValueError):
+            vecchia = False
+        for e in ev:
+            if e["data"] is None and vecchia:
+                e["persa"] = True
         if any(e["persa"] for e in ev):
             annullate += 1                 # partita rinviata o mai arrivata
             continue
@@ -413,8 +463,8 @@ def schedine_per_app(conn):
             d["vinte"] += 1 if vinta else 0
             d["attesa"] += prob or 0.0
 
-        conclusa = max((giorno_locale(e["data"]) for e in ev
-                        if giorno_locale(e["data"])), default=None)
+        conclusa = max((giornata(datetime.fromisoformat(e["data"])) for e in ev
+                        if e["data"]), default=None)
         if conclusa == ieri:
             di_ieri.append({
                 "titolo": titolo_pulito(titolo), "categoria": categoria, "quota": quota,
@@ -463,7 +513,7 @@ def main():
     app = {
         "generato": datetime.now(FUSO).isoformat(timespec="minutes"),
         "mercati": vocabolario_mercati(),
-        "partite": sorted((partita_per_app(p) for p in previsioni),
+        "partite": sorted([partita_per_app(p) for p in previsioni] + partite_solo_quote(previsioni),
                           key=lambda x: x["data"]),
         "giocate": giocate_per_app(previsioni, rho),
         "esatti": esatti_per_app(previsioni),

@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.5";
+  var VERSIONE_APP = "22.6";
 
   var stato = {
     dati: null,
@@ -1174,7 +1174,7 @@
         var max = Math.max(p["1"], p["X"], p["2"]);
         html += '<a class="partita carta" href="#/partita/' + encodeURIComponent(m.id) + '">' +
           '<div class="riga"><div class="ora"><b>' + oraDi(d) + "</b><span>" + esc(etichettaLega(m.campionato)) + "</span></div>" +
-          '<div class="etichette">' + badge(m.formazioni) + (mk ? "" : '<span class="badge">MODELLO</span>') +
+          '<div class="etichette">' + badge(m.formazioni) + (mk ? "" : '<span class="badge">MODELLO</span>') + (m.solo_quote ? '<span class="badge">SOLO QUOTE</span>' : "") +
           (conValore[String(m.id)] ? '<span class="tag-valore">VALORE</span>' : "") + "</div></div>" +
           '<div class="riga"><div class="squadre"><span>' + esc(m.casa) + "</span><span>" + esc(m.fuori) + "</span></div>" +
           '<div class="pillole">' + ["1", "X", "2"].map(function (k) {
@@ -1208,7 +1208,7 @@
     if (mk && mk["1"] != null) {
       return { p: { "1": mk["1"], X: mk["X"], "2": mk["2"] },
                dc: { "1X": mk["1"] + mk["X"], "12": mk["1"] + mk["2"], "X2": mk["X"] + mk["2"] },
-               nome: mk.bookmaker ? "media di " + mk.bookmaker + " bookmaker" : "media dei bookmaker", mercato: true };
+               nome: mk.bookmaker === "Pinnacle" ? "Pinnacle, senza margine" : mk.bookmaker ? "media di " + mk.bookmaker + " bookmaker" : "media dei bookmaker", mercato: true };
     }
     return { p: m.p, dc: m.dc, nome: "dal nostro modello", mercato: false };
   }
@@ -1224,7 +1224,8 @@
     }
     return { righe: [["Over 1.5", m.gol.over15, "Under 1.5", m.gol.under15], ["Over 2.5", m.gol.over25, "Under 2.5", m.gol.under25],
                      ["Over 3.5", m.gol.over35, "Under 3.5", m.gol.under35]],
-             gg: ["Gol", m.gg.gol, "NoGol", m.gg.nogol], nome: "dal nostro modello", quote: false };
+             gg: ["Gol", m.gg.gol, "NoGol", m.gg.nogol],
+             nome: m.solo_quote ? "Pinnacle, senza margine" : "dal nostro modello", quote: !!m.solo_quote };
   }
 
   // le giocate di valore di questa partita, se ce ne sono da fare adesso
@@ -1263,7 +1264,7 @@
   // il nostro modello contro il mercato, esito per esito, come nella
   // versione 17: stesso mercato delle percentuali qui sopra
   function bloccoConfronto(m, f) {
-    if (!f.mercato) return "";
+    if (!f.mercato || m.solo_quote) return "";     // v22.6: senza il nostro modello non c'e' confronto
     var mk = m.mercato || {};
     var fonte = f.nome.indexOf("Pinnacle") === 0 ? "Mercato: le quote di Pinnacle, margine già tolto."
       : "Mercato: media di " + (mk.bookmaker || "più") + " bookmaker" + (mk.margine != null ? ", margine del " + pct(mk.margine, 1) : "") + " già tolto.";
@@ -1411,10 +1412,18 @@
     }
     if (!righe.length) return "";
     return '<section class="blocco elenco"><h2>Altri mercati</h2>' + listaApri(righe, true) +
-      '<p class="nota">Dal nostro modello. Il numero piccolo è la quota equa, cioè il rovescio della percentuale: non è un consiglio di gioco.</p></section>';
+      '<p class="nota">' + (m.solo_quote ? "Ricavati dalle quote di Pinnacle." : "Dal nostro modello.") +
+      " Il numero piccolo è la quota equa, cioè il rovescio della percentuale: non è un consiglio di gioco.</p></section>";
   }
 
   function bloccoFiducia(m) {
+    // v22.6: le partite dei campionati che il nostro modello non segue
+    if (m.solo_quote) {
+      return '<section class="blocco carta"><h2>Da dove vengono i numeri</h2><p class="nota">Il nostro modello non segue questo campionato: ' +
+        "tutte le percentuali sono ricavate dalle quote di Pinnacle, senza il suo margine.</p>" +
+        (m.attesi && m.attesi[0] != null ? '<div class="attesi"><span>Gol attesi</span><b>' + quota(m.attesi[0]) + ' <span class="fioco">–</span> ' + quota(m.attesi[1]) + "</b></div>" : "") +
+        "</section>";
+    }
     var etichettaForm = m.formazioni === "ufficiale" ? "Formazioni ufficiali" :
                         m.formazioni === "probabile" ? "Formazioni probabili" : "Formazioni non note";
     var etichetta = m.affidabilita_etichetta || "bassa";
@@ -1465,6 +1474,7 @@
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
+    { id: "ragionate", nome: "Quota 5-10 e 20+", testo: "Due schedine a quota mirata, costruite guardando l'analisi: una giocata per partita, coerente con quello che dicono le quote di Pinnacle, mai contro un favorito chiaro, scelta fra quelle che Bet365 paga più vicino al prezzo giusto. Sotto ogni partita, il perché." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
 
@@ -1514,8 +1524,8 @@
         (c.eventi || []).forEach(function (e) {
           // v21.1: accanto alla probabilita' la quota di Bet365, o "stimata" se non c'e'
           var qe = sistema || e.quota === undefined ? "" : e.quota ? " · Bet365 " + quota(e.quota) : " · quota stimata";
-          html += '<div class="evento"><div class="sx"><b>' + conBandiera(e) + "</b><small>" + esc(e.info) +
-            '</small></div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
+          html += '<div class="evento"><div class="sx"><b>' + conBandiera(e) + "</b><small>" + esc(e.info) + "</small>" +
+            (e.motivo ? '<small class="motivo">' + esc(e.motivo) + "</small>" : "") + '</div><div class="dx2"><span class="esito">' + esc(e.esito) + "</span><small>" +
             (e.almeno_uno ? "almeno uno " : "") + pct(e.p) + qe + "</small></div></div>";
         });
         if (sistema || c.stimate) {
@@ -1687,7 +1697,7 @@
       "prese battono l'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p>";
   }
 
-  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", esatti: "Risultati esatti" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", esatti: "Risultati esatti" };
 
   function corpoModello() {
     if (!stato.dati) return senzaDati();
@@ -1728,7 +1738,7 @@
         "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "sistemi", "miste", "esatti", "singole", "valore"].forEach(function (k) {
+      ["alta", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +

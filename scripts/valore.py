@@ -791,9 +791,9 @@ def giro(notifica=False):
                                   "campionato": info.get("campionato", ""),
                                   "extra": bool(info.get("extra")), "fonte": "pinnacle",
                                   "aggiornato": adesso.isoformat(timespec="minutes")}
-        if fid in palinsesto and not palinsesto[fid].get("extra"):
-            # le probabilita' per la pagina della partita: le partite dei
-            # campionati aggiunti non hanno pagina nell'app
+        if fid in palinsesto:
+            # le probabilita' per la pagina della partita (dalla v22.6 anche
+            # quelle dei campionati aggiunti, che ora hanno la loro pagina)
             fin = finali(g, gp, cal)
             if rp or fin:
                 tempi_oggi[str(fid)] = {"data": palinsesto[fid]["data"],
