@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.6";
+  var VERSIONE_APP = "22.7";
 
   var stato = {
     dati: null,
@@ -555,11 +555,24 @@
     for (var k = 0; k <= n; k++) { out.push(t); t = t * l / (k + 1); }
     return out;
   }
+  // v22.7: con i gol attesi stimati da noi (senza quote) i gol del secondo
+  // tempo si trattano come incerti: media di piu' Poisson, con i fattori
+  // che manda il server (incertezza_stima in valore.json)
+  function poissonMisto(l, n, a) {
+    var fattori = a && a.fonte_gol === "stima" && stato.valore && stato.valore.incertezza_stima;
+    if (!fattori || !fattori.length) return poissonLista(l, n);
+    var out = [];
+    for (var k = 0; k <= n; k++) out.push(0);
+    fattori.forEach(function (f) {
+      poissonLista(l * f[0], n).forEach(function (x, k) { out[k] += f[1] * x; });
+    });
+    return out;
+  }
   // tutte le probabilita' dell'analisi; null se mancano i dati
   function calcoloAnalisi(a) {
     var g = a.gol_2t || [], ht = String(a.ht || "").split("-").map(Number);
     if (g.length !== 2 || ht.length !== 2 || isNaN(ht[0]) || isNaN(ht[1])) return null;
-    var N = 10, pa = poissonLista(g[0], N), pb = poissonLista(g[1], N);
+    var N = 10, pa = poissonMisto(g[0], N, a), pb = poissonMisto(g[1], N, a);
     var hc = ht[0], hf = ht[1];
     var fin = /^\d+-\d+$/.test(a.finale || "") ? a.finale.split("-").map(Number) : null;
     var esito = fin ? [fin[0] - hc, fin[1] - hf] : null;      // gol del secondo tempo davvero

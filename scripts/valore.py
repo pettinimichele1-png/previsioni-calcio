@@ -1271,6 +1271,9 @@ def scrivi_app(registro, stato):
             "oggi": [voce_app(r) for r in di_oggi],
             # analisi dell'intervallo di oggi (v21.5), le piu' recenti prima
             "analisi": analisi_app(oggi),
+            # v22.7: i fattori con cui l'app allarga le probabilita' delle
+            # partite con i gol attesi stimati da noi
+            "incertezza_stima": [[round(u, 5), round(w, 5)] for u, w in punti_gamma(INCERTEZZA_STIMA)],
             # dalla v20.6 due al giorno; "schedina" (la prima) resta per l'app vecchia
             "schedine": schedine,
             "schedina": schedine[0] if schedine else None,
@@ -1498,12 +1501,44 @@ def prob_pausa(lc, lf, htc, hta, mod, resta=1.0):
     return prob_da_gol(a * resta, b * resta, htc, hta)
 
 
-def prob_da_gol(a, b, htc, hta):
-    """I mercati dell'intervallo dai gol attesi del secondo tempo."""
-    pa, pb = [math.exp(-a)], [math.exp(-b)]
-    for k in range(1, 10):
-        pa.append(pa[-1] * a / k)
-        pb.append(pb[-1] * b / k)
+# v22.7: nelle partite senza quote (gol attesi stimati da noi) il calcolo
+# era troppo sicuro di se'. I gol attesi della vigilia sono incerti: si
+# moltiplicano per un fattore casuale di media 1 (distribuzione Gamma con
+# forma INCERTEZZA_STIMA), che allarga le probabilita' verso il 50%.
+# Provato il 19/10/2026: imparato su 951 partite, giudicato su 952 mai
+# viste; sulle partite con la stima migliora in modo dimostrato (+11
+# millesimi [+1,9, +21], taratura da 2,5 a 1,9 punti), con Pinnacle e con
+# la media dei bookmaker no, quindi li' non si applica.
+INCERTEZZA_STIMA = 8
+PUNTI_INCERTEZZA = 12
+
+
+def punti_gamma(forma):
+    """[(fattore, peso)]: una Gamma di media 1 a quantili, per mescolare i Poisson."""
+    from statistics import NormalDist
+    punti = []
+    for k in range(PUNTI_INCERTEZZA):
+        z = NormalDist().inv_cdf((k + 0.5) / PUNTI_INCERTEZZA)
+        x = (1 - 1 / (9 * forma) + z * math.sqrt(1 / (9 * forma))) ** 3      # Wilson-Hilferty
+        punti.append(max(x, 1e-6))
+    media = sum(punti) / len(punti)
+    return [(x / media, 1 / len(punti)) for x in punti]
+
+
+def prob_da_gol(a, b, htc, hta, forma=None):
+    """I mercati dell'intervallo dai gol attesi del secondo tempo; con forma
+    (v22.7) i gol attesi si trattano come incerti (vedi INCERTEZZA_STIMA)."""
+    fattori = punti_gamma(forma) if forma else [(1.0, 1.0)]
+
+    def poisson(l):
+        p = [math.exp(-l)]
+        for k in range(1, 10):
+            p.append(p[-1] * l / k)
+        return p
+    pa = [sum(w * x for w, x in zip([w for _, w in fattori], col))
+          for col in zip(*[poisson(a * u) for u, _ in fattori])]
+    pb = [sum(w * x for w, x in zip([w for _, w in fattori], col))
+          for col in zip(*[poisson(b * u) for u, _ in fattori])]
     out = dict.fromkeys(MERCATI_PAUSA, 0.0)
     for i, x in enumerate(pa):
         for j, y in enumerate(pb):
@@ -1512,6 +1547,16 @@ def prob_da_gol(a, b, htc, hta):
                     out[k] += x * y
     tot = sum(pa) * sum(pb)
     return {k: v / tot for k, v in out.items()}
+
+
+# v22.7: niente squadre giovanili, riserve o femminili all'intervallo, anche
+# quando il nome del campionato non lo dice (es. "Parnu JK Vaprus U21")
+SQUADRE_ESCLUSE = re.compile(r"\bU-?(1[5-9]|2[0-3])\b|\s(II|III|B)$|\breserves?\b|\byouth\b|\bjuniors?\b|"
+                             r"\(f\)|\sW$|\bwomen\b|\bfemenin", re.I)
+
+
+def squadra_esclusa(nome):
+    return bool(SQUADRE_ESCLUSE.search((nome or "").strip()))
 
 
 def rosso(eventi):
@@ -1697,7 +1742,7 @@ def analizza(in_pausa, gol, mod, stat_pt, id_casa=None, id_fuori=None):
         if con_stat:
             a, b = con_stat
             modello = "statistiche"
-        prob = prob_da_gol(a, b, htc, hta)
+        prob = prob_da_gol(a, b, htc, hta, INCERTEZZA_STIMA if g.get("fonte") == "stima" else None)
         tutte[fid] = {"data": g["data"], "partita": f"{g['casa']} - {g['fuori']}",
                       "campionato": g.get("campionato", ""), "ht": f"{htc}-{hta}",
                       "letta": datetime.now(FUSO).isoformat(timespec="minutes"),
@@ -1971,6 +2016,9 @@ def intervallo():
         if st in FINITE:
             fatte[fid] = st
         if st != "HT" or fid not in gol:
+            continue
+        if squadra_esclusa(gol[fid].get("casa")) or squadra_esclusa(gol[fid].get("fuori")):
+            fatte[fid] = "giovanili"          # v22.7
             continue
         ht = (f.get("score") or {}).get("halftime") or {}
         gh, ga = ht.get("home"), ht.get("away")
