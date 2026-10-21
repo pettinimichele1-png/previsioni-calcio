@@ -19,6 +19,7 @@ USO:
 
 import os
 import sys
+import itertools
 import json
 import time
 import math
@@ -1544,6 +1545,192 @@ def _schedine_ragionate(previsioni):
     return fuori
 
 
+# --- sistemi integrali (v22.8, criteri dell'utente) -------------------
+# Ogni mattina sistemi integrali a 3 partite con 3 esiti ciascuna (27
+# colonne, stesso importo per colonna), almeno un risultato esatto per
+# partita, quota della colonna minima circa 30 e massima di almeno 800.
+# Due versioni: ESCLUSIVI (i tre esiti di una partita si escludono: copre
+# piu' risultati, vince una colonna sola) e SOVRAPPOSTI (un esito e due
+# risultati esatti dentro quell'esito: se esce l'esatto vincono piu'
+# colonne insieme, ma si vince molto piu' di rado). Probabilita' dalla
+# matrice dei gol di Pinnacle, quote vere di Bet365 (anche degli esatti).
+# Una coppia di sistemi al giorno, due o tre coppie quando ci sono tante
+# partite; partite diverse in ogni sistema.
+INTEGRALI_QMIN = (26.0, 40.0)
+INTEGRALI_QMAX_MINIMA = 800.0
+INTEGRALI_COPPIE = ((27, 3), (18, 2), (0, 1))   # partite utilizzabili -> coppie di sistemi
+MERCATI_INTEGRALI = ["1", "X", "2", "1X", "X2", "12", "over15", "over25", "over35", "under25",
+                     "under35", "gol_gol", "no_gol", "casa_segna", "fuori_segna",
+                     "casa_over15", "fuori_over15", "casa_under15", "fuori_under15"]
+
+
+def _nome_integrale(p, k):
+    if "-" in k and k[0].isdigit():
+        return f"esatto {k}"
+    if k == "1":
+        return f"{p['casa']} vince"
+    if k == "2":
+        return f"{p['fuori']} vince"
+    if k == "X":
+        return "pareggio"
+    return NOMI.get(k, k).replace("Casa", p["casa"]).replace("Ospite", p["fuori"])
+
+
+def _terne_integrali(p, tipo):
+    """Le terne di esiti possibili su una partita, con la loro distribuzione."""
+    try:
+        import quote_giuste as Qg
+        M = Qg.matrice(p["gol_attesi_casa"], p["gol_attesi_fuori"])
+    except Exception:
+        return []
+    n, m, mk = len(M), p["mercati"], p.get("mercato") or {}
+    esatte = p.get("quote_esatti") or {}
+
+    def quota(k):
+        return esatte.get(k) if "-" in k else mk.get(f"quota_{k}")
+    soglia = 2.6 if tipo == "esclusivi" else 2.2
+    base = [k for k in MERCATI_INTEGRALI if quota(k) and quota(k) >= soglia
+            and m.get(k) and m[k] * quota(k) >= 0.90]
+    esatti = sorted(((M[x][y], f"{x}-{y}") for x in range(min(n, 6)) for y in range(min(n, 6))
+                     if esatte.get(f"{x}-{y}")), reverse=True)[:12]
+    if tipo == "esclusivi":
+        terne = [t for t in itertools.combinations(base + [e for _, e in esatti], 3)
+                 if any("-" in e for e in t)]
+    else:
+        terne = []
+        for b in base:
+            dentro = [e for _, e in esatti if esito_avvenuto(b, int(e.split("-")[0]), int(e.split("-")[1]))]
+            terne += [(b, e1, e2) for e1, e2 in itertools.combinations(dentro, 2)]
+    fuori = []
+    for t in terne:
+        qs = [quota(k) for k in t]
+        dist, doppi = {}, 0.0
+        for x in range(n):
+            for y in range(n):
+                presi = [k for k in t if esito_avvenuto(k, x, y)]
+                f = round(sum(quota(k) for k in presi), 3)
+                dist[f] = dist.get(f, 0.0) + M[x][y]
+                if len(presi) >= 2:
+                    doppi += M[x][y]
+        copre = sum(v for f, v in dist.items() if f > 0)
+        resa = sum(f * v for f, v in dist.items()) / 3
+        if resa < 0.75:
+            continue
+        fuori.append({"p": p, "esiti": t, "quote": qs, "dist": dist, "copre": copre,
+                      "doppi": doppi, "resa": resa})
+    fuori.sort(key=lambda x: -x["copre"])
+    return fuori[:8]
+
+
+def _valuta_integrale(scelte):
+    d = {1.0: 1.0}
+    for s in scelte:
+        nuovo = {}
+        for a, pa in d.items():
+            for b, pb in s["dist"].items():
+                k = round(a * b, 2)
+                nuovo[k] = nuovo.get(k, 0.0) + pa * pb
+        d = nuovo
+    colonne = 3 ** len(scelte)
+    return {"vince": sum(v for f, v in d.items() if f > 0),
+            "attivo": sum(v for f, v in d.items() if f >= colonne),
+            "incasso_max": max(d), "resa": math.prod(s["resa"] for s in scelte) - 1}
+
+
+def _miglior_integrale(per_partita, usate):
+    """Il sistema a 3 partite con la probabilita' piu' alta di andare in attivo."""
+    voci = [(fid, t) for fid, lista in per_partita.items() if fid not in usate for t in lista]
+    # le partite piu' promettenti, per non provare milioni di combinazioni
+    voci.sort(key=lambda v: -v[1]["copre"])
+    voci = voci[:160]
+    candidati = []
+    for a, b, c in itertools.combinations(range(len(voci)), 3):
+        fa, fb, fc = voci[a][0], voci[b][0], voci[c][0]
+        if fa == fb or fa == fc or fb == fc:
+            continue
+        sc = (voci[a][1], voci[b][1], voci[c][1])
+        qmin = math.prod(min(s["quote"]) for s in sc)
+        if not INTEGRALI_QMIN[0] <= qmin <= INTEGRALI_QMIN[1]:
+            continue
+        qmax = math.prod(max(s["quote"]) for s in sc)
+        if qmax < INTEGRALI_QMAX_MINIMA:
+            continue
+        candidati.append((math.prod(s["copre"] for s in sc), sc, qmin, qmax))
+    candidati.sort(key=lambda x: -x[0])
+    migliore = None
+    for _, sc, qmin, qmax in candidati[:60]:
+        v = _valuta_integrale(sc)
+        chiave = (round(v["attivo"], 4), v["resa"])
+        if migliore is None or chiave > migliore[0]:
+            migliore = (chiave, sc, qmin, qmax, v)
+    return migliore
+
+
+def _pool_integrali(previsioni):
+    """Le partite per i sistemi: quelle del modello piu' quelle dei campionati
+    aggiunti (campionati_valore.py), tutte con Pinnacle, della giornata delle
+    giocate (dalle 7 alle 7) e non ancora iniziate."""
+    nostre = {p["fixture_id"] for p in previsioni}
+    try:
+        extra = [dict(e, affidabilita=100) for e in leggi_giro().get("partite_extra", [])
+                 if e.get("fixture_id") not in nostre]
+        tutte = list(previsioni) + con_pinnacle(extra)
+    except Exception:
+        tutte = list(previsioni)
+    oggi = giornata_giocate()
+    adesso = datetime.now(timezone.utc)
+    fuori = []
+    for p in tutte:
+        try:
+            d = datetime.fromisoformat(p["data"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        locale = d.astimezone(FUSO_GIOCATE)
+        g = locale.date() - timedelta(days=1) if locale.hour < 7 else locale.date()
+        if g == oggi and d > adesso + timedelta(minutes=10):
+            fuori.append(p)
+    return fuori
+
+
+def _sistemi_integrali(previsioni):
+    """Le coppie di sistemi integrali del giorno (vedi INTEGRALI_*)."""
+    oggi = _pool_integrali(previsioni)
+    terne = {tipo: {} for tipo in ("esclusivi", "sovrapposti")}
+    for p in oggi:
+        for tipo in terne:
+            lista = _terne_integrali(p, tipo)
+            if lista:
+                terne[tipo][p["fixture_id"]] = lista
+    utili = len(set(terne["esclusivi"]) | set(terne["sovrapposti"]))
+    coppie = next(n for soglia, n in INTEGRALI_COPPIE if utili >= soglia)
+    fuori, usate = [], set()
+    for numero in range(1, coppie + 1):
+        for tipo in ("esclusivi", "sovrapposti"):
+            m = _miglior_integrale(terne[tipo], usate)
+            if not m:
+                continue
+            _, sc, qmin, qmax, v = m
+            voci, unioni = [], {}
+            for s in sorted(sc, key=lambda s: s["p"]["data"]):
+                p = s["p"]
+                usate.add(p["fixture_id"])
+                unioni[str(p["fixture_id"])] = s["copre"]
+                for k, q in zip(s["esiti"], s["quote"]):
+                    x = _voce(p, k, None, q)
+                    x["nome"] = f"{_nome_integrale(p, k)} " + f"{q:.2f}".replace(".", ",")
+                    voci.append(x)
+            fuori.append({
+                "titolo": f"Sistema {len(fuori) + 1} - esiti " + tipo,
+                "nota": ("I tre esiti di ogni partita si escludono: si prende un esito per partita."
+                         if tipo == "esclusivi" else
+                         "Un esito e due risultati esatti dentro: se esce l'esatto vincono piu' colonne insieme."),
+                "tipo": tipo, "voci": voci, "unioni": unioni, "sistema": True,
+                "prob": v["vince"], "attivo": v["attivo"], "resa": v["resa"],
+                "quota": qmin, "quota_max": qmax, "incasso_max": v["incasso_max"],
+                "combinazioni": 27})
+    return fuori
+
+
 def _proposte_giorno(previsioni):
     """
     Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
@@ -1560,6 +1747,10 @@ def _proposte_giorno(previsioni):
                     and "esatti" in salvate):
                 # v22.6: le schedine ragionate si aggiungono a quelle gia'
                 # fissate stamattina, senza cambiare le altre
+                if "integrali" not in salvate["giocate"]:
+                    salvate["giocate"]["integrali"] = _sistemi_integrali(con_pinnacle(previsioni))
+                    with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
+                        json.dump(salvate, f, ensure_ascii=False)
                 if "ragionate" not in salvate["giocate"]:
                     salvate["giocate"]["ragionate"] = _schedine_ragionate(
                         _solo_primo_giorno(_finestra_giorni(con_pinnacle(previsioni))))
@@ -1601,7 +1792,7 @@ def esatti_correnti(previsioni):
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
-                "sistemi": [], "miste": [], "ragionate": []}
+                "sistemi": [], "miste": [], "ragionate": [], "integrali": []}
     previsioni = _finestra_giorni(previsioni)
 
     # --- singole: le migliori per vantaggio stimato ----------------
@@ -1652,7 +1843,12 @@ def costruisci_giocate(previsioni):
                 "ne implichi la quota."))
 
     # --- sistemi integrali ------------------------------------------
-    proposte["sistemi"] = _costruisci_sistemi(previsioni)
+    # v22.8: al posto dei vecchi sistemi, quelli fatti con i criteri
+    # dell'utente (vedi INTEGRALI_*), solo con le partite di oggi
+    proposte["integrali"] = _sistemi_integrali(previsioni)
+    if not proposte["integrali"]:
+        proposte.setdefault("note", {})["sistemi"] = (
+            "Oggi non ci sono abbastanza partite per un sistema con quota minima circa 30 e massima di almeno 800.")
 
     # --- schedine ragionate (v22.6), solo con le partite di oggi -------
     proposte["ragionate"] = _schedine_ragionate(_solo_primo_giorno(previsioni))

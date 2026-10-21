@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.7";
+  var VERSIONE_APP = "22.8";
 
   var stato = {
     dati: null,
@@ -1486,7 +1486,7 @@
   // ---------------------------------------------------------------
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
-    { id: "sistemi", nome: "Sistemi", testo: "Più esiti sulla stessa partita: basta che in ogni partita se ne avveri almeno uno." },
+    { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali a 3 partite con 3 esiti ciascuna, risultati esatti compresi: 27 colonne con lo stesso importo, quota minima circa 30 e massima di almeno 800. Basta azzeccare un esito per partita. Ogni giorno una coppia (esiti esclusivi ed esiti sovrapposti), di più quando ci sono tante partite." },
     { id: "ragionate", nome: "Quota 5-10 e 20+", testo: "Due schedine a quota mirata, costruite guardando l'analisi: una giocata per partita, coerente con quello che dicono le quote di Pinnacle, mai contro un favorito chiaro, scelta fra quelle che Bet365 paga più vicino al prezzo giusto. Sotto ogni partita, il perché." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
@@ -1510,6 +1510,31 @@
     return html;
   }
 
+  // v22.8: i sistemi integrali fatti con i criteri dell'utente
+  function corpoIntegrali(lista, nota) {
+    if (!lista.length) {
+      return '<div class="vuoto"><h3>Nessun sistema oggi</h3>' + esc(nota || "Oggi non ci sono abbastanza partite con questi criteri.") + "</div>";
+    }
+    var html = "";
+    lista.forEach(function (c) {
+      html += '<article class="giocata carta"><div class="giocata-testa"><span>' + esc(c.titolo) +
+        '</span><div class="quota"><small>quota colonna</small><b>' + quota(c.quota, 1) + "–" + quota(c.quota_max, 0) + "</b></div></div>";
+      if (c.nota) html += '<p class="nota integrale-nota">' + esc(c.nota) + "</p>";
+      (c.eventi || []).forEach(function (e) {
+        html += '<div class="evento"><div class="sx"><b>' + conBandiera(e) + "</b><small>" + esc(e.info) + "</small>" +
+          '<small class="motivo">' + esc(e.esito) + '</small></div><div class="dx2"><span class="esito">copre</span><small>' +
+          pct(e.p) + "</small></div></div>";
+      });
+      var colonne = c.combinazioni || 27;
+      html += '<div class="nota-stima integrale-info">' + colonne + " colonne con lo stesso importo: con 1 € a colonna giochi " + colonne +
+        " €. Incasso massimo " + Math.round(c.incasso_max || c.quota_max) + " €." +
+        (c.attivo != null && c.prob - c.attivo < 0.005 ? " Ogni volta che vince sei in attivo." :
+          c.attivo != null ? " In attivo " + pct(c.attivo) + " delle volte." : "") + "</div>";
+      html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>probabilità che vinca</span><b>' + pct(c.prob) + "</b></div></article>";
+    });
+    return html;
+  }
+
   function vistaGiocate() {
     var scheda = SCHEDE.filter(function (s) { return s.id === stato.scheda; })[0];
     if (!scheda) { stato.scheda = "alta"; scheda = SCHEDE[0]; }
@@ -1522,6 +1547,8 @@
 
     if (stato.scheda === "esatti") {
       html += corpoEsatti();
+    } else if (stato.scheda === "sistemi" && g.integrali) {
+      html += corpoIntegrali(g.integrali, (g.note || {}).sistemi);
     } else {
       var carte = g[stato.scheda] || [];
       if (!carte.length) {
@@ -1710,7 +1737,7 @@
       "prese battono l'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p>";
   }
 
-  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", esatti: "Risultati esatti" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", integrali: "Sistemi integrali", esatti: "Risultati esatti" };
 
   function corpoModello() {
     if (!stato.dati) return senzaDati();
@@ -1751,7 +1778,7 @@
         "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
+      ["alta", "integrali", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +

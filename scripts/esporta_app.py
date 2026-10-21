@@ -61,7 +61,7 @@ def trova(nome):
             return percorso
     return None
 
-CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate")
+CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate", "integrali")
 
 # Una partita senza risultato dopo tre giorni e' rinviata o persa per
 # strada: la schedina che la contiene viene annullata, invece di restare
@@ -367,6 +367,22 @@ def giocate_per_app(previsioni, rho):
             "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"],
             "quota_max": s.get("quota_max"), "prob": s["prob"],
             "combinazioni": s.get("combinazioni"), "eventi": eventi})
+    # v22.8: i sistemi integrali con i criteri dell'utente, uno per carta,
+    # con gli esiti raggruppati per partita
+    for s in proposte.get("integrali", []):
+        gruppi = {}
+        for v in s["voci"]:
+            gruppi.setdefault(v["fixture_id"], []).append(v)
+        fuori["integrali"].append({
+            "titolo": titolo_pulito(s["titolo"]), "nota": s.get("nota"), "tipo": s.get("tipo"),
+            "quota": s["quota"], "quota_max": s.get("quota_max"), "prob": s["prob"],
+            "attivo": s.get("attivo"), "resa": s.get("resa"), "incasso_max": s.get("incasso_max"),
+            "combinazioni": s.get("combinazioni"),
+            "eventi": [{"partita": f"{voci[0]['casa']} – {voci[0]['fuori']}", "info": info_partita(voci[0]),
+                        "campionato": voci[0].get("campionato", ""),
+                        "esito": " · ".join(x.get("nome") or x["esito"] for x in voci),
+                        "p": (s.get("unioni") or {}).get(str(fid)), "almeno_uno": True}
+                       for fid, voci in gruppi.items()]})
     fuori["generato"] = generato
     fuori["note"] = proposte.get("note", {})
     return fuori
@@ -408,6 +424,19 @@ def schedine_per_app(conn):
         return vuoto
 
     limite = datetime.now(FUSO) - timedelta(days=GIORNI_ANNULLAMENTO)
+    # v22.8: i risultati delle partite fuori dal database del modello (i
+    # campionati aggiunti, usati dai sistemi integrali) dall'archivio dello storico
+    storico = {}
+    try:
+        import sqlite3 as _s
+        a = _s.connect("file:stato/intervallo_storico.db?mode=ro", uri=True)
+        storico = {r[0]: r[1:] for r in a.execute(
+            "SELECT fid, ft_c, ft_f, data, stato FROM partite")}
+        a.close()
+    except Exception:
+        pass
+    righe = [(c, f, e, ca, fu) + (tuple(storico[f]) if gc is None and f in storico else (gc, ga, d, st))
+             for c, f, e, ca, fu, gc, ga, d, st in righe]
     eventi = {}
     for codice, fid, esito, casa, fuori, gc, ga, data, stato in righe:
         giocata = gc is not None and stato in ("FT", "AET", "PEN")
@@ -449,7 +478,7 @@ def schedine_per_app(conn):
             continue                       # non ancora conclusa
         for e in ev:
             e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
-        if categoria == "sistemi":
+        if categoria in ("sistemi", "integrali"):
             per_partita = {}
             for e in ev:
                 per_partita.setdefault(e["fid"], []).append(e["preso"])
