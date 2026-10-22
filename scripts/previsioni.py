@@ -1731,6 +1731,93 @@ def _sistemi_integrali(previsioni):
     return fuori
 
 
+# --- quota alta (v23.0) ---------------------------------------------
+# Il metodo delle schedine a quota 15 e 36 del 21/10/2026 (uscite tutte e
+# due), chiesto dall'utente per la scheda "Quota alta": per ogni quota
+# obiettivo la combinazione con la PROBABILITA' PIU' ALTA, una giocata per
+# partita, scelta fra tutte le partite di oggi (modello e campionati
+# aggiunti, giornata 7-7, non ancora iniziate). Solo giocate pagate da
+# Bet365 al massimo QUOTA_ALTA_MARGINE sotto il prezzo giusto di Pinnacle,
+# mai contro un favorito chiaro, ognuna almeno al QUOTA_ALTA_PROB_MINIMA.
+# La ricerca e' esatta: programmazione dinamica sul logaritmo della quota
+# (la probabilita' di una schedina e' il prodotto, la quota pure).
+QUOTA_ALTA = (("Quota 15-30", 15.0, 30.0), ("Quota circa 40", 36.0, 46.0))
+QUOTA_ALTA_MARGINE = 0.025
+QUOTA_ALTA_PROB_MINIMA = 0.45
+QUOTA_ALTA_GIOCATE = (3, 9)
+MERCATI_QUOTA_ALTA = ["1", "2", "X", "1X", "X2", "12", "over15", "over25", "over35", "under25",
+                      "under35", "gol_gol", "no_gol", "casa_segna", "fuori_segna",
+                      "casa_over15", "fuori_over15", "casa_under15", "fuori_under15",
+                      "casa_under25", "fuori_under25"]
+
+
+def _candidate_quota_alta(p):
+    m, mk = p["mercati"], p.get("mercato") or {}
+    fuori = []
+    for k in MERCATI_QUOTA_ALTA:
+        q, pr = mk.get(f"quota_{k}"), m.get(k)
+        if not q or pr is None or pr < QUOTA_ALTA_PROB_MINIMA or q < 1.05:
+            continue
+        if pr * q - 1 < -QUOTA_ALTA_MARGINE or not _col_favorito(p, k):
+            continue
+        v = _voce(p, k, pr, q)
+        v["nome"] = {"1": f"{p['casa']} vince", "2": f"{p['fuori']} vince", "X": "pareggio",
+                     "1X": f"{p['casa']} o pareggio (1X)", "X2": f"{p['fuori']} o pareggio (X2)"}.get(
+            k, v["nome"].replace("Casa", p["casa"]).replace("Ospite", p["fuori"]))
+        v["vantaggio"] = pr * q - 1
+        v["motivo"] = motivo_giocata(p, k)
+        fuori.append(v)
+    return fuori
+
+
+def _miglior_schedina(per_partita, qmin, qmax):
+    """La schedina con la probabilita' piu' alta e la quota fra qmin e qmax."""
+    passo = 0.005
+    hi = int(math.log(qmax) / passo) + 1
+    massimo = QUOTA_ALTA_GIOCATE[1]
+    # stato: (giocate, quota in log a passi) -> (log prob, voci)
+    stati = {(0, 0): (0.0, ())}
+    for lista in per_partita:
+        nuovi = dict(stati)
+        for (n, b), (lp, voci) in stati.items():
+            if n >= massimo:
+                continue
+            for v in lista:
+                nb = b + int(round(math.log(v["quota"]) / passo))
+                if nb > hi:
+                    continue
+                chiave = (n + 1, nb)
+                val = lp + math.log(v["prob"])
+                if chiave not in nuovi or val > nuovi[chiave][0]:
+                    nuovi[chiave] = (val, voci + (v,))
+        stati = nuovi
+    migliore = None
+    for (n, b), (lp, voci) in stati.items():
+        if n < QUOTA_ALTA_GIOCATE[0]:
+            continue
+        q = math.prod(v["quota"] for v in voci)
+        if qmin <= q <= qmax and (migliore is None or lp > migliore[0]):
+            migliore = (lp, voci)
+    return list(migliore[1]) if migliore else None
+
+
+def _schedine_quota_alta(previsioni):
+    pool = _pool_integrali(previsioni)
+    per_partita = [l for l in (_candidate_quota_alta(p) for p in pool) if l]
+    fuori = []
+    for titolo, qmin, qmax in QUOTA_ALTA:
+        voci = _miglior_schedina(per_partita, qmin, qmax)
+        if not voci:
+            continue
+        voci.sort(key=lambda v: v["data"])
+        s = _schedina(voci, f"{titolo} - {len(voci)} partite",
+                      "La combinazione con la probabilita' piu' alta per questa quota: una giocata per partita, "
+                      "pagata da Bet365 vicino al prezzo giusto di Pinnacle.")
+        s["resa"] = s["prob"] * s["quota"] - 1
+        fuori.append(s)
+    return fuori
+
+
 def _proposte_giorno(previsioni):
     """
     Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
@@ -1751,9 +1838,8 @@ def _proposte_giorno(previsioni):
                     salvate["giocate"]["integrali"] = _sistemi_integrali(con_pinnacle(previsioni))
                     with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
                         json.dump(salvate, f, ensure_ascii=False)
-                if "ragionate" not in salvate["giocate"]:
-                    salvate["giocate"]["ragionate"] = _schedine_ragionate(
-                        _solo_primo_giorno(_finestra_giorni(con_pinnacle(previsioni))))
+                if "quota_alta" not in salvate["giocate"]:
+                    salvate["giocate"]["quota_alta"] = _schedine_quota_alta(con_pinnacle(previsioni))
                     with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
                         json.dump(salvate, f, ensure_ascii=False)
                 return salvate
@@ -1792,7 +1878,7 @@ def esatti_correnti(previsioni):
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
-                "sistemi": [], "miste": [], "ragionate": [], "integrali": []}
+                "sistemi": [], "miste": [], "ragionate": [], "integrali": [], "quota_alta": []}
     previsioni = _finestra_giorni(previsioni)
 
     # --- singole: le migliori per vantaggio stimato ----------------
@@ -1850,11 +1936,11 @@ def costruisci_giocate(previsioni):
         proposte.setdefault("note", {})["sistemi"] = (
             "Oggi non ci sono abbastanza partite per un sistema con quota minima circa 30 e massima di almeno 800.")
 
-    # --- schedine ragionate (v22.6), solo con le partite di oggi -------
-    proposte["ragionate"] = _schedine_ragionate(_solo_primo_giorno(previsioni))
-    if not proposte["ragionate"]:
-        proposte.setdefault("note", {})["ragionate"] = (
-            "Oggi non ci sono abbastanza partite con giocate sensate e pagate vicino al prezzo giusto.")
+    # --- quota alta (v23.0): prende il posto delle schedine ragionate ----
+    proposte["quota_alta"] = _schedine_quota_alta(previsioni)
+    if not proposte["quota_alta"]:
+        proposte.setdefault("note", {})["quota_alta"] = (
+            "Oggi non ci sono abbastanza partite con giocate pagate vicino al prezzo giusto per arrivare a queste quote.")
 
     # --- miste a quota mirata ---------------------------------------
     # spente dalla v21.1 (decisione dell'utente): 4 vinte su 47, e su tanti

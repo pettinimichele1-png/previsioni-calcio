@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "22.9";
+  var VERSIONE_APP = "23.0";
 
   var stato = {
     dati: null,
@@ -1487,7 +1487,7 @@
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali a 3 partite con 3 esiti ciascuna, risultati esatti compresi: 27 colonne con lo stesso importo, quota minima circa 30 e massima di almeno 800. Basta azzeccare un esito per partita. Ogni giorno una coppia (esiti esclusivi ed esiti sovrapposti), di più quando ci sono tante partite." },
-    { id: "ragionate", nome: "Quota 5-10 e 20+", testo: "Due schedine a quota mirata, costruite guardando l'analisi: una giocata per partita, coerente con quello che dicono le quote di Pinnacle, mai contro un favorito chiaro, scelta fra quelle che Bet365 paga più vicino al prezzo giusto. Sotto ogni partita, il perché." },
+    { id: "ragionate", nome: "Quota alta", testo: "Due schedine al giorno, a quota 15-30 e a quota circa 40: fra tutte le partite di oggi, la combinazione con la probabilità più alta di uscire per quella quota. Una giocata per partita, pagata da Bet365 al massimo il 2,5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 45%. Sotto ogni partita, il perché." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
 
@@ -1550,9 +1550,10 @@
     } else if (stato.scheda === "sistemi" && g.integrali) {
       html += corpoIntegrali(g.integrali, (g.note || {}).sistemi);
     } else {
-      var carte = g[stato.scheda] || [];
+      // v23.0: la scheda "Quota alta" mostra le nuove schedine (con il file vecchio, le ragionate)
+      var carte = (stato.scheda === "ragionate" && g.quota_alta ? g.quota_alta : g[stato.scheda]) || [];
       if (!carte.length) {
-        var spiega = (g.note || {})[stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
+        var spiega = (g.note || {})[stato.scheda === "ragionate" && g.quota_alta ? "quota_alta" : stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
         html += '<div class="vuoto"><h3>Nessuna proposta</h3>' + esc(spiega) + "</div>";
       }
       carte.forEach(function (c) {
@@ -1737,7 +1738,7 @@
       "prese battono l'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p>";
   }
 
-  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", integrali: "Sistemi integrali", esatti: "Risultati esatti" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", quota_alta: "Quota alta", integrali: "Sistemi integrali", esatti: "Risultati esatti" };
 
   function corpoModello() {
     if (!stato.dati) return senzaDati();
@@ -1778,7 +1779,7 @@
         "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "integrali", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
+      ["alta", "integrali", "quota_alta", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +

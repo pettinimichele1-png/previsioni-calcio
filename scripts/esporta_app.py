@@ -61,7 +61,7 @@ def trova(nome):
             return percorso
     return None
 
-CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate", "integrali")
+CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate", "integrali", "quota_alta")
 
 # Una partita senza risultato dopo tre giorni e' rinviata o persa per
 # strada: la schedina che la contiene viene annullata, invece di restare
@@ -335,7 +335,7 @@ def giocate_per_app(previsioni, rho):
             "mercato": v.get("mercato"), "vantaggio": v.get("vantaggio"),
             "eventi": [evento_per_app(v)]})
 
-    for categoria in ("alta", "valore", "miste", "ragionate"):
+    for categoria in ("alta", "valore", "miste", "ragionate", "quota_alta"):
         for s in proposte.get(categoria, []):
             fuori[categoria].append({
                 "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"], "prob": s["prob"],
