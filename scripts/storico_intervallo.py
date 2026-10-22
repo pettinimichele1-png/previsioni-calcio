@@ -196,8 +196,16 @@ def calendario(c, solo_vecchi=True):
     """Calendari via API: 1 chiamata per campionato e stagione."""
     n = da_db_modello(c)
     print(f"  dal database del modello: {n} partite")
-    nel_modello = {r[0] for r in c.execute(
-        "SELECT DISTINCT lega FROM partite WHERE stagione = ?", (STAGIONE,))}
+    # v22.9: i campionati del modello sono quelli del suo database (le sue
+    # partite arrivano gia' da li'); prima si guardava l'archivio, che dopo il
+    # primo scarico conteneva tutti i campionati, e cosi' gli altri non si
+    # aggiornavano piu'
+    nel_modello = set()
+    if os.path.exists(DB_MODELLO):
+        m = sqlite3.connect(f"file:{DB_MODELLO}?mode=ro", uri=True, timeout=60)
+        nel_modello = {r[0] for r in m.execute(
+            "SELECT DISTINCT league_id FROM fixtures WHERE season = ?", (STAGIONE,))}
+        m.close()
     lavori = [(l, STAGIONE_PINNACLE) for l in LEGHE_PINNACLE]
     lavori += [(l, STAGIONE) for l in sorted(leghe_viste() - nel_modello)]
     # v21.8: tutti i campionati dell'intervallo, non solo quelli gia' visti
