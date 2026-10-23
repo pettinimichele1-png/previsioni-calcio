@@ -1956,8 +1956,10 @@ def _candidate_quota_alta(p):
     return fuori
 
 
-def _miglior_schedina(per_partita, qmin, qmax):
-    """La schedina con la probabilita' piu' alta e la quota fra qmin e qmax."""
+def _miglior_schedina(per_partita, qmin, qmax, evita=()):
+    """La schedina con la probabilita' piu' alta e la quota fra qmin e qmax.
+    evita: partite da usare il meno possibile (contano come se fossero
+    molto meno probabili, v23.5)."""
     passo = 0.005
     hi = int(math.log(qmax) / passo) + 1
     massimo = QUOTA_ALTA_GIOCATE[1]
@@ -1973,7 +1975,7 @@ def _miglior_schedina(per_partita, qmin, qmax):
                 if nb > hi:
                     continue
                 chiave = (n + 1, nb)
-                val = lp + math.log(v["prob"])
+                val = lp + math.log(v["prob"]) + (math.log(0.2) if v["fixture_id"] in evita else 0.0)
                 if chiave not in nuovi or val > nuovi[chiave][0]:
                     nuovi[chiave] = (val, voci + (v,))
         stati = nuovi
@@ -1990,11 +1992,16 @@ def _miglior_schedina(per_partita, qmin, qmax):
 def _schedine_quota_alta(previsioni):
     pool = _pool_integrali(previsioni)
     per_partita = [l for l in (_candidate_quota_alta(p) for p in pool) if l]
-    fuori = []
+    fuori, usate = [], set()
     for titolo, qmin, qmax in QUOTA_ALTA:
-        voci = _miglior_schedina(per_partita, qmin, qmax)
+        # v23.5 (scelta dell'utente): la seconda schedina con partite diverse
+        # dalla prima; se non si riesce, il meno possibile in comune
+        voci = _miglior_schedina([l for l in per_partita if l[0]["fixture_id"] not in usate], qmin, qmax)
+        if not voci and usate:
+            voci = _miglior_schedina(per_partita, qmin, qmax, evita=usate)
         if not voci:
             continue
+        usate |= {v["fixture_id"] for v in voci}
         voci.sort(key=lambda v: v["data"])
         s = _schedina(voci, f"{titolo} - {len(voci)} partite",
                       "La combinazione con la probabilita' piu' alta per questa quota: una giocata per partita, "
