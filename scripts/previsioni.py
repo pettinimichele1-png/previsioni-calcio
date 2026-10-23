@@ -1751,6 +1751,8 @@ def _pool_integrali(previsioni):
 # di partite migliori, poi si aggiunge una partita alla volta tenendo i
 # candidati piu' promettenti.
 INTEGRALI_PARTITE = (2, 4)
+INTEGRALI_MASSIMO = 6               # sistemi al giorno, al massimo (v23.4)
+INTEGRALI_ATTIVO_MINIMO = 0.05      # sotto il 5% di andare in attivo non si propone
 INTEGRALI_ESITI = (2, 4)
 INTEGRALI_FASCIO = 500
 INTEGRALI_PARTITE_PROVATE = 30
@@ -1877,14 +1879,23 @@ def _sistemi_integrali(previsioni):
                 per_partita[p["fixture_id"]] = lista
         utili |= set(per_partita)
         trovati[tipo] = _cerca_integrali(per_partita) if len(per_partita) >= 2 else []
-    coppie = next(n for soglia, n in INTEGRALI_COPPIE if len(utili) >= soglia)
+    # v23.4 (scelta dell'utente): ogni giorno quanti piu' sistemi possibile,
+    # al massimo INTEGRALI_MASSIMO, alternando i due tipi; quando un tipo non
+    # ne ha piu' si continua con l'altro. Partite diverse fra tutti i sistemi.
     fuori, usate = [], set()
-    for numero in range(1, coppie + 1):
-        for tipo in ("esclusivi", "sovrapposti"):
-            x = next((c for c in trovati[tipo]
-                      if not any(s["p"]["fixture_id"] in usate for s in c["scelte"])), None)
-            if not x:
-                continue
+    ordine = ["esclusivi", "sovrapposti"]
+    while len(fuori) < INTEGRALI_MASSIMO:
+        x = tipo = None
+        for t in ordine:
+            x = next((c for c in trovati[t] if c["attivo"] >= INTEGRALI_ATTIVO_MINIMO
+                      and not any(s["p"]["fixture_id"] in usate for s in c["scelte"])), None)
+            if x:
+                tipo = t
+                break
+        if not x:
+            break
+        ordine = [o for o in ordine if o != tipo] + [tipo]     # la prossima volta l'altro tipo
+        if x:
             voci, unioni = [], {}
             for s in sorted(x["scelte"], key=lambda s: s["p"]["data"]):
                 p = s["p"]
