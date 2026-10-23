@@ -1556,8 +1556,13 @@ def _schedine_ragionate(previsioni):
 # matrice dei gol di Pinnacle, quote vere di Bet365 (anche degli esatti).
 # Una coppia di sistemi al giorno, due o tre coppie quando ci sono tante
 # partite; partite diverse in ogni sistema.
-INTEGRALI_QMIN = (26.0, 40.0)
-INTEGRALI_QMAX_MINIMA = 800.0
+INTEGRALI_QMIN = (26.0, 40.0)        # non piu' usata dalla v23.2
+# v23.2 (scelta dell'utente 23/10/2026): per esclusivi e sovrapposti nessuna
+# quota minima della colonna, massima di almeno 500; solo esiti sensati
+INTEGRALI_QMAX_MINIMA = 500.0
+INTEGRALI_PROB_ESITO = 0.15          # l'esito principale almeno al 15%
+INTEGRALI_PROB_ESATTO = 0.05         # un risultato esatto almeno al 5%
+INTEGRALI_RESA_ESATTO = 0.80         # Bet365 al massimo il 20% sotto il giusto su un esatto
 INTEGRALI_COPPIE = ((27, 3), (18, 2), (0, 1))   # partite utilizzabili -> coppie di sistemi
 MERCATI_INTEGRALI = ["1", "X", "2", "1X", "X2", "12", "over15", "over25", "over35", "under25",
                      "under35", "gol_gol", "no_gol", "casa_segna", "fuori_segna",
@@ -1590,11 +1595,13 @@ def _terne_integrali(p, tipo):
         return esatte.get(k) if "-" in k else mk.get(f"quota_{k}")
     # v23.1: nei sovrapposti niente quota minima della colonna (scelta
     # dell'utente), quindi l'esito principale puo' essere anche il favorito
-    soglia = 2.6 if tipo == "esclusivi" else 1.15
-    base = [k for k in MERCATI_INTEGRALI if quota(k) and quota(k) >= soglia
-            and m.get(k) and m[k] * quota(k) >= 0.90]
+    # v23.2: solo esiti con una probabilita' concreta, pagati da Bet365 non
+    # troppo sotto il giusto
+    base = [k for k in MERCATI_INTEGRALI if quota(k) and quota(k) >= 1.15
+            and m.get(k) and m[k] >= INTEGRALI_PROB_ESITO and m[k] * quota(k) >= 0.90]
     esatti = sorted(((M[x][y], f"{x}-{y}") for x in range(min(n, 6)) for y in range(min(n, 6))
-                     if esatte.get(f"{x}-{y}")), reverse=True)[:12]
+                     if esatte.get(f"{x}-{y}") and M[x][y] >= INTEGRALI_PROB_ESATTO
+                     and M[x][y] * esatte[f"{x}-{y}"] >= INTEGRALI_RESA_ESATTO), reverse=True)[:10]
     if tipo == "esclusivi":
         terne = [t for t in itertools.combinations(base + [e for _, e in esatti], 3)
                  if any("-" in e for e in t)]
@@ -1618,12 +1625,12 @@ def _terne_integrali(p, tipo):
         resa = sum(f * v for f, v in dist.items()) / 3
         if resa < 0.75:
             continue
+        if tipo == "esclusivi" and doppi > 0:
+            continue                     # esclusivi davvero: mai due esiti insieme
         fuori.append({"p": p, "esiti": t, "quote": qs, "dist": dist, "copre": copre,
                       "doppi": doppi, "resa": resa})
     fuori.sort(key=lambda x: -x["copre"])
-    if tipo == "esclusivi":
-        return fuori[:8]
-    # sovrapposti: per ogni fascia di quota dell'esito principale la terna che
+    # per ogni fascia di quota dell'esito principale la terna che
     # copre di piu', cosi' restano in gara sia gli esiti sicuri sia quelli a
     # quota piu' alta (prendere solo le piu' coprenti lasciava solo i primi)
     fasce = {}
@@ -1680,9 +1687,9 @@ def _miglior_integrale(per_partita, usate, quota_minima=None):
 
 def _miglior_sovrapposto(per_partita, usate, partite_max=35):
     """
-    (v23.1) Il sistema sovrapposto con la probabilita' piu' alta di andare in
-    attivo, senza quota minima della colonna (scelta dell'utente) e con la
-    quota massima di almeno INTEGRALI_QMAX_MINIMA. Si provano tutte le terne
+    (v23.1, per tutti e due i tipi dalla v23.2) Il sistema con la probabilita'
+    piu' alta di andare in attivo, senza quota minima della colonna (scelta
+    dell'utente) e con la quota massima di almeno INTEGRALI_QMAX_MINIMA. Si provano tutte le terne
     delle partite piu' promettenti; per ogni fascia di quota minima si
     valutano per bene le combinazioni che coprono di piu'.
     """
@@ -1748,11 +1755,8 @@ def _sistemi_integrali(previsioni):
     fuori, usate = [], set()
     for numero in range(1, coppie + 1):
         for tipo in ("esclusivi", "sovrapposti"):
-            # v23.1: la quota minima circa 30 vale solo per gli esclusivi
-            if tipo == "esclusivi":
-                m = _miglior_integrale(terne[tipo], usate, INTEGRALI_QMIN)
-            else:
-                m = _miglior_sovrapposto(terne[tipo], usate)
+            # v23.2: stessa ricerca per i due tipi, senza quota minima
+            m = _miglior_sovrapposto(terne[tipo], usate)
             if not m:
                 continue
             _, sc, qmin, qmax, v = m

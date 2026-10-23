@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "23.1";
+  var VERSIONE_APP = "23.2";
 
   var stato = {
     dati: null,
@@ -1486,7 +1486,7 @@
   // ---------------------------------------------------------------
   var SCHEDE = [
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
-    { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali a 3 partite con 3 esiti ciascuna, risultati esatti compresi: 27 colonne con lo stesso importo e quota massima di almeno 800. Basta azzeccare un esito per partita. Esiti esclusivi: quota minima circa 30, ogni vincita è in attivo. Esiti sovrapposti: nessuna quota minima, si sceglie quello che va in attivo più spesso. Ogni giorno una coppia, di più quando ci sono tante partite." },
+    { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali a 3 partite con 3 esiti ciascuna, risultati esatti compresi: 27 colonne con lo stesso importo, nessuna quota minima e quota massima di almeno 500. Basta azzeccare un esito per partita. Si sceglie il sistema che va in attivo più spesso, solo con esiti dalle probabilità concrete. Esiti esclusivi: un esito per partita; esiti sovrapposti: un esito e due risultati esatti dentro. Ogni giorno una coppia, di più quando ci sono tante partite." },
     { id: "ragionate", nome: "Quota alta", testo: "Due schedine al giorno, a quota 15-30 e a quota circa 40: fra tutte le partite di oggi, la combinazione con la probabilità più alta di uscire per quella quota. Una giocata per partita, pagata da Bet365 al massimo il 2,5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 45%. Sotto ogni partita, il perché." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
