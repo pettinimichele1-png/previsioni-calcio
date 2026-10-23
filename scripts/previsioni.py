@@ -1588,7 +1588,9 @@ def _terne_integrali(p, tipo):
 
     def quota(k):
         return esatte.get(k) if "-" in k else mk.get(f"quota_{k}")
-    soglia = 2.6 if tipo == "esclusivi" else 2.2
+    # v23.1: nei sovrapposti niente quota minima della colonna (scelta
+    # dell'utente), quindi l'esito principale puo' essere anche il favorito
+    soglia = 2.6 if tipo == "esclusivi" else 1.15
     base = [k for k in MERCATI_INTEGRALI if quota(k) and quota(k) >= soglia
             and m.get(k) and m[k] * quota(k) >= 0.90]
     esatti = sorted(((M[x][y], f"{x}-{y}") for x in range(min(n, 6)) for y in range(min(n, 6))
@@ -1619,7 +1621,17 @@ def _terne_integrali(p, tipo):
         fuori.append({"p": p, "esiti": t, "quote": qs, "dist": dist, "copre": copre,
                       "doppi": doppi, "resa": resa})
     fuori.sort(key=lambda x: -x["copre"])
-    return fuori[:8]
+    if tipo == "esclusivi":
+        return fuori[:8]
+    # sovrapposti: per ogni fascia di quota dell'esito principale la terna che
+    # copre di piu', cosi' restano in gara sia gli esiti sicuri sia quelli a
+    # quota piu' alta (prendere solo le piu' coprenti lasciava solo i primi)
+    fasce = {}
+    for x in fuori:
+        f = int(math.log(min(x["quote"])) / 0.12)
+        if f not in fasce or x["copre"] > fasce[f]["copre"]:
+            fasce[f] = x
+    return list(fasce.values())
 
 
 def _valuta_integrale(scelte):
@@ -1637,7 +1649,7 @@ def _valuta_integrale(scelte):
             "incasso_max": max(d), "resa": math.prod(s["resa"] for s in scelte) - 1}
 
 
-def _miglior_integrale(per_partita, usate):
+def _miglior_integrale(per_partita, usate, quota_minima=None):
     """Il sistema a 3 partite con la probabilita' piu' alta di andare in attivo."""
     voci = [(fid, t) for fid, lista in per_partita.items() if fid not in usate for t in lista]
     # le partite piu' promettenti, per non provare milioni di combinazioni
@@ -1650,7 +1662,7 @@ def _miglior_integrale(per_partita, usate):
             continue
         sc = (voci[a][1], voci[b][1], voci[c][1])
         qmin = math.prod(min(s["quote"]) for s in sc)
-        if not INTEGRALI_QMIN[0] <= qmin <= INTEGRALI_QMIN[1]:
+        if quota_minima and not quota_minima[0] <= qmin <= quota_minima[1]:
             continue
         qmax = math.prod(max(s["quote"]) for s in sc)
         if qmax < INTEGRALI_QMAX_MINIMA:
@@ -1658,11 +1670,41 @@ def _miglior_integrale(per_partita, usate):
         candidati.append((math.prod(s["copre"] for s in sc), sc, qmin, qmax))
     candidati.sort(key=lambda x: -x[0])
     migliore = None
-    for _, sc, qmin, qmax in candidati[:60]:
+    for _, sc, qmin, qmax in candidati[:250]:
         v = _valuta_integrale(sc)
         chiave = (round(v["attivo"], 4), v["resa"])
         if migliore is None or chiave > migliore[0]:
             migliore = (chiave, sc, qmin, qmax, v)
+    return migliore
+
+
+def _miglior_sovrapposto(per_partita, usate, partite_max=35):
+    """
+    (v23.1) Il sistema sovrapposto con la probabilita' piu' alta di andare in
+    attivo, senza quota minima della colonna (scelta dell'utente) e con la
+    quota massima di almeno INTEGRALI_QMAX_MINIMA. Si provano tutte le terne
+    delle partite piu' promettenti; per ogni fascia di quota minima si
+    valutano per bene le combinazioni che coprono di piu'.
+    """
+    libere = {fid: l for fid, l in per_partita.items() if fid not in usate}
+    partite = sorted(libere, key=lambda f: -max(t["copre"] for t in libere[f]))[:partite_max]
+    per_fascia = {}
+    for a, b, c in itertools.combinations(partite, 3):
+        for sc in itertools.product(libere[a], libere[b], libere[c]):
+            if math.prod(max(s["quote"]) for s in sc) < INTEGRALI_QMAX_MINIMA:
+                continue
+            qmin = math.prod(min(s["quote"]) for s in sc)
+            per_fascia.setdefault(int(math.log(qmin) / 0.25), []).append(
+                (math.prod(s["copre"] for s in sc), sc, qmin))
+    migliore = None
+    for lista in per_fascia.values():
+        lista.sort(key=lambda x: -x[0])
+        for _, sc, qmin in lista[:40]:
+            v = _valuta_integrale(sc)
+            chiave = (round(v["attivo"], 4), v["resa"])
+            if migliore is None or chiave > migliore[0]:
+                qmax = math.prod(max(s["quote"]) for s in sc)
+                migliore = (chiave, sc, qmin, qmax, v)
     return migliore
 
 
@@ -1706,7 +1748,11 @@ def _sistemi_integrali(previsioni):
     fuori, usate = [], set()
     for numero in range(1, coppie + 1):
         for tipo in ("esclusivi", "sovrapposti"):
-            m = _miglior_integrale(terne[tipo], usate)
+            # v23.1: la quota minima circa 30 vale solo per gli esclusivi
+            if tipo == "esclusivi":
+                m = _miglior_integrale(terne[tipo], usate, INTEGRALI_QMIN)
+            else:
+                m = _miglior_sovrapposto(terne[tipo], usate)
             if not m:
                 continue
             _, sc, qmin, qmax, v = m
