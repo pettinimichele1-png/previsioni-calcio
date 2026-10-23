@@ -1741,43 +1741,168 @@ def _pool_integrali(previsioni):
     return fuori
 
 
+# --- sistemi integrali con partite ed esiti variabili (v23.3) ---------
+# Regole dell'utente (23/10/2026), per esclusivi e sovrapposti: nessuna
+# quota minima della colonna, quota massima di almeno INTEGRALI_QMAX_MINIMA,
+# da 2 a 4 partite, da 2 a 4 esiti per partita, stesso importo per colonna
+# (colonne = prodotto degli esiti di ogni partita), almeno un risultato
+# esatto per partita, solo esiti con probabilita' concrete. Si cerca il
+# sistema che va in attivo piu' spesso con una ricerca a fascio: le coppie
+# di partite migliori, poi si aggiunge una partita alla volta tenendo i
+# candidati piu' promettenti.
+INTEGRALI_PARTITE = (2, 4)
+INTEGRALI_ESITI = (2, 4)
+INTEGRALI_FASCIO = 500
+INTEGRALI_PARTITE_PROVATE = 30
+
+
+def _insiemi_integrali(p, tipo):
+    """Gli insiemi di 2-4 esiti possibili su una partita, con la distribuzione
+    del fattore G = (somma delle quote degli esiti usciti) / numero di esiti."""
+    try:
+        import quote_giuste as Qg
+        M = Qg.matrice(p["gol_attesi_casa"], p["gol_attesi_fuori"])
+    except Exception:
+        return []
+    n, m, mk = len(M), p["mercati"], p.get("mercato") or {}
+    esatte = p.get("quote_esatti") or {}
+
+    def quota(k):
+        return esatte.get(k) if "-" in k else mk.get(f"quota_{k}")
+    base = [k for k in MERCATI_INTEGRALI if quota(k) and quota(k) >= 1.15
+            and m.get(k) and m[k] >= INTEGRALI_PROB_ESITO and m[k] * quota(k) >= 0.90]
+    esatti = [e for _, e in sorted(((M[x][y], f"{x}-{y}") for x in range(min(n, 6)) for y in range(min(n, 6))
+                                    if esatte.get(f"{x}-{y}") and M[x][y] >= INTEGRALI_PROB_ESATTO
+                                    and M[x][y] * esatte[f"{x}-{y}"] >= INTEGRALI_RESA_ESATTO), reverse=True)[:8]]
+    if not esatti:
+        return []
+    celle = [(x, y, M[x][y]) for x in range(n) for y in range(n)]
+    dove = {k: {(x, y) for x, y, _ in celle if esito_avvenuto(k, x, y)} for k in base + esatti}
+    lo, hi = INTEGRALI_ESITI
+    insiemi = []
+    if tipo == "esclusivi":
+        tutti = base + esatti
+        def estendi(scelti, da):
+            if lo <= len(scelti) <= hi and any("-" in k for k in scelti):
+                insiemi.append(tuple(scelti))
+            if len(scelti) == hi:
+                return
+            for i in range(da, len(tutti)):
+                k = tutti[i]
+                if all(not (dove[k] & dove[c]) for c in scelti):
+                    estendi(scelti + [k], i + 1)
+        estendi([], 0)
+    else:
+        for b in base:
+            dentro = [e for e in esatti if next(iter(dove[e])) in dove[b]]
+            for r in range(lo - 1, hi):
+                insiemi += [(b,) + c for c in itertools.combinations(dentro, r)]
+    fuori = []
+    for t in insiemi:
+        k = len(t)
+        qs = [quota(e) for e in t]
+        dist = {}
+        for x, y, pr in celle:
+            g = round(sum(quota(e) for e in t if (x, y) in dove[e]) / k, 3)
+            dist[g] = dist.get(g, 0.0) + pr
+        copre = sum(v for g, v in dist.items() if g > 0)
+        resa = sum(g * v for g, v in dist.items())
+        if resa < 0.75:
+            continue
+        fuori.append({"p": p, "esiti": t, "quote": qs, "dist": dist, "copre": copre,
+                      "resa": resa, "k": k})
+    # per ogni numero di esiti e fascia di quota minima, l'insieme che copre di piu'
+    fasce = {}
+    for x in fuori:
+        f = (x["k"], int(math.log(min(x["quote"])) / 0.15))
+        if f not in fasce or x["copre"] > fasce[f]["copre"]:
+            fasce[f] = x
+    return sorted(fasce.values(), key=lambda x: -x["copre"])[:14]
+
+
+def _prodotto_dist(a, b):
+    out = {}
+    for x, pa in a.items():
+        for y, pb in b.items():
+            k = round(x * y, 3)
+            out[k] = out.get(k, 0.0) + pa * pb
+    return out
+
+
+def _cerca_integrali(per_partita):
+    """Tutti i sistemi buoni trovati (2-4 partite), dal piu' probabile in attivo."""
+    partite = sorted(per_partita, key=lambda f: -max(x["copre"] for x in per_partita[f]))
+    partite = partite[:INTEGRALI_PARTITE_PROVATE]
+    indice = {f: i for i, f in enumerate(partite)}
+
+    def stato(scelte, dist):
+        attivo = sum(v for g, v in dist.items() if g >= 1 - 1e-9)
+        return {"scelte": scelte, "dist": dist, "attivo": attivo,
+                "qmax": math.prod(max(s["quote"]) for s in scelte)}
+    fascio = [stato((s,), s["dist"]) for f in partite for s in per_partita[f]]
+    finali = []
+    for numero in range(2, INTEGRALI_PARTITE[1] + 1):
+        nuovi = []
+        for st in fascio:
+            ultimo = indice[st["scelte"][-1]["p"]["fixture_id"]]
+            for f in partite[ultimo + 1:]:
+                for s in per_partita[f]:
+                    nuovi.append(stato(st["scelte"] + (s,), _prodotto_dist(st["dist"], s["dist"])))
+        if not nuovi:
+            break
+        nuovi.sort(key=lambda x: -x["attivo"])
+        if numero >= INTEGRALI_PARTITE[0]:
+            finali += [x for x in nuovi if x["qmax"] >= INTEGRALI_QMAX_MINIMA]
+        fascio = nuovi[:INTEGRALI_FASCIO]
+    for x in finali:
+        x["resa"] = sum(g * v for g, v in x["dist"].items()) - 1
+        x["vince"] = sum(v for g, v in x["dist"].items() if g > 0)
+        x["colonne"] = math.prod(s["k"] for s in x["scelte"])
+        x["qmin"] = math.prod(min(s["quote"]) for s in x["scelte"])
+        x["incasso_max"] = max(x["dist"]) * x["colonne"]
+    finali.sort(key=lambda x: (-round(x["attivo"], 4), -x["resa"]))
+    return finali
+
+
 def _sistemi_integrali(previsioni):
-    """Le coppie di sistemi integrali del giorno (vedi INTEGRALI_*)."""
+    """I sistemi integrali del giorno (vedi INTEGRALI_*), a coppie: uno a esiti
+    esclusivi e uno a esiti sovrapposti, partite diverse fra tutti i sistemi."""
     oggi = _pool_integrali(previsioni)
-    terne = {tipo: {} for tipo in ("esclusivi", "sovrapposti")}
-    for p in oggi:
-        for tipo in terne:
-            lista = _terne_integrali(p, tipo)
+    trovati, utili = {}, set()
+    for tipo in ("esclusivi", "sovrapposti"):
+        per_partita = {}
+        for p in oggi:
+            lista = _insiemi_integrali(p, tipo)
             if lista:
-                terne[tipo][p["fixture_id"]] = lista
-    utili = len(set(terne["esclusivi"]) | set(terne["sovrapposti"]))
-    coppie = next(n for soglia, n in INTEGRALI_COPPIE if utili >= soglia)
+                per_partita[p["fixture_id"]] = lista
+        utili |= set(per_partita)
+        trovati[tipo] = _cerca_integrali(per_partita) if len(per_partita) >= 2 else []
+    coppie = next(n for soglia, n in INTEGRALI_COPPIE if len(utili) >= soglia)
     fuori, usate = [], set()
     for numero in range(1, coppie + 1):
         for tipo in ("esclusivi", "sovrapposti"):
-            # v23.2: stessa ricerca per i due tipi, senza quota minima
-            m = _miglior_sovrapposto(terne[tipo], usate)
-            if not m:
+            x = next((c for c in trovati[tipo]
+                      if not any(s["p"]["fixture_id"] in usate for s in c["scelte"])), None)
+            if not x:
                 continue
-            _, sc, qmin, qmax, v = m
             voci, unioni = [], {}
-            for s in sorted(sc, key=lambda s: s["p"]["data"]):
+            for s in sorted(x["scelte"], key=lambda s: s["p"]["data"]):
                 p = s["p"]
                 usate.add(p["fixture_id"])
                 unioni[str(p["fixture_id"])] = s["copre"]
                 for k, q in zip(s["esiti"], s["quote"]):
-                    x = _voce(p, k, None, q)
-                    x["nome"] = f"{_nome_integrale(p, k)} " + f"{q:.2f}".replace(".", ",")
-                    voci.append(x)
+                    v = _voce(p, k, None, q)
+                    v["nome"] = f"{_nome_integrale(p, k)} " + f"{q:.2f}".replace(".", ",")
+                    voci.append(v)
             fuori.append({
                 "titolo": f"Sistema {len(fuori) + 1} - esiti " + tipo,
-                "nota": ("I tre esiti di ogni partita si escludono: si prende un esito per partita."
+                "nota": ("Gli esiti di ogni partita si escludono: si prende un esito per partita."
                          if tipo == "esclusivi" else
-                         "Un esito e due risultati esatti dentro: se esce l'esatto vincono piu' colonne insieme."),
+                         "Un esito e dei risultati esatti dentro: se esce l'esatto vincono piu' colonne insieme."),
                 "tipo": tipo, "voci": voci, "unioni": unioni, "sistema": True,
-                "prob": v["vince"], "attivo": v["attivo"], "resa": v["resa"],
-                "quota": qmin, "quota_max": qmax, "incasso_max": v["incasso_max"],
-                "combinazioni": 27})
+                "prob": x["vince"], "attivo": x["attivo"], "resa": x["resa"],
+                "quota": x["qmin"], "quota_max": x["qmax"], "incasso_max": x["incasso_max"],
+                "combinazioni": x["colonne"]})
     return fuori
 
 
