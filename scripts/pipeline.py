@@ -201,6 +201,10 @@ def main():
         if esegui("storico_intervallo.py", "storico dell'intervallo", ["aggiorna"]):
             if datetime.now().weekday() == 0:
                 esegui("modello_primo_tempo.py", "modello del primo tempo")
+            # v23.7: i risultati dei campionati aggiunti arrivano dallo storico,
+            # appena aggiornato: si riscrivono i dati dell'app perche' la
+            # verifica delle schedine di ieri sia completa gia' alle 7
+            esegui("esporta_app.py", "dati per l'app (schedine di ieri)")
 
     elif modalita == "previsioni":
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])

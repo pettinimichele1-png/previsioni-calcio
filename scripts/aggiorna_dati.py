@@ -110,6 +110,19 @@ def scarica_statistiche(cur, fixture_id):
                 ))
 
 
+def stagioni_correnti():
+    """v23.7: la stagione in corso di ogni campionato secondo l'API, con la
+    sua data d'inizio. Serve ai campionati che hanno cambiato calendario:
+    il J1 giapponese dall'agosto 2026 gioca la stagione "2027", e con la
+    sola SEASON non si scaricava piu' dal 6 giugno. 1 chiamata."""
+    fuori = {}
+    for x in chiamata_api("leagues", {"current": "true"}) or []:
+        st = (x.get("seasons") or [{}])[0]
+        if st.get("year"):
+            fuori[x["league"]["id"]] = (int(st["year"]), st.get("start"))
+    return fuori
+
+
 def main():
     if not os.path.exists(DB_PATH):
         print(f"Database {DB_PATH} non trovato.")
@@ -136,25 +149,37 @@ def main():
 
     oggi = adesso.date()
     totale_nuove = 0
+    correnti = stagioni_correnti()
 
+    lavori = []
     for league_id, paese, nome in campionati:
+        lavori.append((league_id, paese, nome, SEASON, None))
+        # v23.7: anche la stagione in corso, se per l'API e' gia' quella dopo
+        anno, inizio = correnti.get(league_id, (SEASON, None))
+        if anno > SEASON:
+            lavori.append((league_id, paese, nome, anno, inizio))
+
+    for league_id, paese, nome, stagione, inizio in lavori:
         # data dell'ultima partita salvata per questo campionato
         cur.execute(
             "SELECT MAX(date) FROM fixtures WHERE league_id = ? AND season = ?",
-            (league_id, SEASON)
+            (league_id, stagione)
         )
         ultima = cur.fetchone()[0]
 
         if ultima:
             data_da = (datetime.fromisoformat(ultima.replace("Z", "+00:00")).date()
                        - timedelta(days=GIORNI_MARGINE))
+        elif inizio:
+            # stagione nuova mai scaricata: dal suo inizio
+            data_da = datetime.fromisoformat(inizio).date()
         else:
             # campionato senza partite di questa stagione: guardo l'ultimo mese
             data_da = oggi - timedelta(days=30)
 
         nuove = chiamata_api("fixtures", {
             "league": league_id,
-            "season": SEASON,
+            "season": stagione,
             "from": data_da.isoformat(),
             "to": oggi.isoformat(),
         }) or []
@@ -162,6 +187,8 @@ def main():
         concluse = [f for f in nuove if f["fixture"]["status"]["short"] in STATI_VALIDI]
         da_aggiungere = [f for f in concluse if f["fixture"]["id"] not in gia_presenti]
 
+        if stagione != SEASON:
+            nome = f"{nome} (stagione {stagione})"
         if not da_aggiungere:
             log(f"  {paese} - {nome}: nessuna partita nuova", file_log)
             continue
