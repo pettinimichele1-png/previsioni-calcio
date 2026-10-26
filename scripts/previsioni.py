@@ -1118,6 +1118,13 @@ def _quota_equa(p):
     return 1.0 / max(p, 0.001)
 
 
+# v23.8: i nomi dei mercati dei tempi (Quota alta)
+for _b in ["1", "X", "2", "1X", "12", "X2", "over05", "under05", "over15", "under15",
+           "over25", "under25", "gol_gol", "no_gol", "casa_segna", "fuori_segna"]:
+    NOMI.setdefault(_b + "_pt", NOMI.get(_b, _b) + " 1° tempo")
+    NOMI.setdefault(_b + "_st", NOMI.get(_b, _b) + " 2° tempo")
+
+
 def _voce(p, esito, prob, quota=None, mercato=None):
     return {"fixture_id": p["fixture_id"], "data": p["data"],
             "casa": p["casa"], "fuori": p["fuori"],
@@ -1142,7 +1149,10 @@ def _col_favorito(p, esito):
     favorito = max(("1", "X", "2"), key=lambda k: m.get(k, 0))
     if m.get(favorito, 0) < SOGLIA_FAVORITO:
         return True                      # partita aperta: vale tutto
-    insieme = ESITI_1X2.get(esito.split("+")[0])
+    testa = esito.split("+")[0]
+    if testa.endswith(("_pt", "_st")):
+        testa = testa[:-3]               # v23.8: anche nei tempi, mai contro il favorito
+    insieme = ESITI_1X2.get(testa)
     return insieme is None or favorito in insieme
 
 
@@ -1380,6 +1390,38 @@ for _l in ("1.5", "2.5", "3.5"):
         SU_LIBRO[f"{_chi}_under{_k}"] = (_m, f"under {_l}")
 
 
+# v23.8 (scelta dell'utente 26/10/2026): per Quota alta anche i mercati dei
+# tempi e le combo di Bet365. Nome dell'API (minuscolo, come in
+# valore.leggi_quote) -> nostra chiave; le combo si leggono dalle quote grezze.
+TEMPI_LIBRO = {}
+for _s, (_mw, _dc, _ou, _bt) in {
+        "_pt": ("first half winner", "double chance - first half",
+                "goals over/under first half", "both teams score - first half"),
+        "_st": ("second half winner", "double chance - second half",
+                "goals over/under - second half", "both teams to score - second half")}.items():
+    TEMPI_LIBRO.update({"1" + _s: (_mw, "home"), "X" + _s: (_mw, "draw"), "2" + _s: (_mw, "away"),
+                        "1X" + _s: (_dc, "home/draw"), "12" + _s: (_dc, "home/away"),
+                        "X2" + _s: (_dc, "draw/away"),
+                        "gol_gol" + _s: (_bt, "yes"), "no_gol" + _s: (_bt, "no")})
+    for _l in ("0.5", "1.5", "2.5"):
+        TEMPI_LIBRO[f"over{_l.replace('.', '')}{_s}"] = (_ou, f"over {_l}")
+        TEMPI_LIBRO[f"under{_l.replace('.', '')}{_s}"] = (_ou, f"under {_l}")
+COMBO_LIBRO = ("Result/Total Goals", "Results/Both Teams Score")
+_ESITO_LIBRO = {"home": "1", "draw": "X", "away": "2"}
+
+
+def _combo_libro(nome, valore):
+    """'Home/Over 2.5' -> '1+over25', 'Away/No' -> '2+nogol'."""
+    try:
+        r, resto = str(valore).lower().split("/")
+        if nome == "Results/Both Teams Score":
+            return _ESITO_LIBRO[r] + ("+gol" if resto == "yes" else "+nogol")
+        a, l = resto.split()
+        return _ESITO_LIBRO[r] + "+" + a + l.replace(".", "")
+    except (ValueError, KeyError):
+        return None
+
+
 def con_pinnacle(previsioni):
     """
     Le stesse previsioni, ma con probabilita' e gol attesi ricavati da
@@ -1412,12 +1454,29 @@ def con_pinnacle(previsioni):
             q = (libro.get(mercato) or {}).get(esito)
             if q:
                 quote[f"quota_{k}"] = q
+        # v23.8: tempi e combo per Quota alta, {chiave: (probabilita', quota)};
+        # solo i mercati che la calibrazione giudica affidabili
+        affidabile = lambda k: ((cal or {}).get("mercati", {}).get(k) or {}).get("affidabile")
+        corrette = Q.correggi(grezze, cal)
+        altri = {}
+        for k, (mercato, esito) in TEMPI_LIBRO.items():
+            q = (libro.get(mercato) or {}).get(esito)
+            if q and k in corrette and affidabile(k):
+                altri[k] = (corrette[k], q)
         # le quote di Bet365 sui risultati esatti ("1:0" -> "1-0"), v21.3
         esatti = {}
         for b in (voce.get("bookmakers") or []):
             if b.get("name") != LIBRO_GIOCATE:
                 continue
             for bet in b.get("bets") or []:
+                if bet.get("name") in COMBO_LIBRO:
+                    for x in bet.get("values") or []:
+                        k = _combo_libro(bet.get("name"), x.get("value"))
+                        try:
+                            if k and k in m and affidabile(k):
+                                altri[k] = (m[k], float(x.get("odd")))
+                        except (TypeError, ValueError):
+                            pass
                 if bet.get("name") in ("Exact Score", "Correct Score"):
                     for x in bet.get("values") or []:
                         try:
@@ -1425,6 +1484,7 @@ def con_pinnacle(previsioni):
                         except (TypeError, ValueError):
                             pass
         fuori.append(dict(p, mercati=m, mercato=quote, affidabilita=100, quote_esatti=esatti,
+                          quote_altri=altri,
                           gol_attesi_casa=gp["lc"], gol_attesi_fuori=gp["lf"]))
     return fuori
 
@@ -1942,11 +2002,33 @@ MERCATI_QUOTA_ALTA = ["1", "2", "X", "1X", "X2", "12", "over15", "over25", "over
                       "casa_under25", "fuori_under25"]
 
 
+def _nome_quota_alta(p, k):
+    """Il nome della giocata con le squadre."""
+    casa, ospite = p["casa"], p["fuori"]
+    if "+" in k:                         # combo (v23.8)
+        r, a = k.split("+")
+        esito = {"1": f"{casa} vince", "X": "pareggio", "2": f"{ospite} vince"}.get(r, r)
+        if a == "nogol" and r in ("1", "2"):
+            return f"{esito} senza subire gol ({r} + NoGol)"
+        return f"{esito} + " + {"gol": "Gol", "nogol": "NoGol"}.get(a, NOMI.get(a, a))
+    tempo = ""
+    if k.endswith(("_pt", "_st")):       # tempi (v23.8)
+        k, tempo = k[:-3], " nel 1° tempo" if k.endswith("_pt") else " nel 2° tempo"
+        nomi = {"1": f"{casa} vince", "2": f"{ospite} vince", "X": "pareggio",
+                "1X": f"{casa} o pareggio (1X)", "X2": f"{ospite} o pareggio (X2)",
+                "12": "non finisce pari (12)"}
+        return nomi.get(k, NOMI.get(k, k)) + tempo
+    nomi = {"1": f"{casa} vince", "2": f"{ospite} vince", "X": "pareggio",
+            "1X": f"{casa} o pareggio (1X)", "X2": f"{ospite} o pareggio (X2)"}
+    return nomi.get(k, NOMI.get(k, k).replace("Casa", casa).replace("Ospite", ospite))
+
+
 def _candidate_quota_alta(p):
     m, mk = p["mercati"], p.get("mercato") or {}
     fuori = []
-    for k in MERCATI_QUOTA_ALTA:
-        q, pr = mk.get(f"quota_{k}"), m.get(k)
+    voci = [(k, m.get(k), mk.get(f"quota_{k}")) for k in MERCATI_QUOTA_ALTA]
+    voci += [(k, pr, q) for k, (pr, q) in (p.get("quote_altri") or {}).items()]
+    for k, pr, q in voci:
         lc, lf = p.get("gol_attesi_casa") or 0, p.get("gol_attesi_fuori") or 9
         if k == "gol_gol" and pr is not None and lc >= 2.0 and lf <= 1.1:
             pr -= QUOTA_ALTA_GOL_FAVORITA
@@ -1955,9 +2037,7 @@ def _candidate_quota_alta(p):
         if pr * q - 1 < -QUOTA_ALTA_MARGINE or not _col_favorito(p, k):
             continue
         v = _voce(p, k, pr, q)
-        v["nome"] = {"1": f"{p['casa']} vince", "2": f"{p['fuori']} vince", "X": "pareggio",
-                     "1X": f"{p['casa']} o pareggio (1X)", "X2": f"{p['fuori']} o pareggio (X2)"}.get(
-            k, v["nome"].replace("Casa", p["casa"]).replace("Ospite", p["fuori"]))
+        v["nome"] = _nome_quota_alta(p, k)
         v["vantaggio"] = pr * q - 1
         v["motivo"] = motivo_giocata(p, k)
         fuori.append(v)

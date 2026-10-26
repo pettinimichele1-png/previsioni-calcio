@@ -430,23 +430,42 @@ def schedine_per_app(conn):
     try:
         import sqlite3 as _s
         a = _s.connect("file:stato/intervallo_storico.db?mode=ro", uri=True)
-        storico = {r[0]: r[1:] for r in a.execute(
-            "SELECT fid, ft_c, ft_f, data, stato FROM partite")}
+        storico, ht_storico = {}, {}
+        for fid, ftc, ftf, data, stato, htc, htf in a.execute(
+                "SELECT fid, ft_c, ft_f, data, stato, ht_c, ht_f FROM partite"):
+            storico[fid] = (ftc, ftf, data, stato)
+            ht_storico[fid] = (htc, htf)
         a.close()
     except Exception:
-        pass
+        ht_storico = {}
+    # v23.8: i mercati dei tempi (Quota alta) si verificano col primo tempo
+    ht = dict(ht_storico)
+    con_tempi = sorted({f for _, f, e, *_ in righe if str(e).endswith(("_pt", "_st"))})
+    if con_tempi:
+        for fid, raw in cur.execute(
+                f"SELECT id, raw_json FROM fixtures WHERE id IN ({','.join('?' * len(con_tempi))})",
+                con_tempi):
+            try:
+                h = json.loads(raw)["score"]["halftime"]
+                if h.get("home") is not None:
+                    ht[fid] = (h["home"], h["away"])
+            except (TypeError, ValueError, KeyError):
+                pass
     righe = [(c, f, e, ca, fu) + (tuple(storico[f]) if gc is None and f in storico else (gc, ga, d, st))
              for c, f, e, ca, fu, gc, ga, d, st in righe]
     eventi = {}
     for codice, fid, esito, casa, fuori, gc, ga, data, stato in righe:
         giocata = gc is not None and stato in ("FT", "AET", "PEN")
+        htc, hta = ht.get(fid, (None, None))
+        if str(esito).endswith(("_pt", "_st")) and htc is None:
+            giocata = False                # serve il risultato del primo tempo
         try:
             passata = datetime.fromisoformat(data).astimezone(FUSO) < limite
         except (TypeError, ValueError):
             passata = False
         eventi.setdefault(codice, []).append({
             "fid": fid, "esito": esito, "partita": f"{casa} – {fuori}",
-            "gc": gc, "ga": ga, "data": data, "giocata": giocata,
+            "gc": gc, "ga": ga, "htc": htc, "hta": hta, "data": data, "giocata": giocata,
             "persa": not giocata and passata})
 
     # v22.6: "ieri" e' la giornata delle giocate di ieri (dalle 7 alle 7):
@@ -477,7 +496,11 @@ def schedine_per_app(conn):
         if not all(e["giocata"] for e in ev):
             continue                       # non ancora conclusa
         for e in ev:
-            e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
+            if e["esito"].endswith(("_pt", "_st")):
+                import quote_giuste as Q
+                e["preso"] = bool(Q.esito(e["esito"], e["gc"], e["ga"], e["htc"], e["hta"]))
+            else:
+                e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
         if categoria in ("sistemi", "integrali"):
             per_partita = {}
             for e in ev:
