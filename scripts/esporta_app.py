@@ -40,6 +40,7 @@ from zoneinfo import ZoneInfo
 CARTELLA = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, CARTELLA)
 import previsioni as P
+import giocatori as G
 
 DB_PATH = "calcio_dati.db"
 PREVISIONI = "previsioni.json"
@@ -533,6 +534,25 @@ def schedine_per_app(conn):
 
 # ---------------------------------------------------------------
 
+def giocatori_per_app():
+    """v23.9: tiri, tiri in porta e falli dei titolari (prova, scripts/giocatori.py)."""
+    try:
+        with open(G.USCITA, encoding="utf-8") as f:
+            dati = json.load(f)
+    except (OSError, ValueError):
+        return {}, None
+    partite = {}
+    for fid, v in dati.items():
+        if v.get("verificata"):
+            continue
+        # [nome, in casa, ruolo, minuti attesi, tiri, in porta, falli] (per mille)
+        partite[fid] = {"g": [[g["nome"], 1 if g["casa"] else 0, g["ruolo"], g["min"]] +
+                              [[round(x * 1000) for x in g["p"][k]] for k in G.MERCATI]
+                              for g in v["giocatori"]],
+                        "senza": v.get("senza_dati", 0)}
+    return partite, G.riepilogo(dati) or None
+
+
 def main():
     file_previsioni = trova(PREVISIONI)
     if not file_previsioni:
@@ -562,11 +582,17 @@ def main():
         risultati = risultati_per_app(conn)
         conn.close()
 
+    giocatori, giocatori_dal_vivo = giocatori_per_app()
+    partite = [partita_per_app(p) for p in previsioni] + partite_solo_quote(previsioni)
+    for x in partite:
+        if str(x["id"]) in giocatori:
+            x["giocatori"] = giocatori[str(x["id"])]
+
     app = {
         "generato": datetime.now(FUSO).isoformat(timespec="minutes"),
         "mercati": vocabolario_mercati(),
-        "partite": sorted([partita_per_app(p) for p in previsioni] + partite_solo_quote(previsioni),
-                          key=lambda x: x["data"]),
+        "partite": sorted(partite, key=lambda x: x["data"]),
+        "giocatori_dal_vivo": giocatori_dal_vivo,
         "giocate": giocate_per_app(previsioni, rho),
         "esatti": esatti_per_app(previsioni),
         "verifica": verifica,

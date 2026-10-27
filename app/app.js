@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "23.8";
+  var VERSIONE_APP = "23.9";
 
   var stato = {
     dati: null,
@@ -1429,6 +1429,53 @@
       " Il numero piccolo è la quota equa, cioè il rovescio della percentuale: non è un consiglio di gioco.</p></section>";
   }
 
+  // v23.9: tiri, tiri in porta e falli dei titolari, in prova (scripts/giocatori.py)
+  var MERCATI_GIOCATORI = [
+    { t: "Tiri", sotto: "Tutti i tiri, anche fuori", i: 4, chiave: "tiri" },
+    { t: "Tiri in porta", sotto: "Solo quelli nello specchio", i: 5, chiave: "porta" },
+    { t: "Falli commessi", sotto: "Falli fatti dal giocatore", i: 6, chiave: "falli" }
+  ];
+  var RUOLI = { G: "P", D: "D", M: "C", F: "A" };
+  function bloccoGiocatori(m) {
+    var x = m.giocatori;
+    if (!x || !x.g || !x.g.length) return "";
+    var vivo = (stato.dati && stato.dati.giocatori_dal_vivo) || {};
+    var html = '<section class="blocco elenco"><h2>Giocatori (in prova)</h2><div class="carta lista-apri">';
+    MERCATI_GIOCATORI.forEach(function (mm) {
+      var chiave = "giocatori-" + mm.chiave, aperta = !!stato.mercati[chiave];
+      html += '<button class="riga-apri" data-mercato="' + chiave + '" aria-expanded="' + aperta + '">' +
+        '<span class="ra-testi"><span class="ra-t1">' + mm.t + '</span><span class="ra-t2">' + mm.sotto +
+        " · almeno 1, 2 o 3</span></span>" + icona(aperta ? "su" : "giu") + "</button>";
+      if (!aperta) return;
+      html += '<div class="ra-dentro">';
+      [[1, m.casa], [0, m.fuori]].forEach(function (sq) {
+        // i portieri non tirano: nei tiri si tolgono
+        var lista = x.g.filter(function (g) { return g[1] === sq[0] && (mm.chiave === "falli" || g[2] !== "G"); })
+          .sort(function (a, b) { return b[mm.i][0] - a[mm.i][0]; });
+        if (!lista.length) return;
+        html += '<span class="sotto-t">' + esc(sq[1]) + '</span><div class="tabella giocatori"><span class="ti">Titolare</span>' +
+          '<span class="ti dx">Almeno 1</span><span class="ti dx">Almeno 2</span><span class="ti dx">Almeno 3</span>';
+        lista.forEach(function (g) {
+          html += '<span class="c nome">' + esc(g[0]) + " <small>" + (RUOLI[g[2]] || "") + "</small></span>" +
+            g[mm.i].map(function (v) {
+              return '<span class="c dx">' + pct(v / 1000) + "<small>" + quota(1000 / Math.max(v, 1)) + "</small></span>";
+            }).join("");
+        });
+        html += "</div>";
+      });
+      var r = vivo[mm.chiave];
+      if (r && r.n) {
+        html += '<p class="nota">Finora dal vivo, su ' + r.n + " previsioni: in media il calcolo diceva " + pct(r.previsto) +
+          ", è uscito " + pct(r.uscito) + ".</p>";
+      }
+      html += "</div>";
+    });
+    return html + '</div><p class="nota">Solo i titolari delle formazioni ufficiali, nei cinque grandi campionati. Calcolo nostro (media del giocatore, ' +
+      "avversario, minuti da titolare), in prova fino a fine novembre: sotto la percentuale la quota giusta. Bet365 trattiene molto su questi " +
+      "mercati: interessa solo una quota almeno del 10% più alta." + (x.senza ? " " + x.senza + (x.senza === 1 ? " titolare" : " titolari") +
+      " senza abbastanza partite: non c'è." : "") + "</p></section>";
+  }
+
   function bloccoFiducia(m) {
     // v22.6: le partite dei campionati che il nostro modello non segue
     if (m.solo_quote) {
@@ -1477,7 +1524,7 @@
       '</span><span class="contro">contro</span><span class="nome">' + esc(m.fuori) + "</span></h1>" +
       '<div class="quando">' + GIORNI_LUNGHI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " · <b>" + oraDi(d) + "</b></div></div>";
 
-    html += bloccoEsito(m) + bloccoGol(m) + bloccoTempi(m) + bloccoAltri(m) + bloccoFiducia(m);
+    html += bloccoEsito(m) + bloccoGol(m) + bloccoTempi(m) + bloccoAltri(m) + bloccoGiocatori(m) + bloccoFiducia(m);
     return html + '<p class="nota-piccola centro">Sono probabilità, non certezze: un esito al 60% non si verifica quattro volte su dieci.</p>';
   }
 

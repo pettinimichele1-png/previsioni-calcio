@@ -177,6 +177,8 @@ def main():
     if modalita == "raccolta":
         esegui("aggiorna_dati.py", "partite giocate e statistiche")
         esegui("raccolta_giocatori.py", "statistiche dei giocatori", ["60"])
+        # v23.9: come sono andate le probabilita' dei giocatori (prova)
+        esegui("giocatori.py", "verifica dei giocatori", ["verifica"])
         esegui("raccolta_formazioni.py", "formazioni delle partite nuove")
 
         if esegui("normalizza.py", "normalizzazione dei dati grezzi"):
@@ -218,6 +220,8 @@ def main():
     else:  # live
         if esegui("formazioni_previste.py",
                   "formazioni ufficiali delle partite imminenti", ["ufficiali"]):
+            # v23.9: tiri e falli dei titolari appena escono le formazioni (prova)
+            esegui("giocatori.py", "tiri e falli dei titolari", ["prevedi"])
             esegui("previsioni.py", "previsioni aggiornate")
             esegui("verifica.py", "archiviazione", ["archivia"])
             esegui("esporta_app.py", "dati per l'app")
