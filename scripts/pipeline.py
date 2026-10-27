@@ -191,6 +191,7 @@ def main():
                 esegui("addestra_modello.py", "addestramento del modello")
 
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])
+        esegui("giocatori.py", "tiri e falli dei titolari", ["prevedi"])
         if esegui("previsioni.py", "previsioni della giornata"):
             esegui("verifica.py", "archiviazione delle previsioni", ["archivia"])
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])
@@ -210,6 +211,7 @@ def main():
 
     elif modalita == "previsioni":
         esegui("formazioni_previste.py", "formazioni probabili", ["probabili"])
+        esegui("giocatori.py", "tiri e falli dei titolari", ["prevedi"])
         if esegui("previsioni.py", "previsioni della giornata"):
             esegui("verifica.py", "archiviazione delle previsioni", ["archivia"])
         esegui("verifica.py", "verifica dei risultati arrivati", ["report"])

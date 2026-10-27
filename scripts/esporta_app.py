@@ -549,7 +549,7 @@ def giocatori_per_app():
         partite[fid] = {"g": [[g["nome"], 1 if g["casa"] else 0, g["ruolo"], g["min"]] +
                               [[round(x * 1000) for x in g["p"][k]] for k in G.MERCATI]
                               for g in v["giocatori"]],
-                        "senza": v.get("senza_dati", 0)}
+                        "senza": v.get("senza_dati", 0), "form": v.get("formazione", "ufficiale")}
     return partite, G.riepilogo(dati) or None
 
 

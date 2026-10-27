@@ -9,8 +9,11 @@ tutti e tre i mercati. Niente giocate e niente notifiche: le probabilita'
 si mostrano nella pagina della partita ("Giocatori (in prova)") e il
 giorno dopo si controlla come sono andate.
 
-Solo i cinque grandi campionati, stagione in corso, solo i TITOLARI delle
-formazioni ufficiali (formazioni_previste, tipo 'ufficiale'). Nessuna
+Solo i cinque grandi campionati, stagione in corso, solo i TITOLARI
+(formazioni_previste). Dalla v24.0 anche con la formazione probabile,
+ricalcolata a ogni giro e segnata "probabile"; quando esce quella
+ufficiale si calcola un'ultima volta e si blocca. Nella verifica contano
+solo i calcoli con la formazione ufficiale. Nessuna
 chiamata all'API: statistiche e formazioni le scaricano gia'
 raccolta_giocatori.py e formazioni_previste.py.
 
@@ -27,7 +30,7 @@ IL CALCOLO (quello che ha vinto nella prova del 27/10/2026)
     vedere dal vivo se il giocatore la batte ancora.
 
 USO, dalla cartella del progetto:
-    python3 scripts/giocatori.py prevedi    probabilita' delle partite con le formazioni ufficiali
+    python3 scripts/giocatori.py prevedi    probabilita' delle partite con le formazioni
     python3 scripts/giocatori.py verifica   come sono andate quelle giocate
 Scrive stato/giocatori_previsioni.json.
 """
@@ -164,12 +167,13 @@ def prevedi(conn, ore_indietro=2):
     adesso = datetime.now(timezone.utc)
     da = (adesso - timedelta(hours=ore_indietro)).isoformat()
     # le partite future non sono nella tabella fixtures: si parte dalle
-    # formazioni ufficiali, e casa e fuori si prendono da previsioni.json
-    # (per le partite gia' giocate, dalla tabella fixtures)
+    # formazioni (probabili o ufficiali), e casa e fuori si prendono da
+    # previsioni.json (per le partite gia' giocate, dalla tabella fixtures)
     form = defaultdict(dict)
-    for fid, tid, data, undici in conn.execute("""SELECT fixture_id, team_id, data, undici FROM formazioni_previste
-                                                 WHERE tipo = 'ufficiale' AND data >= ?""", (da,)):
-        form[fid][tid] = (data, undici)
+    for fid, tid, data, undici, tipo in conn.execute("""SELECT fixture_id, team_id, data, undici, tipo
+                                                       FROM formazioni_previste
+                                                       WHERE tipo IN ('ufficiale', 'probabile') AND data >= ?""", (da,)):
+        form[fid][tid] = (data, undici, tipo)
     nomi = dict(conn.execute("SELECT id, name FROM teams"))
     prev = {}
     for percorso in ("previsioni.json", os.path.join(os.environ.get("SITO_DIR", "docs"), "previsioni.json")):
@@ -181,9 +185,15 @@ def prevedi(conn, ore_indietro=2):
             continue
     partite = []
     for fid, sq in form.items():
-        if len(sq) != 2 or str(fid) in dati:
+        # v24.0: con la formazione probabile si mostra e si ricalcola a ogni
+        # giro; con quella ufficiale si calcola una volta e non si tocca piu'
+        tipo = "ufficiale" if all(x[2] == "ufficiale" for x in sq.values()) else "probabile"
+        vecchia = dati.get(str(fid))
+        if len(sq) != 2 or (vecchia and vecchia.get("formazione", "ufficiale") == "ufficiale"):
             continue
         a, b = list(sq)
+        if tipo == "probabile" and sq[a][0] <= adesso.isoformat():
+            continue          # gia' iniziata senza formazione ufficiale
         leghe = {t: (conn.execute("SELECT league_id FROM player_match WHERE team_id = ? AND season = ? "
                                   "ORDER BY date DESC LIMIT 1", (t, STAGIONE)).fetchone() or [None])[0] for t in (a, b)}
         if leghe[a] not in LEGHE or leghe[a] != leghe[b]:
@@ -197,12 +207,16 @@ def prevedi(conn, ore_indietro=2):
             casa, fuori = (a, b) if nomi.get(a) == n_casa else (b, a)
         else:
             continue
-        partite.append((fid, sq[a][0], leghe[a], casa, fuori, n_casa, n_fuori))
+        partite.append((fid, sq[a][0], leghe[a], casa, fuori, n_casa, n_fuori, tipo))
     nuove = 0
-    for fid, data, lega, casa, fuori, n_casa, n_fuori in partite:
-        # calcolata una volta sola, con la formazione ufficiale
-        undici = {t: u for t, (_, u) in form[fid].items()}
-        gioc, ruolo, conc, lega_tot = storia(conn, data)
+    storie = {}
+    for fid, data, lega, casa, fuori, n_casa, n_fuori, tipo in partite:
+        undici = {t: x[1] for t, x in form[fid].items()}
+        # per le partite future la storia e' la stessa: si calcola una volta
+        fino = min(data, adesso.isoformat())
+        if fino not in storie:
+            storie[fino] = storia(conn, fino)
+        gioc, ruolo, conc, lega_tot = storie[fino]
         lista, senza = [], 0
         for tid, avv, in_casa in ((casa, fuori, True), (fuori, casa, False)):
             for pid in json.loads(undici.get(tid) or "[]"):
@@ -218,11 +232,11 @@ def prevedi(conn, ore_indietro=2):
                               "p": {k: v[0] for k, v in p.items()}, "r": {k: v[1] for k, v in p.items()}})
         dati[str(fid)] = {"data": data, "casa": n_casa, "fuori": n_fuori, "lega": lega,
                           "calcolato": adesso.isoformat(timespec="minutes"), "senza_dati": senza,
-                          "giocatori": lista}
+                          "formazione": tipo, "giocatori": lista}
         nuove += 1
-        print(f"  {n_casa} - {n_fuori}: {len(lista)} titolari calcolati, {senza} senza dati")
+        print(f"  {n_casa} - {n_fuori} ({tipo}): {len(lista)} titolari calcolati, {senza} senza dati")
     salva_file(dati)
-    print(f"Partite nuove: {nuove} (in archivio {len(dati)})")
+    print(f"Partite calcolate: {nuove} (in archivio {len(dati)})")
 
 
 def verifica(conn):
@@ -256,6 +270,8 @@ def riepilogo(dati):
     for k in MERCATI:
         n, prev, usc, noi, ru = 0, 0.0, 0, 0.0, 0.0
         for v in dati.values():
+            if v.get("formazione") == "probabile":
+                continue      # nella prova contano solo i calcoli con la formazione ufficiale
             for g in v.get("giocatori", []):
                 e = g.get("esito")
                 if not e:

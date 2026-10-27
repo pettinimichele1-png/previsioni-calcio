@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "23.9";
+  var VERSIONE_APP = "24.0";
 
   var stato = {
     dati: null,
@@ -1440,7 +1440,10 @@
     var x = m.giocatori;
     if (!x || !x.g || !x.g.length) return "";
     var vivo = (stato.dati && stato.dati.giocatori_dal_vivo) || {};
-    var html = '<section class="blocco elenco"><h2>Giocatori (in prova)</h2><div class="carta lista-apri">';
+    var probabile = x.form === "probabile";
+    var html = '<section class="blocco elenco"><h2>Giocatori (in prova)</h2>' +
+      (probabile ? '<p class="nota">Con la formazione probabile: si ricalcola quando esce quella ufficiale, circa un\'ora prima.</p>' : "") +
+      '<div class="carta lista-apri">';
     MERCATI_GIOCATORI.forEach(function (mm) {
       var chiave = "giocatori-" + mm.chiave, aperta = !!stato.mercati[chiave];
       html += '<button class="riga-apri" data-mercato="' + chiave + '" aria-expanded="' + aperta + '">' +
@@ -1453,7 +1456,8 @@
         var lista = x.g.filter(function (g) { return g[1] === sq[0] && (mm.chiave === "falli" || g[2] !== "G"); })
           .sort(function (a, b) { return b[mm.i][0] - a[mm.i][0]; });
         if (!lista.length) return;
-        html += '<span class="sotto-t">' + esc(sq[1]) + '</span><div class="tabella giocatori"><span class="ti">Titolare</span>' +
+        html += '<span class="sotto-t">' + esc(sq[1]) + '</span><div class="tabella giocatori"><span class="ti">' +
+          (probabile ? "Titolare probabile" : "Titolare") + "</span>" +
           '<span class="ti dx">Almeno 1</span><span class="ti dx">Almeno 2</span><span class="ti dx">Almeno 3</span>';
         lista.forEach(function (g) {
           html += '<span class="c nome">' + esc(g[0]) + " <small>" + (RUOLI[g[2]] || "") + "</small></span>" +
@@ -1470,7 +1474,7 @@
       }
       html += "</div>";
     });
-    return html + '</div><p class="nota">Solo i titolari delle formazioni ufficiali, nei cinque grandi campionati. Calcolo nostro (media del giocatore, ' +
+    return html + '</div><p class="nota">Solo i titolari, nei cinque grandi campionati. Calcolo nostro (media del giocatore, ' +
       "avversario, minuti da titolare), in prova fino a fine novembre: sotto la percentuale la quota giusta. Bet365 trattiene molto su questi " +
       "mercati: interessa solo una quota almeno del 10% più alta." + (x.senza ? " " + x.senza + (x.senza === 1 ? " titolare" : " titolari") +
       " senza abbastanza partite: non c'è." : "") + "</p></section>";
