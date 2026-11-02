@@ -9,6 +9,8 @@ Raccoglie in un unico file, app.json, tutto quello che l'app mostra:
     verifica    le statistiche storiche delle partite
     schedine    le statistiche storiche delle schedine e quelle
                 concluse il giorno precedente
+    campionati_gol  i campionati con piu' gol (totale, 1° e 2° tempo)
+                e le loro partite di oggi e domani (v24.1)
 
 Non ricalcola le previsioni: legge previsioni.json e verifica.json,
 prodotti poco prima dallo stesso pipeline, e il database per lo storico
@@ -553,6 +555,82 @@ def giocatori_per_app():
     return partite, G.riepilogo(dati) or None
 
 
+# ---------------------------------------------------------------
+#  CAMPIONATI CON PIU' GOL (v24.1), pagina aperta da Partite
+# ---------------------------------------------------------------
+
+GOL_CLASSIFICA = 10          # campionati per classifica
+GOL_MINIMI = 4.0             # la classifica dei gol a partita parte da 4
+GOL_PARTITE_MINIME = 20      # partite della stagione per entrare
+# dove l'API non registra l'intervallo scrive 0-0: un primo tempo sotto
+# un terzo dei gol vuol dire dato mancante (Turkmenistan, Guadalupa...)
+GOL_QUOTA_PT_MINIMA = 0.33
+GOL_ESCLUSI = ("U17", "U18", "U19", "U20", "U21", "U23", "Premier League 2", "Femenil",
+               "Women", "Feminin", "Femminile", "WPSL", "Youth", "Reserve")
+
+
+def campionati_gol_per_app(previsioni):
+    """
+    Le tre classifiche (gol a partita, nel 1° e nel 2° tempo) dall'archivio
+    dello storico, letto soltanto, sull'ultima stagione di ogni campionato;
+    sotto, le partite di oggi e domani non ancora iniziate, con i gol
+    attesi quando ci sono. Nessuna chiamata all'API.
+    """
+    try:
+        a = sqlite3.connect("file:stato/intervallo_storico.db?mode=ro", uri=True)
+        righe = a.execute("""
+            SELECT lega, stagione, MAX(campionato), COUNT(*), AVG(ft_c + ft_f), AVG(ht_c + ht_f),
+                   AVG(CASE WHEN ft_c + ft_f >= 4 THEN 1.0 ELSE 0 END), MAX(data)
+            FROM partite WHERE ft_c IS NOT NULL AND ht_c IS NOT NULL
+            GROUP BY lega, stagione""").fetchall()
+        a.close()
+    except sqlite3.Error as e:
+        print(f"  campionati con piu' gol non preparati: {e}")
+        return None
+    ultima = {}
+    for r in righe:
+        if r[3] < GOL_PARTITE_MINIME or any(x.lower() in (r[2] or "").lower() for x in GOL_ESCLUSI):
+            continue
+        if r[0] not in ultima or r[1] > ultima[r[0]][1]:
+            ultima[r[0]] = r
+    voci = [{"lega": r[0], "c": r[2], "n": r[3], "g": round(r[4], 2), "pt": round(r[5], 2),
+             "st": round(r[4] - r[5], 2), "q4": round(r[6], 3), "al": (r[7] or "")[:10]}
+            for r in ultima.values()]
+    intervallo_ok = [v for v in voci if v["g"] and v["pt"] / v["g"] >= GOL_QUOTA_PT_MINIMA]
+    classifiche = {
+        "totale": sorted([v for v in voci if v["g"] >= GOL_MINIMI], key=lambda v: -v["g"])[:GOL_CLASSIFICA],
+        "pt": sorted(intervallo_ok, key=lambda v: -v["pt"])[:GOL_CLASSIFICA],
+        "st": sorted(intervallo_ok, key=lambda v: -v["st"])[:GOL_CLASSIFICA],
+    }
+    nomi = {v["c"] for l in classifiche.values() for v in l}
+
+    # le partite di oggi e domani: modello, campionati aggiunti, intervallo esteso
+    adesso = datetime.now(FUSO)
+    giorni = {adesso.date(), adesso.date() + timedelta(days=1)}
+    giro = P.leggi_giro()
+    partite, viste = {}, set()
+    fonti = ([(p, p.get("gol_attesi_totali")) for p in previsioni] +
+             [(p, None) for p in giro.get("partite_extra", [])] +
+             [(p, (p.get("lc") or 0) + (p.get("lf") or 0) or None) for p in giro.get("partite_intervallo", [])])
+    for p, gol in fonti:
+        c, fid = p.get("campionato"), p.get("fixture_id")
+        if c not in nomi or fid in viste:
+            continue
+        try:
+            inizio = datetime.fromisoformat(p["data"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if inizio <= adesso or inizio.astimezone(FUSO).date() not in giorni:
+            continue
+        viste.add(fid)
+        partite.setdefault(c, []).append({"id": fid, "data": p["data"], "casa": p.get("casa"), "fuori": p.get("fuori"),
+                                          "gol": round(gol, 2) if gol else None,
+                                          "stima": p.get("fonte") == "stima"})
+    for l in partite.values():
+        l.sort(key=lambda x: x["data"])
+    return {"classifiche": classifiche, "partite": partite}
+
+
 def main():
     file_previsioni = trova(PREVISIONI)
     if not file_previsioni:
@@ -598,6 +676,7 @@ def main():
         "verifica": verifica,
         "schedine": schedine,
         "risultati": risultati,
+        "campionati_gol": campionati_gol_per_app(previsioni),
     }
     with open(USCITA, "w", encoding="utf-8") as f:
         json.dump(app, f, ensure_ascii=False, separators=(",", ":"))

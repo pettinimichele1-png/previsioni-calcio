@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "24.0";
+  var VERSIONE_APP = "24.1";
 
   var stato = {
     dati: null,
@@ -19,6 +19,7 @@
     valoreCaricato: false,     // il primo tentativo di scaricarlo e' finito
     giorno: "tutti",           // partite: giorno scelto
     lega: "tutte",             // partite: campionato scelto
+    golScheda: "totale",       // campionati con piu' gol: totale, pt, st
     scheda: "alta",            // giocate: alta, sistemi, miste, esatti
     risultati: "carta",        // risultati: carta o modello
     aperta: false,             // il modello: schedine concluse ieri
@@ -1153,6 +1154,12 @@
     var agg = stato.dati.generato ? oraDi(data(stato.dati.generato)) : "";
     var n = filtrate.length;
     var html = testa("Partite", "Aggiornato alle " + agg + " · " + n + (n === 1 ? " partita" : " partite"), campana());
+    // v24.1: la pagina dei campionati con piu' gol (con app.json vecchio non c'e')
+    if (stato.dati.campionati_gol) {
+      html += '<a class="link-gol carta" href="#/partite/gol"><span><b>Campionati con più gol</b>' +
+              "<small>I primi 10 per gol a partita, nel 1° e nel 2° tempo, con le partite di oggi e domani</small></span>" +
+              icona("destra", "freccia") + "</a>";
+    }
 
     html += '<div class="filtri"><div class="riga-chip nascosto-scroll">';
     html += '<button class="chip-giorno' + (stato.giorno === "tutti" ? " attivo" : "") +
@@ -1196,6 +1203,84 @@
       });
       html += "</section>";
     });
+    return html + "</div>";
+  }
+
+  // ---------------------------------------------------------------
+  //  CAMPIONATI CON PIU' GOL (v24.1): le tre classifiche dell'archivio
+  //  e solo le partite di oggi e domani ancora da giocare
+  // ---------------------------------------------------------------
+  var SCHEDE_GOL = [
+    { id: "totale", nome: "Gol a partita", campo: "g",
+      testo: "I campionati con almeno 4 gol a partita, i primi 10." },
+    { id: "pt", nome: "1° tempo", campo: "pt", testo: "I 10 campionati con più gol nel primo tempo." },
+    { id: "st", nome: "2° tempo", campo: "st", testo: "I 10 campionati con più gol nel secondo tempo." }
+  ];
+  function vistaCampionatiGol() {
+    var indietro = '<a class="indietro" href="#/partite">' + icona("sinistra") + "Partite</a>";
+    var cg = stato.dati.campionati_gol;
+    if (!cg) return indietro + '<div class="vuoto"><h3>Non ancora disponibile</h3>La pagina compare al prossimo aggiornamento dei dati.</div>';
+    var scheda = SCHEDE_GOL.filter(function (s) { return s.id === stato.golScheda; })[0] || SCHEDE_GOL[0];
+    var lista = (cg.classifiche || {})[scheda.id] || [];
+    var adesso = new Date();
+    var f2 = function (v) { return v == null ? "–" : Number(v).toFixed(2).replace(".", ","); };
+    var html = indietro + testa("Campionati con più gol", "Ultima stagione di ogni campionato · partite di oggi e domani") +
+      '<div class="filtri"><div class="riga-chip stretta nascosto-scroll">' +
+      SCHEDE_GOL.map(function (s) {
+        return '<button class="chip' + (scheda.id === s.id ? " attivo" : "") + '" data-gol-scheda="' + s.id + '">' + s.nome + "</button>";
+      }).join("") + "</div></div>" + avvisoFuoriLinea() + '<div class="corpo"><p class="nota">' + scheda.testo +
+      " Dati dell'ultima stagione di ogni campionato (almeno 20 partite), aggiornati ogni mattina. " +
+      "Fuori i campionati giovanili e femminili e, per il 1° e 2° tempo, quelli dove l'API non registra il punteggio dell'intervallo.</p>";
+    if (!lista.length) return html + '<div class="vuoto"><h3>Nessun campionato</h3>Oggi l\'archivio non ne ha da mostrare.</div></div>';
+
+    function numeri(v) {
+      return [["g", " gol a partita"], ["pt", " nel 1° tempo"], ["st", " nel 2° tempo"]].map(function (x) {
+        var t = f2(v[x[0]]) + x[1];
+        return x[0] === scheda.campo ? "<b>" + t + "</b>" : t;
+      }).join(" · ") + " · partite con 4+ gol " + pct(v.q4);
+    }
+    function avvisi(v) {
+      var a = [];
+      if (v.n < 40) a.push("poche partite (" + v.n + ")");
+      if (v.al && (adesso - data(v.al)) / 864e5 > 365) a.push("dati fermi al " + v.al.slice(8, 10) + "/" + v.al.slice(5, 7) + "/" + v.al.slice(0, 4));
+      return a.length ? '<div class="nota-stima">' + icona("avviso") + " " + a.join(" · ") + "</div>" : "";
+    }
+    function nome(v, i) {
+      var l = nomeLega(v.c);
+      var b = bandiera(l.paese);
+      return '<span class="pos-gol">' + (i + 1) + "</span>" + (b ? b + " " : "") + esc(l.nome) +
+             (l.paese ? ' <small>· ' + esc(l.paese.replace(/-/g, " ")) + "</small>" : "");
+    }
+    var conPartite = [], senza = [];
+    lista.forEach(function (v, i) {
+      var pp = ((cg.partite || {})[v.c] || []).filter(function (m) { return data(m.data) > adesso; });
+      (pp.length ? conPartite : senza).push({ v: v, i: i, pp: pp });
+    });
+    conPartite.forEach(function (x) {
+      html += '<section class="carta lega-gol"><div class="lega-gol-nome">' + nome(x.v, x.i) + "</div>" +
+        '<div class="lega-gol-numeri">' + x.v.n + " partite · " + numeri(x.v) + "</div>" + avvisi(x.v);
+      x.pp.forEach(function (m) {
+        var d = data(m.data);
+        var dentro = '<div class="ora"><b>' + oraDi(d) + "</b><span>" + esc(relativo(chiaveGiorno(d)) || dataBreve(d)) + "</span></div>" +
+          '<div class="gp-squadre">' + esc(m.casa) + " – " + esc(m.fuori) + "</div>" +
+          '<div class="gp-gol">' + (m.gol != null ? "<b>" + Number(m.gol).toFixed(1).replace(".", ",") + "</b><small>gol attesi" + (m.stima ? " (stima)" : "") + "</small>" : "<small>gol attesi non disponibili</small>") + "</div>";
+        html += trovaPartita(m.id) ? '<a class="gol-partita" href="#/partita/' + encodeURIComponent(m.id) + '">' + dentro + "</a>"
+                                   : '<div class="gol-partita">' + dentro + "</div>";
+      });
+      html += "</section>";
+    });
+    if (!conPartite.length) html += '<div class="vuoto"><h3>Nessuna partita</h3>Oggi e domani questi campionati non giocano.</div>';
+    if (senza.length) {
+      html += '<section class="gruppo"><div class="gruppo-testa"><h2>Non giocano oggi e domani</h2><span>' + senza.length + "</span></div>";
+      senza.forEach(function (x) {
+        html += '<div class="carta lega-gol chiusa"><div class="lega-gol-nome">' + nome(x.v, x.i) + "</div>" +
+          '<div class="lega-gol-numeri">' + x.v.n + " partite · " + numeri(x.v) + "</div>" + avvisi(x.v) + "</div>";
+      });
+      html += "</section>";
+    }
+    if (conPartite.some(function (x) { return x.pp.some(function (m) { return m.stima; }); })) {
+      html += '<p class="nota-piccola">(stima) = senza quote nell\'API: gol attesi calcolati da quanto le due squadre segnano e subiscono in stagione, meno precisi.</p>';
+    }
     return html + "</div>";
   }
 
@@ -1897,6 +1982,8 @@
       vista = "live"; html = vistaLive(true);
     } else if (h.indexOf("#/live/analisi/") === 0) {
       vista = "live"; html = stato.valore ? vistaAnalisi(decodeURIComponent(h.slice(15))) : vistaLive(true);
+    } else if (h === "#/partite/gol") {
+      vista = "partite"; html = stato.dati ? vistaCampionatiGol() : senzaDati();
     } else if (h === "#/partite") {
       vista = "partite"; html = stato.dati ? vistaPartite() : senzaDati();
     } else if (h === "#/giocate") {
@@ -1926,6 +2013,7 @@
     if (!el) return;
     if (el.hasAttribute("data-giorno")) { stato.giorno = el.getAttribute("data-giorno"); disegna(); }
     else if (el.hasAttribute("data-lega")) { stato.lega = el.getAttribute("data-lega"); disegna(); }
+    else if (el.hasAttribute("data-gol-scheda")) { stato.golScheda = el.getAttribute("data-gol-scheda"); disegna(); }
     else if (el.hasAttribute("data-scheda")) { stato.scheda = el.getAttribute("data-scheda"); disegna(); }
     else if (el.hasAttribute("data-risultati")) { stato.risultati = el.getAttribute("data-risultati"); disegna(); }
     else if (el.hasAttribute("data-apri")) { stato.aperta = !stato.aperta; ridisegnaFermo(); }

@@ -452,3 +452,25 @@ a.segmento { display: flex; align-items: center; justify-content: center; text-d
 /* sistemi integrali (v22.8) */
 .integrale-nota { margin: 4px 0 2px; }
 .integrale-info { color: var(--testo2); }
+
+/* ---------- campionati con piu' gol (v24.1) ---------- */
+.link-gol { margin: 0 16px 6px 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none; color: var(--testo); }
+.link-gol:active { background: var(--carta2); }
+.link-gol span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.link-gol b { font-size: 15px; font-weight: 800; }
+.link-gol small { font-size: 12px; color: var(--testo3); line-height: 1.4; }
+.lega-gol { padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.lega-gol.chiusa { padding: 12px 14px; margin-top: 8px; }
+.lega-gol-nome { font-size: 15px; font-weight: 800; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.lega-gol-nome small { font-size: 12px; font-weight: 600; color: var(--testo3); }
+.pos-gol { font-family: var(--titolo); font-size: 18px; font-weight: 800; color: var(--testo3); min-width: 20px; }
+.lega-gol-numeri { font-size: 12px; color: var(--testo2); line-height: 1.5; }
+.lega-gol-numeri b { color: var(--testo); }
+.lega-gol .nota-stima { display: flex; align-items: center; gap: 6px; padding: 0; }
+.lega-gol .nota-stima .ic { width: 14px; height: 14px; }
+.gol-partita { display: flex; align-items: center; gap: 10px; padding: 10px 0 2px 0; border-top: 1px solid var(--linea); text-decoration: none; color: var(--testo); }
+.gol-partita .ora { flex-direction: column; gap: 2px; align-items: flex-start; flex-shrink: 0; width: 62px; }
+.gp-squadre { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 700; line-height: 1.35; }
+.gp-gol { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.gp-gol b { font-family: var(--titolo); font-size: 20px; font-weight: 800; line-height: 1; }
+.gp-gol small { font-size: 11px; color: var(--testo3); text-align: right; }
