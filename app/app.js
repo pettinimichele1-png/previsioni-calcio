@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "24.7";
+  var VERSIONE_APP = "24.8";
 
   var stato = {
     dati: null,
@@ -1630,7 +1630,7 @@
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali da 2 a 4 partite, con 2-4 esiti per partita e almeno un risultato esatto: stesso importo su ogni colonna, nessuna quota minima e quota massima di almeno 500. Basta azzeccare un esito per partita. Si sceglie il sistema che va in attivo più spesso, solo con esiti dalle probabilità concrete. Esiti esclusivi: un esito per partita; esiti sovrapposti: un esito e dei risultati esatti dentro. Ogni giorno tutti quelli che si riescono a costruire, fino a 6, alternando esclusivi e sovrapposti, con partite diverse." },
     { id: "ragionate", nome: "Quota alta", testo: "Due schedine al giorno, a quota 15-30 e a quota circa 40, con partite diverse fra loro: fra tutte le partite di oggi, la combinazione con la probabilità più alta di uscire per quella quota. Una giocata per partita, anche sul 1° o 2° tempo o una combo (esito + Over/Under o Gol/NoGol), pagata da Bet365 al massimo il 2,5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 45%. Sotto ogni partita, il perché." },
-    { id: "quota_mille", nome: "Quota 1000", testo: "Cinque schedine al giorno sopra quota 1000, scelte insieme per avere la probabilità più alta che ne esca almeno una: ognuna è fra le combinazioni più probabili, e le giocate si ripetono solo quando conviene e mai in più di 2 schedine su 5, così una partita storta non le fa cadere tutte. Una giocata per partita, anche sul 1° o 2° tempo o una combo, pagata da Bet365 al massimo il 5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 15%. Si gioca per il colpo grosso: in media si perde." },
+    { id: "quota_mille", nome: "Quota 1000", testo: "Dieci schedine al giorno sopra quota 1000, scelte insieme per avere la probabilità più alta che ne esca almeno una: ognuna è fra le combinazioni più probabili, e le giocate si ripetono solo quando conviene e mai in più di 3 schedine su 10, così una partita storta non le fa cadere tutte. Una giocata per partita, anche sul 1° o 2° tempo o una combo, pagata da Bet365 al massimo il 5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 15%. Si gioca per il colpo grosso: in media si perde." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
 
