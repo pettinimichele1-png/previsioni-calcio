@@ -1511,8 +1511,10 @@ MERCATI_RAGIONATE = ["1", "2", "1X", "X2", "12", "over15", "over25", "under25", 
                      "casa_under25", "fuori_under25"]
 
 
-def motivo_giocata(p, esito):
-    """Il perche' di una giocata, in poche parole, dai gol attesi di Pinnacle."""
+def motivo_giocata(p, esito, prob=None, quota=None):
+    """Il perche' di una giocata, in poche parole, dai gol attesi di Pinnacle.
+    v24.6: se la giocata va contro chi e' favorito (o e' un pareggio), lo dice
+    e spiega perche' entra lo stesso: quanto spesso esce e quanto la paga Bet365."""
     lc, lf = p.get("gol_attesi_casa"), p.get("gol_attesi_fuori")
     if not lc or not lf:
         return ""
@@ -1534,6 +1536,26 @@ def motivo_giocata(p, esito):
         ritmo = ", partita da pochi gol" if tot <= 2.6 else ""
     else:
         ritmo = ""
+    testa = esito.split("+")[0]
+    tempo = ""
+    if testa.endswith(("_pt", "_st")):
+        tempo = " nel 1° tempo" if testa.endswith("_pt") else " nel 2° tempo"
+        testa = testa[:-3]
+    contro = ((lc / lf >= 1.25 and testa in ("2", "X2")) or (lf / lc >= 1.25 and testa in ("1", "1X"))
+              or testa == "X")
+    if contro and prob and quota:
+        if "+" in esito:
+            chi = "questa combo esce"
+        elif testa == "X":
+            chi = "finisce pari" if not tempo else f"il {tempo[5:]} finisce pari"
+        else:
+            chi = (p["casa"] if testa in ("1", "1X") else p["fuori"]) + (
+                " vince" if len(testa) == 1 else " vince o pareggia") + tempo
+        legame = ": " if testa == "X" and "favorito" not in quadro else (
+            ", ma " if "nettamente" in quadro or testa == "X" else ", ma non nettamente: ")
+        testo = (f"{quadro}{ritmo} ({attesi}){legame}{chi} circa il {prob * 100:.0f}% delle volte; "
+                 f"Bet365 paga {quota:.2f}, quota giusta {1 / prob:.2f}")
+        return testo.replace(".", ",")
     return f"{quadro}{ritmo} ({attesi})"
 
 
@@ -2041,7 +2063,7 @@ def _candidate_quota_alta(p, prob_minima=None, margine=None):
         v = _voce(p, k, pr, q)
         v["nome"] = _nome_quota_alta(p, k)
         v["vantaggio"] = pr * q - 1
-        v["motivo"] = motivo_giocata(p, k)
+        v["motivo"] = motivo_giocata(p, k, pr, q)
         fuori.append(v)
     return fuori
 
