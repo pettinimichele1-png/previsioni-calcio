@@ -2128,7 +2128,7 @@ def _schedine_quota_alta(previsioni):
 
 
 # --- quota 1000 (v24.2-24.3) ----------------------------------------
-# Richiesta dell'utente del 3/11/2026: ogni giorno 10 schedine a quota
+# Richiesta dell'utente del 3/11/2026: ogni giorno 5 schedine (10 fino alla v24.6) a quota
 # 1000 o piu', scelte per avere la PROBABILITA' PIU' ALTA CHE NE ESCA
 # ALMENO UNA (v24.3, scelta dell'utente: nessun limite fisso a quante
 # volte una giocata si ripete). Ogni schedina e' la piu' probabile (stessa
@@ -2139,13 +2139,13 @@ def _schedine_quota_alta(previsioni):
 # Margine e probabilita' minima piu' larghi della Quota alta: con il 2,5%
 # e il 45% nei giorni feriali non si arriva a 10 schedine (prova del 3/11: 3).
 QUOTA_MILLE = (1000.0, 1300.0)
-QUOTA_MILLE_SCHEDINE = 10
+QUOTA_MILLE_SCHEDINE = 5          # v24.7 (scelta dell'utente): 10 erano troppe da giocare
 QUOTA_MILLE_GIOCATE = (3, 10)
 QUOTA_MILLE_PROB_MINIMA = 0.15
 QUOTA_MILLE_MARGINE = 0.05
 # v24.4 (scelta dell'utente): tutto bilanciato, nessuna giocata in piu' di
-# 3 schedine su 10
-QUOTA_MILLE_MASSIMO_USO = 3
+# 3 schedine su 10; dalla v24.7, con 5 schedine, in piu' di 2
+QUOTA_MILLE_MASSIMO_USO = 2
 QUOTA_MILLE_PENALITA = (0.6, 0.3, 0.1)     # 3 prove: con 150 partite circa 3 minuti
 
 
