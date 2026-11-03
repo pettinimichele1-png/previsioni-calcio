@@ -2023,7 +2023,9 @@ def _nome_quota_alta(p, k):
     return nomi.get(k, NOMI.get(k, k).replace("Casa", casa).replace("Ospite", ospite))
 
 
-def _candidate_quota_alta(p):
+def _candidate_quota_alta(p, prob_minima=None, margine=None):
+    prob_minima = QUOTA_ALTA_PROB_MINIMA if prob_minima is None else prob_minima
+    margine = QUOTA_ALTA_MARGINE if margine is None else margine
     m, mk = p["mercati"], p.get("mercato") or {}
     fuori = []
     voci = [(k, m.get(k), mk.get(f"quota_{k}")) for k in MERCATI_QUOTA_ALTA]
@@ -2032,9 +2034,9 @@ def _candidate_quota_alta(p):
         lc, lf = p.get("gol_attesi_casa") or 0, p.get("gol_attesi_fuori") or 9
         if k == "gol_gol" and pr is not None and lc >= 2.0 and lf <= 1.1:
             pr -= QUOTA_ALTA_GOL_FAVORITA
-        if not q or pr is None or pr < QUOTA_ALTA_PROB_MINIMA or q < 1.05:
+        if not q or pr is None or pr < prob_minima or q < 1.05:
             continue
-        if pr * q - 1 < -QUOTA_ALTA_MARGINE or not _col_favorito(p, k):
+        if pr * q - 1 < -margine or not _col_favorito(p, k):
             continue
         v = _voce(p, k, pr, q)
         v["nome"] = _nome_quota_alta(p, k)
@@ -2044,13 +2046,15 @@ def _candidate_quota_alta(p):
     return fuori
 
 
-def _miglior_schedina(per_partita, qmin, qmax, evita=()):
+def _miglior_schedina(per_partita, qmin, qmax, evita=(), giocate=QUOTA_ALTA_GIOCATE, passo=0.005,
+                      usate=None, escluse=()):
     """La schedina con la probabilita' piu' alta e la quota fra qmin e qmax.
     evita: partite da usare il meno possibile (contano come se fossero
-    molto meno probabili, v23.5)."""
-    passo = 0.005
+    molto meno probabili, v23.5). usate: quante volte ogni giocata e' gia'
+    in altre schedine (Quota 1000, v24.2: ogni volta conta come se fosse
+    meno probabile); escluse: schedine gia' fatte, da non ripetere."""
     hi = int(math.log(qmax) / passo) + 1
-    massimo = QUOTA_ALTA_GIOCATE[1]
+    massimo = giocate[1]
     # stato: (giocate, quota in log a passi) -> (log prob, voci)
     stati = {(0, 0): (0.0, ())}
     for lista in per_partita:
@@ -2064,12 +2068,14 @@ def _miglior_schedina(per_partita, qmin, qmax, evita=()):
                     continue
                 chiave = (n + 1, nb)
                 val = lp + math.log(v["prob"]) + (math.log(0.2) if v["fixture_id"] in evita else 0.0)
+                if usate:
+                    val += usate.get((v["fixture_id"], v["esito"]), 0) * math.log(QUOTA_MILLE_PENALITA)
                 if chiave not in nuovi or val > nuovi[chiave][0]:
                     nuovi[chiave] = (val, voci + (v,))
         stati = nuovi
     migliore = None
     for (n, b), (lp, voci) in stati.items():
-        if n < QUOTA_ALTA_GIOCATE[0]:
+        if n < giocate[0] or (escluse and frozenset((v["fixture_id"], v["esito"]) for v in voci) in escluse):
             continue
         q = math.prod(v["quota"] for v in voci)
         if qmin <= q <= qmax and (migliore is None or lp > migliore[0]):
@@ -2099,6 +2105,49 @@ def _schedine_quota_alta(previsioni):
     return fuori
 
 
+# --- quota 1000 (v24.2) ---------------------------------------------
+# Richiesta dell'utente del 3/11/2026: ogni giorno 10 schedine a quota
+# 1000 o piu', ognuna con la probabilita' piu' alta possibile (stessa
+# ricerca e stesse regole della Quota alta), e DIVERSE fra loro (scelta
+# dell'utente): ogni giocata al massimo in QUOTA_MILLE_USO schedine, e
+# ogni volta che e' gia' stata usata conta come meno probabile, cosi' una
+# partita storta non le fa cadere tutte insieme. Gli esiti di schedine
+# diverse possono escludersi. Margine e probabilita' minima piu' larghi
+# della Quota alta: con il 2,5% e il 45% nei giorni feriali non si
+# arriva a 10 schedine (prova del 3/11: 3).
+QUOTA_MILLE = (1000.0, 1300.0)
+QUOTA_MILLE_SCHEDINE = 10
+QUOTA_MILLE_GIOCATE = (3, 10)
+QUOTA_MILLE_PROB_MINIMA = 0.15
+QUOTA_MILLE_MARGINE = 0.05
+QUOTA_MILLE_USO = 2
+QUOTA_MILLE_PENALITA = 0.5
+
+
+def _schedine_quota_mille(previsioni):
+    pool = _pool_integrali(previsioni)
+    per_partita = [l for l in (_candidate_quota_alta(p, QUOTA_MILLE_PROB_MINIMA, QUOTA_MILLE_MARGINE)
+                               for p in pool) if l]
+    fuori, usate, fatte = [], {}, set()
+    for k in range(QUOTA_MILLE_SCHEDINE):
+        liste = [[v for v in l if usate.get((v["fixture_id"], v["esito"]), 0) < QUOTA_MILLE_USO]
+                 for l in per_partita]
+        voci = _miglior_schedina([l for l in liste if l], *QUOTA_MILLE, giocate=QUOTA_MILLE_GIOCATE,
+                                 passo=0.01, usate=usate, escluse=fatte)
+        if not voci:
+            break
+        fatte.add(frozenset((v["fixture_id"], v["esito"]) for v in voci))
+        for v in voci:
+            usate[(v["fixture_id"], v["esito"])] = usate.get((v["fixture_id"], v["esito"]), 0) + 1
+        voci.sort(key=lambda v: v["data"])
+        s = _schedina(voci, f"Quota 1000 n. {k + 1} - {len(voci)} partite",
+                      "La combinazione piu' probabile sopra quota 1000, diversa dalle altre: una giocata per "
+                      "partita, pagata da Bet365 vicino al prezzo giusto di Pinnacle.")
+        s["resa"] = s["prob"] * s["quota"] - 1
+        fuori.append(s)
+    return fuori
+
+
 def _proposte_giorno(previsioni):
     """
     Schedine e risultati esatti del giorno. Si costruiscono UNA volta, al
@@ -2121,6 +2170,10 @@ def _proposte_giorno(previsioni):
                         json.dump(salvate, f, ensure_ascii=False)
                 if "quota_alta" not in salvate["giocate"]:
                     salvate["giocate"]["quota_alta"] = _schedine_quota_alta(con_pinnacle(previsioni))
+                    with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
+                        json.dump(salvate, f, ensure_ascii=False)
+                if "quota_mille" not in salvate["giocate"]:
+                    salvate["giocate"]["quota_mille"] = _schedine_quota_mille(con_pinnacle(previsioni))
                     with open(FILE_GIOCATE, "w", encoding="utf-8") as f:
                         json.dump(salvate, f, ensure_ascii=False)
                 return salvate
@@ -2159,7 +2212,8 @@ def esatti_correnti(previsioni):
 def costruisci_giocate(previsioni):
     """Le proposte, divise per logica."""
     proposte = {"singole": [], "alta": [], "valore": [],
-                "sistemi": [], "miste": [], "ragionate": [], "integrali": [], "quota_alta": []}
+                "sistemi": [], "miste": [], "ragionate": [], "integrali": [], "quota_alta": [],
+                "quota_mille": []}
     previsioni = _finestra_giorni(previsioni)
 
     # --- singole: le migliori per vantaggio stimato ----------------
@@ -2222,6 +2276,12 @@ def costruisci_giocate(previsioni):
     if not proposte["quota_alta"]:
         proposte.setdefault("note", {})["quota_alta"] = (
             "Oggi non ci sono abbastanza partite con giocate pagate vicino al prezzo giusto per arrivare a queste quote.")
+
+    # --- quota 1000 (v24.2) ------------------------------------------
+    proposte["quota_mille"] = _schedine_quota_mille(previsioni)
+    if not proposte["quota_mille"]:
+        proposte.setdefault("note", {})["quota_mille"] = (
+            "Oggi non ci sono abbastanza partite con giocate pagate vicino al prezzo giusto per arrivare a quota 1000.")
 
     # --- miste a quota mirata ---------------------------------------
     # spente dalla v21.1 (decisione dell'utente): 4 vinte su 47, e su tanti

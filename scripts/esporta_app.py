@@ -64,7 +64,7 @@ def trova(nome):
             return percorso
     return None
 
-CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate", "integrali", "quota_alta")
+CATEGORIE = ("alta", "valore", "sistemi", "miste", "ragionate", "integrali", "quota_alta", "quota_mille")
 
 # Una partita senza risultato dopo tre giorni e' rinviata o persa per
 # strada: la schedina che la contiene viene annullata, invece di restare
@@ -338,7 +338,7 @@ def giocate_per_app(previsioni, rho):
             "mercato": v.get("mercato"), "vantaggio": v.get("vantaggio"),
             "eventi": [evento_per_app(v)]})
 
-    for categoria in ("alta", "valore", "miste", "ragionate", "quota_alta"):
+    for categoria in ("alta", "valore", "miste", "ragionate", "quota_alta", "quota_mille"):
         for s in proposte.get(categoria, []):
             fuori[categoria].append({
                 "titolo": titolo_pulito(s["titolo"]), "quota": s["quota"], "prob": s["prob"],
@@ -409,6 +409,20 @@ def esatti_per_app(previsioni):
 #  SCHEDINE CONCLUSE
 # ---------------------------------------------------------------
 
+def tipo_esito(e):
+    """Il tipo di una giocata, per il conteggio della Quota 1000 (v24.2)."""
+    e = str(e)
+    if "+" in e:
+        return "combo"
+    if e.endswith(("_pt", "_st")):
+        return "tempi"
+    if e.startswith(("casa_", "fuori_")):
+        return "gol di una squadra"
+    return {"X": "pareggio", "1": "vittoria", "2": "vittoria", "1X": "doppia chance", "X2": "doppia chance",
+            "12": "doppia chance", "gol_gol": "Gol/NoGol", "no_gol": "Gol/NoGol"}.get(
+        e, "over" if e.startswith("over") else "under" if e.startswith("under") else "altro")
+
+
 def schedine_per_app(conn):
     vuoto = {"totale": {"n": 0, "vinte": 0, "attesa": 0.0},
              "categorie": {}, "ieri": []}
@@ -416,6 +430,9 @@ def schedine_per_app(conn):
     try:
         cur.execute("SELECT codice, categoria, titolo, quota, prob, proposta_il FROM schedine")
         schedine = cur.fetchall()
+        # v24.2: la probabilita' di ogni giocata della Quota 1000, per il conteggio per tipo
+        prob_mille = {(c, f, e): p for c, f, e, p in cur.execute(
+            "SELECT codice, fixture_id, esito, prob FROM schedine_eventi WHERE codice LIKE 'quota_mille|%'")}
         cur.execute("""
             SELECT e.codice, e.fixture_id, e.esito, e.casa, e.fuori,
                    f.goals_home, f.goals_away, f.date, f.status
@@ -479,6 +496,10 @@ def schedine_per_app(conn):
     di_ieri = []
 
     annullate = 0
+    # v24.2: dettagli della Quota 1000, salvati in app.json ma non mostrati
+    # (scelta dell'utente): schedine perse per un solo esito e, per tipo di
+    # giocata, quante ne sono uscite contro quante dovevano uscire
+    mille = {"a_un_passo": 0, "tipi": {}}
     for codice, categoria, titolo, quota, prob, proposta_il in schedine:
         ev = eventi.get(codice, [])
         if not ev:
@@ -512,6 +533,13 @@ def schedine_per_app(conn):
         else:
             vinta = all(e["preso"] for e in ev)
 
+        if categoria == "quota_mille":
+            mille["a_un_passo"] += sum(not e["preso"] for e in ev) == 1
+            for e in ev:
+                t = mille["tipi"].setdefault(tipo_esito(e["esito"]), {"n": 0, "uscite": 0, "attese": 0.0})
+                t["n"] += 1
+                t["uscite"] += e["preso"]
+                t["attese"] += prob_mille.get((codice, e["fid"], e["esito"])) or 0.0
         for d in (totale, categorie.setdefault(
                 categoria, {"n": 0, "vinte": 0, "attesa": 0.0})):
             d["n"] += 1
@@ -531,7 +559,9 @@ def schedine_per_app(conn):
     for d in [totale] + list(categorie.values()):
         d["attesa"] = d["attesa"] / d["n"] if d["n"] else 0.0
     totale["annullate"] = annullate
-    return {"totale": totale, "categorie": categorie, "ieri": di_ieri}
+    for t in mille["tipi"].values():
+        t["attese"] = round(t["attese"], 2)
+    return {"totale": totale, "categorie": categorie, "ieri": di_ieri, "quota_mille": mille}
 
 
 # ---------------------------------------------------------------

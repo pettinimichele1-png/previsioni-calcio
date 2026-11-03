@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "24.1";
+  var VERSIONE_APP = "24.2";
 
   var stato = {
     dati: null,
@@ -47,6 +47,12 @@
     if (v == null || isNaN(v)) return "–";
     var s = Math.abs(v * 100).toFixed(dec == null ? 1 : dec).replace(".", ",");
     return (v > 0 ? "+" : v < 0 ? "−" : "") + s + "%";
+  }
+  // v24.2: le probabilita' piccolissime (Quota 1000) come "1 su 1.044"
+  function probTesto(v) {
+    if (v == null || isNaN(v) || v <= 0) return "–";
+    if (v >= 0.01) return pct(v);
+    return "1 su " + String(Math.round(1 / v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
   function quota(v, dec) {
     if (v == null || isNaN(v)) return "–";
@@ -1624,6 +1630,7 @@
     { id: "alta", nome: "Alta probabilità", testo: "Esiti molto probabili, uno per partita, combinati fino a superare quota 1.45." },
     { id: "sistemi", nome: "Sistemi", testo: "Sistemi integrali da 2 a 4 partite, con 2-4 esiti per partita e almeno un risultato esatto: stesso importo su ogni colonna, nessuna quota minima e quota massima di almeno 500. Basta azzeccare un esito per partita. Si sceglie il sistema che va in attivo più spesso, solo con esiti dalle probabilità concrete. Esiti esclusivi: un esito per partita; esiti sovrapposti: un esito e dei risultati esatti dentro. Ogni giorno tutti quelli che si riescono a costruire, fino a 6, alternando esclusivi e sovrapposti, con partite diverse." },
     { id: "ragionate", nome: "Quota alta", testo: "Due schedine al giorno, a quota 15-30 e a quota circa 40, con partite diverse fra loro: fra tutte le partite di oggi, la combinazione con la probabilità più alta di uscire per quella quota. Una giocata per partita, anche sul 1° o 2° tempo o una combo (esito + Over/Under o Gol/NoGol), pagata da Bet365 al massimo il 2,5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 45%. Sotto ogni partita, il perché." },
+    { id: "quota_mille", nome: "Quota 1000", testo: "Dieci schedine al giorno sopra quota 1000, diverse fra loro: ognuna è la combinazione con la probabilità più alta di uscire, e ogni giocata compare al massimo in due schedine, così una partita storta non le fa cadere tutte. Una giocata per partita, anche sul 1° o 2° tempo o una combo, pagata da Bet365 al massimo il 5% sotto il prezzo giusto di Pinnacle, mai contro un favorito chiaro, ognuna almeno al 15%. Si gioca per il colpo grosso: in media si perde." },
     { id: "esatti", nome: "Esatti", testo: "I risultati esatti più probabili secondo le quote di Pinnacle, dal 14% in su, con la quota di Bet365." }
   ];
 
@@ -1692,6 +1699,14 @@
         var spiega = (g.note || {})[stato.scheda === "ragionate" && g.quota_alta ? "quota_alta" : stato.scheda] || "Oggi il modello non trova giocate di questo tipo.";
         html += '<div class="vuoto"><h3>Nessuna proposta</h3>' + esc(spiega) + "</div>";
       }
+      // v24.2: quante volte, giocandole tutte, ne esce almeno una (circa: le partite si ripetono)
+      if (stato.scheda === "quota_mille" && carte.length) {
+        var nessuna = 1;
+        carte.forEach(function (c) { nessuna *= 1 - (c.prob || 0); });
+        html += '<div class="avviso">' + icona("info") + "<span>Giocandole tutte (" + carte.length + (carte.length === 1 ? " schedina" : " schedine") +
+          "), almeno una esce circa " + (1 - nessuna >= 0.01 ? "il " + pct(1 - nessuna) + " dei giorni" :
+            "una volta ogni " + probTesto(1 - nessuna).replace("1 su ", "") + " giorni") + ". Vincerne una ripaga tutte le altre.</span></div>";
+      }
       carte.forEach(function (c) {
         var sistema = stato.scheda === "sistemi";
         var q = sistema ? quota(c.quota, 1) + "–" + quota(c.quota_max, 0) : quota(c.quota);
@@ -1711,7 +1726,7 @@
             ": sul sito saranno più basse.</div>";
         }
         var piede = sistema ? "probabilità di vincere almeno una combinazione" : "probabilità che esca tutto";
-        html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + pct(c.prob) + "</b></div></article>";
+        html += '<div class="piede' + (c.prob < 0.35 ? " rischio" : "") + '"><span>' + piede + "</span><b>" + probTesto(c.prob) + "</b></div></article>";
       });
     }
 
@@ -1874,7 +1889,7 @@
       "prese battono l'ultima quota giusta prima della partita: è il segnale più rapido che il vantaggio è vero.</p>";
   }
 
-  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", quota_alta: "Quota alta", integrali: "Sistemi integrali", esatti: "Risultati esatti" };
+  var NOMI_CATEGORIE = { singole: "Singole", alta: "Alta probabilità", valore: "Valore", sistemi: "Sistemi", miste: "Miste", ragionate: "Quota 5-10 e 20+", quota_alta: "Quota alta", quota_mille: "Quota 1000", integrali: "Sistemi integrali", esatti: "Risultati esatti" };
 
   function corpoModello() {
     if (!stato.dati) return senzaDati();
@@ -1915,11 +1930,13 @@
         "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "integrali", "quota_alta", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
+      ["alta", "integrali", "quota_alta", "quota_mille", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +
-          pct(c.vinte / c.n) + '</span><span class="c dx">' + pct(c.attesa) + "</span>";
+          // v24.2: la Quota 1000 si legge meglio in numero di schedine
+          (k === "quota_mille" ? c.vinte : pct(c.vinte / c.n)) + '</span><span class="c dx">' +
+          (k === "quota_mille" ? (c.attesa * c.n).toFixed(2).replace(".", ",") : pct(c.attesa)) + "</span>";
       });
       html += '</div><p class="testo fioco">Se "uscite" e "attese" restano vicine, le probabilità delle schedine sono oneste.' +
         (t.annullate ? " " + t.annullate + (t.annullate === 1 ? " schedina annullata" : " schedine annullate") + " per partite rinviate o mai arrivate." : "") +
@@ -1944,7 +1961,7 @@
           html += '<div class="riga-evento"><span class="segno' + (e.preso ? "" : " no") + '">' + icona(e.preso ? "vinta" : "persa") +
             '</span><span class="nome">' + esc(e.partita) + '</span><span class="es">' + esc(e.esito) + '</span><span class="rs">' + esc(e.ris) + "</span></div>";
         });
-        html += '<span class="nota">Il modello dava il ' + pct(x.prob) + (x.categoria === "sistemi" ? " di vincere almeno una combinazione" : " che uscisse tutto") + "</span></div>";
+        html += '<span class="nota">Il modello dava ' + (x.prob < 0.01 ? probTesto(x.prob).replace("1 su", "una possibilità su") : "il " + pct(x.prob)) + (x.categoria === "sistemi" ? " di vincere almeno una combinazione" : " che uscisse tutto") + "</span></div>";
       });
       html += "</div>";
     }
