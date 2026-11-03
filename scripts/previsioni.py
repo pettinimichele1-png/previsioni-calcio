@@ -2121,6 +2121,9 @@ QUOTA_MILLE_SCHEDINE = 10
 QUOTA_MILLE_GIOCATE = (3, 10)
 QUOTA_MILLE_PROB_MINIMA = 0.15
 QUOTA_MILLE_MARGINE = 0.05
+# v24.4 (scelta dell'utente): tutto bilanciato, nessuna giocata in piu' di
+# 3 schedine su 10
+QUOTA_MILLE_MASSIMO_USO = 3
 QUOTA_MILLE_PENALITA = (0.6, 0.3, 0.1)     # 3 prove: con 150 partite circa 3 minuti
 
 
@@ -2179,7 +2182,9 @@ def _schedine_quota_mille(previsioni):
     for penalita in QUOTA_MILLE_PENALITA:
         gruppo, usate, fatte = [], {}, set()
         for _ in range(QUOTA_MILLE_SCHEDINE):
-            voci = _miglior_schedina(per_partita, *QUOTA_MILLE, giocate=QUOTA_MILLE_GIOCATE, passo=0.01,
+            liste = [[v for v in l if usate.get((v["fixture_id"], v["esito"]), 0) < QUOTA_MILLE_MASSIMO_USO]
+                     for l in per_partita]
+            voci = _miglior_schedina([l for l in liste if l], *QUOTA_MILLE, giocate=QUOTA_MILLE_GIOCATE, passo=0.01,
                                      usate=usate, escluse=fatte, penalita=penalita)
             if not voci:
                 break
