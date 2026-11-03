@@ -2047,12 +2047,12 @@ def _candidate_quota_alta(p, prob_minima=None, margine=None):
 
 
 def _miglior_schedina(per_partita, qmin, qmax, evita=(), giocate=QUOTA_ALTA_GIOCATE, passo=0.005,
-                      usate=None, escluse=()):
+                      usate=None, escluse=(), penalita=1.0):
     """La schedina con la probabilita' piu' alta e la quota fra qmin e qmax.
     evita: partite da usare il meno possibile (contano come se fossero
     molto meno probabili, v23.5). usate: quante volte ogni giocata e' gia'
-    in altre schedine (Quota 1000, v24.2: ogni volta conta come se fosse
-    meno probabile); escluse: schedine gia' fatte, da non ripetere."""
+    in altre schedine (Quota 1000: ogni volta la sua probabilita' conta
+    per penalita' volte); escluse: schedine gia' fatte, da non ripetere."""
     hi = int(math.log(qmax) / passo) + 1
     massimo = giocate[1]
     # stato: (giocate, quota in log a passi) -> (log prob, voci)
@@ -2069,7 +2069,7 @@ def _miglior_schedina(per_partita, qmin, qmax, evita=(), giocate=QUOTA_ALTA_GIOC
                 chiave = (n + 1, nb)
                 val = lp + math.log(v["prob"]) + (math.log(0.2) if v["fixture_id"] in evita else 0.0)
                 if usate:
-                    val += usate.get((v["fixture_id"], v["esito"]), 0) * math.log(QUOTA_MILLE_PENALITA)
+                    val += usate.get((v["fixture_id"], v["esito"]), 0) * math.log(penalita)
                 if chiave not in nuovi or val > nuovi[chiave][0]:
                     nuovi[chiave] = (val, voci + (v,))
         stati = nuovi
@@ -2105,45 +2105,103 @@ def _schedine_quota_alta(previsioni):
     return fuori
 
 
-# --- quota 1000 (v24.2) ---------------------------------------------
+# --- quota 1000 (v24.2-24.3) ----------------------------------------
 # Richiesta dell'utente del 3/11/2026: ogni giorno 10 schedine a quota
-# 1000 o piu', ognuna con la probabilita' piu' alta possibile (stessa
-# ricerca e stesse regole della Quota alta), e DIVERSE fra loro (scelta
-# dell'utente): ogni giocata al massimo in QUOTA_MILLE_USO schedine, e
-# ogni volta che e' gia' stata usata conta come meno probabile, cosi' una
-# partita storta non le fa cadere tutte insieme. Gli esiti di schedine
-# diverse possono escludersi. Margine e probabilita' minima piu' larghi
-# della Quota alta: con il 2,5% e il 45% nei giorni feriali non si
-# arriva a 10 schedine (prova del 3/11: 3).
+# 1000 o piu', scelte per avere la PROBABILITA' PIU' ALTA CHE NE ESCA
+# ALMENO UNA (v24.3, scelta dell'utente: nessun limite fisso a quante
+# volte una giocata si ripete). Ogni schedina e' la piu' probabile (stessa
+# ricerca e stesse regole della Quota alta) dopo aver contato come meno
+# probabili le giocate gia' usate: si provano piu' penalita' e si tiene il
+# gruppo con la probabilita' piu' alta di almeno una vinta, calcolata con
+# le sovrapposizioni fra schedine (_almeno_una). Schedine identiche no.
+# Margine e probabilita' minima piu' larghi della Quota alta: con il 2,5%
+# e il 45% nei giorni feriali non si arriva a 10 schedine (prova del 3/11: 3).
 QUOTA_MILLE = (1000.0, 1300.0)
 QUOTA_MILLE_SCHEDINE = 10
 QUOTA_MILLE_GIOCATE = (3, 10)
 QUOTA_MILLE_PROB_MINIMA = 0.15
 QUOTA_MILLE_MARGINE = 0.05
-QUOTA_MILLE_USO = 2
-QUOTA_MILLE_PENALITA = 0.5
+QUOTA_MILLE_PENALITA = (0.6, 0.3, 0.1)     # 3 prove: con 150 partite circa 3 minuti
+
+
+def _congiunta(p, a, b, pa, pb):
+    """Probabilita' che due giocate diverse sulla stessa partita escano
+    insieme: dalla griglia dei gol di primo e secondo tempo (Poisson, 45%
+    dei gol attesi nel primo), riportata alle probabilita' di Pinnacle."""
+    import quote_giuste as Qg
+    lc, lf = p.get("gol_attesi_casa"), p.get("gol_attesi_fuori")
+    if not lc or not lf:
+        return pa * pb
+    tempi = [[poisson(g, l * f) for g in range(6)] for l in (lc, lf) for f in (0.45, 0.55)]
+    ga = gb = gab = 0.0
+    for c1, f1, c2, f2 in itertools.product(range(6), repeat=4):
+        w = tempi[0][c1] * tempi[2][f1] * tempi[1][c2] * tempi[3][f2]
+        ea = Qg.esito(a, c1 + c2, f1 + f2, c1, f1)
+        eb = Qg.esito(b, c1 + c2, f1 + f2, c1, f1)
+        ga += w * bool(ea)
+        gb += w * bool(eb)
+        gab += w * bool(ea and eb)
+    if not ga or not gb:
+        return pa * pb
+    return min(pa, pb, gab * pa * pb / (ga * gb))
+
+
+def _almeno_una(schedine, per_id, cache):
+    """Probabilita' che esca almeno una schedina: somma delle probabilita'
+    meno quelle di uscire a due a due (le partite sono indipendenti fra loro;
+    a queste quote i casi con tre schedine insieme sono trascurabili)."""
+    tot = sum(math.prod(v["prob"] for v in s) for s in schedine)
+    for s1, s2 in itertools.combinations(schedine, 2):
+        a = {v["fixture_id"]: v for v in s1}
+        b = {v["fixture_id"]: v for v in s2}
+        insieme = 1.0
+        for fid in a.keys() | b.keys():
+            va, vb = a.get(fid), b.get(fid)
+            if not va or not vb:
+                insieme *= (va or vb)["prob"]
+            elif va["esito"] == vb["esito"]:
+                insieme *= va["prob"]
+            else:
+                k = (fid, va["esito"], vb["esito"])
+                if k not in cache:
+                    cache[k] = _congiunta(per_id[fid], va["esito"], vb["esito"], va["prob"], vb["prob"])
+                insieme *= cache[k]
+        tot -= insieme
+    return tot
 
 
 def _schedine_quota_mille(previsioni):
     pool = _pool_integrali(previsioni)
+    per_id = {p["fixture_id"]: p for p in pool}
     per_partita = [l for l in (_candidate_quota_alta(p, QUOTA_MILLE_PROB_MINIMA, QUOTA_MILLE_MARGINE)
                                for p in pool) if l]
-    fuori, usate, fatte = [], {}, set()
-    for k in range(QUOTA_MILLE_SCHEDINE):
-        liste = [[v for v in l if usate.get((v["fixture_id"], v["esito"]), 0) < QUOTA_MILLE_USO]
-                 for l in per_partita]
-        voci = _miglior_schedina([l for l in liste if l], *QUOTA_MILLE, giocate=QUOTA_MILLE_GIOCATE,
-                                 passo=0.01, usate=usate, escluse=fatte)
-        if not voci:
+    migliore, cache = None, {}
+    for penalita in QUOTA_MILLE_PENALITA:
+        gruppo, usate, fatte = [], {}, set()
+        for _ in range(QUOTA_MILLE_SCHEDINE):
+            voci = _miglior_schedina(per_partita, *QUOTA_MILLE, giocate=QUOTA_MILLE_GIOCATE, passo=0.01,
+                                     usate=usate, escluse=fatte, penalita=penalita)
+            if not voci:
+                break
+            fatte.add(frozenset((v["fixture_id"], v["esito"]) for v in voci))
+            for v in voci:
+                usate[(v["fixture_id"], v["esito"])] = usate.get((v["fixture_id"], v["esito"]), 0) + 1
+            gruppo.append(voci)
+        if not gruppo:
             break
-        fatte.add(frozenset((v["fixture_id"], v["esito"]) for v in voci))
-        for v in voci:
-            usate[(v["fixture_id"], v["esito"])] = usate.get((v["fixture_id"], v["esito"]), 0) + 1
+        almeno = _almeno_una(gruppo, per_id, cache)
+        if migliore is None or (len(gruppo), almeno) > (len(migliore[1]), migliore[0]):
+            migliore = (almeno, gruppo)
+    if not migliore:
+        return []
+    fuori = []
+    for k, voci in enumerate(migliore[1]):
         voci.sort(key=lambda v: v["data"])
         s = _schedina(voci, f"Quota 1000 n. {k + 1} - {len(voci)} partite",
-                      "La combinazione piu' probabile sopra quota 1000, diversa dalle altre: una giocata per "
-                      "partita, pagata da Bet365 vicino al prezzo giusto di Pinnacle.")
+                      "Insieme alle altre, il gruppo di schedine sopra quota 1000 con la probabilita' piu' alta "
+                      "che ne esca almeno una: una giocata per partita, pagata da Bet365 vicino al prezzo giusto di Pinnacle.")
         s["resa"] = s["prob"] * s["quota"] - 1
+        s["almeno_una"] = migliore[0]
         fuori.append(s)
     return fuori
 
