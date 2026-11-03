@@ -517,23 +517,31 @@ def schedine_per_app(conn):
         if any(e["persa"] for e in ev):
             annullate += 1                 # partita rinviata o mai arrivata
             continue
-        if not all(e["giocata"] for e in ev):
-            continue                       # non ancora conclusa
+        import quote_giuste as Q
         for e in ev:
-            if e["esito"].endswith(("_pt", "_st")):
-                import quote_giuste as Q
+            if not e["giocata"]:
+                e["preso"] = None
+            elif e["esito"].endswith(("_pt", "_st")):
                 e["preso"] = bool(Q.esito(e["esito"], e["gc"], e["ga"], e["htc"], e["hta"]))
             else:
                 e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
+        finita = all(e["giocata"] for e in ev)
         if categoria in ("sistemi", "integrali"):
+            if not finita:
+                continue                   # non ancora conclusa
             per_partita = {}
             for e in ev:
                 per_partita.setdefault(e["fid"], []).append(e["preso"])
             vinta = all(any(x) for x in per_partita.values())
         else:
-            vinta = all(e["preso"] for e in ev)
+            # v24.5: una schedina e' persa appena sbaglia un esito, senza
+            # aspettare le altre partite (es. le giapponesi del mattino dopo,
+            # che arrivano nell'archivio solo il giorno seguente)
+            if not finita and not any(e["preso"] is False for e in ev):
+                continue                   # non ancora conclusa
+            vinta = finita and all(e["preso"] for e in ev)
 
-        if categoria == "quota_mille":
+        if categoria == "quota_mille" and finita:
             mille["a_un_passo"] += sum(not e["preso"] for e in ev) == 1
             for e in ev:
                 t = mille["tipi"].setdefault(tipo_esito(e["esito"]), {"n": 0, "uscite": 0, "attese": 0.0})
@@ -553,7 +561,7 @@ def schedine_per_app(conn):
                 "titolo": titolo_pulito(titolo), "categoria": categoria, "quota": quota,
                 "prob": prob, "vinta": vinta,
                 "eventi": [{"partita": e["partita"], "esito": nome_esito(e["esito"]),
-                            "ris": f"{e['gc']}-{e['ga']}", "preso": e["preso"]}
+                            "ris": f"{e['gc']}-{e['ga']}" if e["giocata"] else "–", "preso": e["preso"]}
                            for e in ev]})
 
     for d in [totale] + list(categorie.values()):

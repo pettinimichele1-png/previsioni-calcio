@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var VERSIONE_APP = "24.4";
+  var VERSIONE_APP = "24.5";
 
   var stato = {
     dati: null,
@@ -1922,7 +1922,16 @@
       }
     }
 
-    var t = s.totale || { n: 0 };
+    // v24.5: solo le schedine che si fanno ancora (tolte sistemi vecchi, miste, ragionate, singole, valore);
+    // il totale si rifà con quelle
+    var ATTUALI = ["alta", "integrali", "quota_alta", "quota_mille", "esatti"];
+    var t = { n: 0, vinte: 0, attesa: 0, annullate: (s.totale || {}).annullate };
+    ATTUALI.forEach(function (k) {
+      var c = (s.categorie || {})[k];
+      if (!c || !c.n) return;
+      t.n += c.n; t.vinte += c.vinte; t.attesa += c.attesa * c.n;
+    });
+    if (t.n) t.attesa /= t.n;
     if (!t.n) {
       html += '<div class="vuoto">Nessuna schedina ancora conclusa. I conteggi compariranno appena le prime saranno giocate.</div>';
     } else {
@@ -1930,7 +1939,7 @@
         "<div><b>" + pct(t.vinte / t.n) + "</b><span>uscite</span></div>" +
         "<div><b>" + pct(t.attesa) + "</b><span>attese dal modello</span></div></div>" +
         '<div class="tabella"><span class="ti">Categoria</span><span class="ti dx">Gioc.</span><span class="ti dx">Uscite</span><span class="ti dx">Attese</span>';
-      ["alta", "integrali", "quota_alta", "quota_mille", "sistemi", "ragionate", "miste", "esatti", "singole", "valore"].forEach(function (k) {
+      ATTUALI.forEach(function (k) {
         var c = (s.categorie || {})[k];
         if (!c || !c.n) return;
         html += '<span class="c nome">' + NOMI_CATEGORIE[k] + '</span><span class="c dx">' + c.n + '</span><span class="c dx forte">' +
@@ -1958,7 +1967,9 @@
           (x.vinta ? "VINTA" : "PERSA") + '</span><span class="titolo-conclusa">' + esc(x.titolo) +
           '</span></div><b class="q-conclusa' + (x.vinta ? " turchese" : " fioco") + '">' + q + "</b></div>";
         (x.eventi || []).forEach(function (e) {
-          html += '<div class="riga-evento"><span class="segno' + (e.preso ? "" : " no") + '">' + icona(e.preso ? "vinta" : "persa") +
+          // v24.5: partita ancora senza risultato in una schedina gia' persa
+          html += '<div class="riga-evento">' + (e.preso == null ? '<span class="segno no">–' :
+            '<span class="segno' + (e.preso ? "" : " no") + '">' + icona(e.preso ? "vinta" : "persa")) +
             '</span><span class="nome">' + esc(e.partita) + '</span><span class="es">' + esc(e.esito) + '</span><span class="rs">' + esc(e.ris) + "</span></div>";
         });
         html += '<span class="nota">Il modello dava ' + (x.prob < 0.01 ? probTesto(x.prob).replace("1 su", "una possibilità su") : "il " + pct(x.prob)) + (x.categoria === "sistemi" ? " di vincere almeno una combinazione" : " che uscisse tutto") + "</span></div>";
