@@ -2018,6 +2018,10 @@ QUOTA_ALTA_GIOCATE = (3, 9)
 # del previsto (archivio Pinnacle dal 2019: 4.504 partite, 51,0% previsto,
 # 50,1% uscito); la sua probabilita' si abbassa di tanto.
 QUOTA_ALTA_GOL_FAVORITA = 0.01
+# v24.9 (scelta dell'utente 5/11/2026): nella Quota alta e nella Quota 1000
+# nessuna giocata sotto quota 1,25 (prima 1,05): le quote basse servivano
+# solo da riempitivo, rischio in piu' per poca quota
+QUOTA_ALTA_QUOTA_MINIMA = 1.25
 MERCATI_QUOTA_ALTA = ["1", "2", "X", "1X", "X2", "12", "over15", "over25", "over35", "under25",
                       "under35", "gol_gol", "no_gol", "casa_segna", "fuori_segna",
                       "casa_over15", "fuori_over15", "casa_under15", "fuori_under15",
@@ -2056,7 +2060,7 @@ def _candidate_quota_alta(p, prob_minima=None, margine=None):
         lc, lf = p.get("gol_attesi_casa") or 0, p.get("gol_attesi_fuori") or 9
         if k == "gol_gol" and pr is not None and lc >= 2.0 and lf <= 1.1:
             pr -= QUOTA_ALTA_GOL_FAVORITA
-        if not q or pr is None or pr < prob_minima or q < 1.05:
+        if not q or pr is None or pr < prob_minima or q < QUOTA_ALTA_QUOTA_MINIMA:
             continue
         if pr * q - 1 < -margine or not _col_favorito(p, k):
             continue
