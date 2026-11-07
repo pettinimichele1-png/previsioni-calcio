@@ -2151,6 +2151,10 @@ QUOTA_MILLE_MARGINE = 0.05
 # 3 schedine su 10; nella v24.7, con 5 schedine, in piu' di 2
 QUOTA_MILLE_MASSIMO_USO = 3
 QUOTA_MILLE_PENALITA = (0.6, 0.3, 0.1)     # 3 prove: con 150 partite circa 3 minuti
+# v25.0 (scelta dell'utente 7/11/2026): solo partite dalle 13 in poi (e quelle
+# della notte, prima delle 7): le schedine nascono alle 7 e con le partite
+# delle 8-12 non c'era il tempo di giocarle
+QUOTA_MILLE_ORA_MINIMA = 13
 
 
 def _congiunta(p, a, b, pa, pb):
@@ -2200,7 +2204,8 @@ def _almeno_una(schedine, per_id, cache):
 
 
 def _schedine_quota_mille(previsioni):
-    pool = _pool_integrali(previsioni)
+    pool = [p for p in _pool_integrali(previsioni)
+            if not 7 <= datetime.fromisoformat(p["data"]).astimezone(FUSO_GIOCATE).hour < QUOTA_MILLE_ORA_MINIMA]
     per_id = {p["fixture_id"]: p for p in pool}
     per_partita = [l for l in (_candidate_quota_alta(p, QUOTA_MILLE_PROB_MINIMA, QUOTA_MILLE_MARGINE)
                                for p in pool) if l]
