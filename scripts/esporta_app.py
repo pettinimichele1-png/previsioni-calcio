@@ -514,9 +514,6 @@ def schedine_per_app(conn):
         for e in ev:
             if e["data"] is None and vecchia:
                 e["persa"] = True
-        if any(e["persa"] for e in ev):
-            annullate += 1                 # partita rinviata o mai arrivata
-            continue
         import quote_giuste as Q
         for e in ev:
             if not e["giocata"]:
@@ -526,13 +523,24 @@ def schedine_per_app(conn):
             else:
                 e["preso"] = bool(P.esito_avvenuto(e["esito"], e["gc"], e["ga"]))
         finita = all(e["giocata"] for e in ev)
-        if categoria in ("sistemi", "integrali"):
-            if not finita:
-                continue                   # non ancora conclusa
+        sistema = categoria in ("sistemi", "integrali")
+        if sistema:
             per_partita = {}
             for e in ev:
                 per_partita.setdefault(e["fid"], []).append(e["preso"])
-            vinta = all(any(x) for x in per_partita.values())
+            gia_persa = any(all(x is False for x in l) for l in per_partita.values())
+        else:
+            gia_persa = any(e["preso"] is False for e in ev)
+        # v25.1: con una partita rinviata o mai arrivata la schedina si annulla
+        # solo se non aveva gia' sbagliato: se un'altra giocata era gia' persa,
+        # conta come persa (prima si annullava, e la verifica perdeva schedine perse)
+        if any(e["persa"] for e in ev) and not gia_persa:
+            annullate += 1                 # partita rinviata o mai arrivata
+            continue
+        if sistema:
+            if not finita and not (gia_persa and any(e["persa"] for e in ev)):
+                continue                   # non ancora conclusa
+            vinta = finita and all(any(x) for x in per_partita.values())
         else:
             # v24.5: una schedina e' persa appena sbaglia un esito, senza
             # aspettare le altre partite (es. le giapponesi del mattino dopo,
