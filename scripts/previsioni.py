@@ -2022,6 +2022,15 @@ QUOTA_ALTA_GOL_FAVORITA = 0.01
 # nessuna giocata sotto quota 1,25 (prima 1,05): le quote basse servivano
 # solo da riempitivo, rischio in piu' per poca quota
 QUOTA_ALTA_QUOTA_MINIMA = 1.25
+# v25.2 (scelta dell'utente 8/11/2026): la quota di ogni giocata si conta al
+# massimo il giusto di Pinnacle meno il 3% (meno il 10% sui gol di una sola
+# squadra). L'API legge Bet365 internazionale, a volte con quote vecchie, e la
+# ricerca pescava proprio quelle sopra il giusto: la Quota 1000 dell'8/11 sul
+# sito italiano valeva circa 500 (screenshot: Bet365 Italia in media sul
+# giusto, Pardubice piu' di 1.5 il 10% sotto). Prova sull'8/11: almeno una
+# 1 su 117 (prima 1 su 55, ma con quote che sul sito non c'erano).
+QUOTA_ALTA_TETTO = 0.03
+QUOTA_ALTA_TETTO_SQUADRA = 0.10
 MERCATI_QUOTA_ALTA = ["1", "2", "X", "1X", "X2", "12", "over15", "over25", "over35", "under25",
                       "under35", "gol_gol", "no_gol", "casa_segna", "fuori_segna",
                       "casa_over15", "fuori_over15", "casa_under15", "fuori_under15",
@@ -2063,6 +2072,10 @@ def _candidate_quota_alta(p, prob_minima=None, margine=None):
         if not q or pr is None or pr < prob_minima or q < QUOTA_ALTA_QUOTA_MINIMA:
             continue
         if pr * q - 1 < -margine or not _col_favorito(p, k):
+            continue
+        tetto = QUOTA_ALTA_TETTO_SQUADRA if k.startswith(("casa_", "fuori_")) else QUOTA_ALTA_TETTO
+        q = min(q, round((1 - tetto) / pr, 2))
+        if q < QUOTA_ALTA_QUOTA_MINIMA:
             continue
         v = _voce(p, k, pr, q)
         v["nome"] = _nome_quota_alta(p, k)
