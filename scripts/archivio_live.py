@@ -1,5 +1,5 @@
 """
-ARCHIVIO DELLE PARTITE IN CORSO (v25.3)
+ARCHIVIO DELLE PARTITE IN CORSO (v25.3-25.4)
 =======================================
 Raccoglie dati per verificare la pagina "Calcolatore live" e le domande
 sul primo tempo: com'erano minuto, punteggio, statistiche e quote live
@@ -13,8 +13,12 @@ Ogni 5 minuti (cron):
      non dice quale); si tengono solo i mercati che usa la pagina;
   3. fixtures/statistics (1 chiamata a partita) per le partite con quote
      live, nel 1° tempo dal 10' e nel 2° tempo fino all'80': tiri, tiri
-     in porta, angoli, possesso, xG dove c'e'. I campionati che non danno
-     statistiche si saltano dopo 3 risposte vuote;
+     in porta, angoli, possesso, xG dove c'e'. Una partita che risponde
+     vuota 4 volte non si chiede piu'; un campionato si salta quando 3
+     partite diverse non hanno dato nessuna statistica (v25.4: prima
+     bastavano 3 risposte vuote, anche della stessa partita nei primi
+     minuti, e alcuni campionati che le statistiche le hanno venivano
+     saltati);
   4. fixtures?ids=      (1 chiamata ogni 20 partite): risultato del 1°
      tempo e finale delle partite sparite dal live.
 
@@ -48,7 +52,8 @@ MERCATI = {
     "Next 10 Minutes Total", "Both Teams To Score (2nd Half)",
 }
 FINITE = {"FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO"}
-VUOTE_MAX = 3  # risposte senza statistiche prima di saltare il campionato
+VUOTE_PARTITA = 4   # risposte vuote prima di smettere di chiedere quella partita
+PARTITE_VUOTE = 3   # partite senza statistiche prima di saltare il campionato
 
 
 def apri():
@@ -66,6 +71,9 @@ def apri():
         PRIMARY KEY (fixture_id, ora));
     CREATE TABLE IF NOT EXISTS leghe_statistiche (
         lega_id INTEGER PRIMARY KEY, vuote INTEGER DEFAULT 0, piene INTEGER DEFAULT 0);
+    CREATE TABLE IF NOT EXISTS partite_statistiche (
+        fixture_id INTEGER PRIMARY KEY, lega_id INTEGER,
+        vuote INTEGER DEFAULT 0, piene INTEGER DEFAULT 0);
     """)
     return con
 
@@ -150,8 +158,12 @@ def giro():
     quote = ad.chiamata_api("odds/live") or []
     chiamate = 2
     per_id = {q["fixture"]["id"]: q for q in quote}
+    # v25.4: si conta per partita, non per risposta
     senza_stat = {r[0] for r in con.execute(
-        "SELECT lega_id FROM leghe_statistiche WHERE vuote >= ? AND piene = 0", (VUOTE_MAX,))}
+        """SELECT lega_id FROM partite_statistiche GROUP BY lega_id
+           HAVING SUM(piene) = 0 AND SUM(vuote >= ?) >= ?""", (VUOTE_PARTITA, PARTITE_VUOTE))}
+    partite_vuote = {r[0] for r in con.execute(
+        "SELECT fixture_id FROM partite_statistiche WHERE piene = 0 AND vuote >= ?", (VUOTE_PARTITA,))}
 
     foto = stat_fatte = 0
     for fx in live:
@@ -172,7 +184,8 @@ def giro():
             con.execute("UPDATE partite SET ht_casa=?, ht_ospite=? WHERE id=?",
                         (ht["home"], ht["away"], fid))
         stat = None
-        if serve_statistica(stato, minuto) and lega["id"] not in senza_stat:
+        if (serve_statistica(stato, minuto) and lega["id"] not in senza_stat
+                and fid not in partite_vuote):
             risp = ad.chiamata_api("fixtures/statistics", {"fixture": fid})
             chiamate += 1
             stat_fatte += 1
@@ -180,6 +193,8 @@ def giro():
             campo = "piene" if stat else "vuote"
             con.execute(f"""INSERT INTO leghe_statistiche (lega_id, {campo}) VALUES (?, 1)
                             ON CONFLICT(lega_id) DO UPDATE SET {campo}={campo}+1""", (lega["id"],))
+            con.execute(f"""INSERT INTO partite_statistiche (fixture_id, lega_id, {campo}) VALUES (?, ?, 1)
+                            ON CONFLICT(fixture_id) DO UPDATE SET {campo}={campo}+1""", (fid, lega["id"]))
         con.execute("INSERT OR REPLACE INTO foto VALUES (?,?,?,?,?,?,?,?,?)",
                     (fid, ora_s, stato, minuto, extra,
                      fx["goals"]["home"], fx["goals"]["away"],
@@ -201,7 +216,8 @@ def conta():
     print("foto", q("SELECT COUNT(*) FROM foto"),
           "con statistiche", q("SELECT COUNT(*) FROM foto WHERE statistiche IS NOT NULL"))
     print("campionati saltati (senza statistiche)",
-          q(f"SELECT COUNT(*) FROM leghe_statistiche WHERE vuote >= {VUOTE_MAX} AND piene = 0"))
+          q(f"""SELECT COUNT(*) FROM (SELECT lega_id FROM partite_statistiche GROUP BY lega_id
+                 HAVING SUM(piene) = 0 AND SUM(vuote >= {VUOTE_PARTITA}) >= {PARTITE_VUOTE})"""))
 
 
 if __name__ == "__main__":
